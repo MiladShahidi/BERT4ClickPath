@@ -1,0 +1,53 @@
+name: tap-algomart
+channels:
+- defaults
+- conda-forge
+
+dependencies:
+# base python libraries
+- python=3.6
+- pip=20.2.4
+- setuptools=50.3.1
+- six=1.15.0
+- wheel=0.35.1
+
+# base numerical libraries for high performance
+- mkl
+- mkl-service
+- numpy=1.19.2
+- pandas=1.1.3
+
+# persistent and volatile data storage
+- pyarrow=0.11.1
+- pytables=3.6.1
+- jsonpickle=1.4.1
+
+# computation engine
+- dask=2.30.0
+
+# ML libraries
+- scikit-learn=0.23.2
+
+# testing and verification
+- pylint=2.6.0 #static code analysis
+- pytest=6.1.1 # unit testing framework
+- pytest-mock=3.3.1 # plugin to setup mocks on pytest
+- hypothesis=5.41.0 # automatic generation of numerical data for numerical tests
+- faker=4.14.0
+
+# scheduling
+- dagster=0.9.18
+
+# interactive computing and visualization
+- jupyter=1.0.0
+- plotly=4.11.0
+- matplotlib=3.3.2
+- seaborn=0.11.0 
+- python-cufflinks=0.17.3
+
+- pip:
+  # utilities and frameworks
+  - pyhocon=0.3.57 #a more updated version breaks for merging config objects
+
+# scheduling- 
+  - taskflow=4.5.0
