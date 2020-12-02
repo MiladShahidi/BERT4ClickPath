@@ -6,6 +6,7 @@ from functools import reduce
 from future.utils import with_metaclass
 import importlib
 import os
+import pickle
 import shutil
 
 from faker.providers.person.en import Provider
@@ -16,6 +17,8 @@ import taskflow.engines
 from taskflow.patterns import linear_flow as lf
 from taskflow import task
 
+def pickle_copy(obj):
+    return pickle.loads(pickle.dumps(obj, protocol=-1))
 
 def create_directory_if_does_not_exists(dir_path):
     try:
@@ -211,7 +214,7 @@ class TAPDataPipelineTask(task.Task):
     def _pack_result(self, result):
         iomanager = get_io_manager()
         if len(self.provides)>1 and isinstance(result, dict):
-            stored_result = {k:iomanager.store_results(k, result[k], handler_type=self.storage_type)}
+            stored_result = {k:iomanager.store_results(k, result[k], handler_type=self.storage_type) for k in result}
             result = stored_result
         elif len(self.provides)==1:
             key = list(self.provides)[0]
@@ -335,7 +338,8 @@ class ModelDataGenerator(TAPDataPipelineTask):
                  data_splits_int=None, **kwargs):
         self.input_column_groups = input_column_groups
         self.output_column_groups = output_column_groups
-        self._all_columns_groups = self.input_column_groups + self.output_column_groups
+        self._all_columns_groups = pickle_copy(self.input_column_groups)
+        self._all_columns_groups.update(self.output_column_groups)
         self.batch_size = batch_size
         self.n_batches = n_batches
         self.data_splits_pctg = data_splits_pctg
@@ -347,7 +351,7 @@ class ModelDataGenerator(TAPDataPipelineTask):
     def _parse_columns_groups_into_requires(self):
         requires_inputs = set()
         for col_group in self._all_columns_groups:
-            for col in col_group:
+            for col in self._all_columns_groups[col_group]:
                 requires_inputs.add(col.split(".")[0])
         requires_inputs = list(requires_inputs)
         return requires_inputs
@@ -359,8 +363,10 @@ class ModelDataGenerator(TAPDataPipelineTask):
         raise NotImplementedError()
 
     def _split_data_batch_in_groups(self, raw_data_batch):
-        inputs = [raw_data_batch[cols] for cols in self.input_column_groups]
-        outputs = [raw_data_batch[cols] for cols in self.input_column_groups]
+        inputs = {cols_name:raw_data_batch[self.input_column_groups[cols_name]]
+                                           for cols_name in self.input_column_groups}
+        outputs = {cols_name:raw_data_batch[self.output_column_groups[cols_name]]
+                                           for cols_name in self.output_column_groups}
         return (inputs, outputs)
 
     def generate_train_data(self):
@@ -384,9 +390,19 @@ class ModelDataGenerator(TAPDataPipelineTask):
             yield (inputs, outputs)
         pass
 
+    def get_generator(self, batch_data_type):
+        mapping = {ModelDataBatchType.Training: self.generate_train_data,
+                   ModelDataBatchType.Test: self.generate_test_data,
+                   ModelDataBatchType.Validation: self.generate_validation_data}
+        generator = mapping[batch_data_type]()
+        return generator
+
     def execute(self, **kwargs):
         self._initialize_data_source(**kwargs)
         return self
+
+class InferedModelDataWriter(TAPDataPipelineTask):
+    pass
 
 class InMemoryModelDataGenerator(ModelDataGenerator):
     def __init__(self, generator_name, input_column_groups, output_column_groups, batch_size,
@@ -405,7 +421,7 @@ class InMemoryModelDataGenerator(ModelDataGenerator):
         for ds_name in self.requires:
             dataset = io_manager.load_result(kwargs[ds_name])
             for col_group in self._all_columns_groups:
-                required_cols = [col for col in col_group if col.split(".")[0]==ds_name]
+                required_cols = [col for col in self._all_columns_groups[col_group] if col.split(".")[0]==ds_name]
                 for col in required_cols:
                     selected_col = dataset[col.split(".")[1]]
                     selected_col.name = col
@@ -413,37 +429,103 @@ class InMemoryModelDataGenerator(ModelDataGenerator):
         self.raw_data = pd.concat(raw_columns, axis=1)
         self.n_rows = len(self.raw_data)
 
-class TAPModelTrainingTask(TAPDataPipelineTask):
+
+class TAPModelTask(TAPDataPipelineTask):
+    def __init__(self, data_generator_provider, **kwargs):
+        base_name = kwargs.get("name", self.__class__.__name__)
+        kwargs["provides"] = {"{0}.{1}".format(base_name, k) for k in ["result", "metrics"]}
+        kwargs["name"] = base_name
+        self.data_generator_req = list(data_generator_provider.provides)[0]
+        kwargs["requires"] = kwargs.get("requires", []) + [self.data_generator_req]
+        TAPDataPipelineTask.__init__(self, **kwargs)
+
+    def _get_data_generator(self, batch_type, **kwargs):
+        data_generator = kwargs[self.data_generator_req]
+        if isinstance(data_generator, str):
+            iomanager = get_io_manager()
+            iomanager.load_result(data_generator)
+        data_generator = data_generator.get_generator(batch_type)
+        return data_generator
+
+    def _get_performance_metrics(self, **kwargs):
+        raise NotImplementedError("TAPModelTask._get_performance_metrics must be overriden in derived class")
+
+    def _execute_aux(self, **kwargs):
+        raise NotImplementedError("TAPModelTask._execute_aux must be overriden in derived class")
+
+    def execute(self, *args, **kwargs):
+        result_dict = dict()
+        result_dict["{0}.{1}".format(self.name, "result")] = self._execute_aux(**kwargs)
+        result_dict["{0}.{1}".format(self.name, "metrics")] = self._get_performance_metrics(**kwargs)
+        res = self._pack_result(result_dict)
+        return res
+
+class TAPModelTrainingTask(TAPModelTask):
     def __init__(self, model_class, model_kwargs, data_generator_provider, **kwargs):
         klass = load_class(model_class)
         self.model_instance = klass(**model_kwargs)
-        self.serialized_model = None
-        kwargs["provides"] = kwargs.get("provides", self.__class__.__name__)
-        kwargs["requires"] = data_generator_provider.provides
-        TAPDataPipelineTask.__init__(self, **kwargs)
+        TAPModelTask.__init__(self, data_generator_provider, **kwargs)
 
-    def _do_training(self):
+    def _do_training(self, data_generator):
         raise NotImplementedError("TAPModelTrainingTask._do_training must be overriden in derived class")
 
     def _serialize_model(self):
         raise NotImplementedError("TAPModelTrainingTask._serialize_model must be overriden in derived class")
 
+    def _execute_aux(self, **kwargs):
+        training_data_generator = self._get_data_generator(ModelDataBatchType.Training, **kwargs)
+        self._do_training(training_data_generator)
+        serialized_model = self._serialize_model()
+        return serialized_model
+
+class TAPModelInferenceTask(TAPModelTask):
+    def __init__(self, serialized_model_provider, data_generator_provider, **kwargs):
+        if isinstance(serialized_model_provider, TAPModelTrainingTask):
+            kwargs["requires"] = list(serialized_model_provider.provides)
+        elif isinstance(serialized_model_provider, str):
+            kwargs["requires"] = [serialized_model_provider]
+        kwargs["provides"] = "{0}.evaluation".format(self.__class__.__name__)
+        self.model_instance = None
+        TAPModelTask.__init__(self, data_generator_provider, **kwargs)
+
+    def _deserialize_model(self):
+        raise NotImplementedError("TAPModelInferenceTask._deserialize_model must be overriden in derived class")
+
+    def _do_evaluation(self, data_generator):
+        raise NotImplementedError("TAPModelInferenceTask._do_evaluation must be overriden in derived class")
+
     def execute(self, **kwargs):
-        data_generator = kwargs[list(self.requires)[0]]
-        sample_data = data_generator.generate_train_data()
-        return True
+        data_generator = self._get_data_generator(ModelDataBatchType.Training, **kwargs)
+        self.model_instance = self._deserialize_model()
+        evaluated_data = self._do_evaluation(data_generator)
+        return evaluated_data
 
-
-class SklearnModel(TAPModelTrainingTask):
+class SklearnUnsupervisedModelTraining(TAPModelTrainingTask):
     def __init__(self, model_class, model_kwargs, data_generator_provider, **kwargs):
         TAPModelTrainingTask.__init__(self, model_class, model_kwargs, data_generator_provider, **kwargs)
 
-    def _do_training(self):
-        raise NotImplementedError("TAPModelTrainingTask._do_training must be overriden in derived class")
+    def _get_performance_metrics(self, **kwargs):
+        return {"accuracy": 0.5, "recall":0.5}
+
+    def _do_training(self, data_generator):
+        sample_data = [k for k in next(data_generator)[0].values()][0].values
+        self.model_instance.fit(sample_data)
 
     def _serialize_model(self):
-        raise NotImplementedError("TAPModelTrainingTask._serialize_model must be overriden in derived class")
+        serialized_model = pickle.dumps(self.model_instance, protocol=-1)
+        return serialized_model
 
+class SklearnUnsupervisedModelInference(TAPModelInferenceTask):
+    def _deserialize_model(self):
+        deserialized_model = pickle.loads(b'\x80\x03K\x01.')
+        return deserialized_model
+
+    def _do_evaluation(self, data_generator):
+        data = [k for k in next(data_generator)[0].values()][0].values
+        self.model_instance.predict(data)
+
+    def _get_performance_metrics(self, **kwargs):
+        return {"accuracy": 0.5, "recall":0.5}
 
 if __name__=="__main__":
     rand_df_ref = RandomData(10000).execute()
@@ -455,13 +537,22 @@ if __name__=="__main__":
                      CountLastNameInitialByDate())
     feature_data.compile()
 
-    clustering_data_generator = InMemoryModelDataGenerator("clustering_data", [["counts_per_date.CountGenderByDate",
-                                                                               "counts_per_date.CountFirstNameInitialByDate"]], [], 20)
-    clustering = SklearnModel("sklearn.cluster.KMeans",
-                              {"n_clusters": 2, "max_iter": 100},
-                              clustering_data_generator)
+    clustering_data_generator = InMemoryModelDataGenerator("clustering_data",
+                                                           {"cluster_cols": ["counts_per_date.CountGenderByDate",
+                                                                             "counts_per_date.CountFirstNameInitialByDate"]},
+                                                           {}, 20)
+
+    clustering_training = SklearnUnsupervisedModelTraining("sklearn.cluster.KMeans",
+                                                           {"n_clusters": 2, "max_iter": 100},
+                                                           clustering_data_generator)
+
+    clustering_evaluation = SklearnUnsupervisedModelInference(clustering_training, clustering_data_generator)
+
     full_flow = lf.Flow("tap_test")
-    full_flow.add(feature_data, clustering_data_generator, clustering)
+    full_flow.add(feature_data,
+                  clustering_data_generator,
+                  clustering_training,
+                  clustering_evaluation)
 
     engine = taskflow.engines.load(full_flow, store=rand_df_ref)
     engine.run()
