@@ -1,13 +1,13 @@
-from source.input_pipeline import create_tf_dataset
-from source.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-from source.training_utils import BestModelSaverCallback, CustomLRSchedule
-from source.data_generator import ReturnsDataGen
+from input_pipeline import create_tf_dataset
+from training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
+from training_utils import BestModelSaverCallback, CustomLRSchedule
+from data_generator import ReturnsDataGen
+from returns_model import ReturnsModel
 import os
 import tensorflow as tf
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
-from source.returns_model import ReturnsModel
 
 
 def get_vocab_files(training):

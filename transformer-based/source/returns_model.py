@@ -1,9 +1,9 @@
 import tensorflow as tf
-from source.constants import RESERVED_TOKENS
-from source.transformer import Transformer
-from source.constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM
-from source.constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
-from source.head import Head
+from constants import RESERVED_TOKENS
+from transformer import Transformer
+from constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM
+from constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
+from head import Head
 
 
 class TransformerInputPrep:

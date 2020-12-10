@@ -1,7 +1,7 @@
 import tensorflow as tf
 from constants import LABEL_PAD
 import math
-from source.focal_loss import SigmoidFocalCrossEntropy
+from focal_loss import SigmoidFocalCrossEntropy
 
 
 # def custom_lr_schedule_fn(d_model, warmup_steps=4000, scale=1):

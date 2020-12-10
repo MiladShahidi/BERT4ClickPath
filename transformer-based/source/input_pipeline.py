@@ -1,8 +1,8 @@
 import tensorflow as tf
-from source.constants import INPUT_PADDING_TOKEN, LABEL_PAD
-from source.constants import INPUT_PAD
-from source.data_generator import ReturnsDataGen
-from source.returns_model import ReturnsModel
+from constants import INPUT_PADDING_TOKEN, LABEL_PAD
+from constants import INPUT_PAD
+from data_generator import ReturnsDataGen
+from returns_model import ReturnsModel
 
 
 def parse_examples(serialized_example, feature_spec):
