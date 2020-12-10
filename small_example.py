@@ -480,23 +480,26 @@ class TAPModelTrainingTask(TAPModelTask):
 
 class TAPModelInferenceTask(TAPModelTask):
     def __init__(self, serialized_model_provider, data_generator_provider, **kwargs):
+        self.serialized_model_attr = None
         if isinstance(serialized_model_provider, TAPModelTrainingTask):
             kwargs["requires"] = list(serialized_model_provider.provides)
+            self.serialized_model_attr = [k for k in kwargs["requires"] if k.endswith("result")][0]
         elif isinstance(serialized_model_provider, str):
             kwargs["requires"] = [serialized_model_provider]
+            self.serialized_model_attr = serialized_model_provider
         kwargs["provides"] = "{0}.evaluation".format(self.__class__.__name__)
         self.model_instance = None
         TAPModelTask.__init__(self, data_generator_provider, **kwargs)
 
-    def _deserialize_model(self):
+    def _deserialize_model(self, **kwargs):
         raise NotImplementedError("TAPModelInferenceTask._deserialize_model must be overriden in derived class")
 
     def _do_evaluation(self, data_generator):
         raise NotImplementedError("TAPModelInferenceTask._do_evaluation must be overriden in derived class")
 
-    def execute(self, **kwargs):
+    def _execute_aux(self, **kwargs):
         data_generator = self._get_data_generator(ModelDataBatchType.Training, **kwargs)
-        self.model_instance = self._deserialize_model()
+        self.model_instance = self._deserialize_model(**kwargs)
         evaluated_data = self._do_evaluation(data_generator)
         return evaluated_data
 
@@ -505,7 +508,7 @@ class SklearnUnsupervisedModelTraining(TAPModelTrainingTask):
         TAPModelTrainingTask.__init__(self, model_class, model_kwargs, data_generator_provider, **kwargs)
 
     def _get_performance_metrics(self, **kwargs):
-        return {"accuracy": 0.5, "recall":0.5}
+        return {"accuracy": np.random.rand(), "recall":np.random.rand()}
 
     def _do_training(self, data_generator):
         sample_data = [k for k in next(data_generator)[0].values()][0].values
@@ -516,16 +519,19 @@ class SklearnUnsupervisedModelTraining(TAPModelTrainingTask):
         return serialized_model
 
 class SklearnUnsupervisedModelInference(TAPModelInferenceTask):
-    def _deserialize_model(self):
-        deserialized_model = pickle.loads(b'\x80\x03K\x01.')
+    def _deserialize_model(self, **kwargs):
+        serialized_model_uri = kwargs[self.serialized_model_attr]
+        serialized_model = get_io_manager().load_result(serialized_model_uri)
+        deserialized_model = pickle.loads(serialized_model)
         return deserialized_model
 
     def _do_evaluation(self, data_generator):
         data = [k for k in next(data_generator)[0].values()][0].values
-        self.model_instance.predict(data)
+        results = self.model_instance.predict(data)
+        return results
 
     def _get_performance_metrics(self, **kwargs):
-        return {"accuracy": 0.5, "recall":0.5}
+        return {"accuracy": np.random.rand(), "recall":np.random.rand()}
 
 if __name__=="__main__":
     rand_df_ref = RandomData(10000).execute()
