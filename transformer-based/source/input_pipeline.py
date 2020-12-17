@@ -1,8 +1,7 @@
 import tensorflow as tf
-from constants import INPUT_PADDING_TOKEN, LABEL_PAD
-from constants import INPUT_PAD
+from constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
 from data_generator import ReturnsDataGen
-from returns_model import ReturnsModel
+from clickstream_model import ClickstreamModel
 
 
 def parse_examples(serialized_example, feature_spec):
@@ -18,7 +17,7 @@ def parse_examples(serialized_example, feature_spec):
 
 def random_choice(x, size, axis=0):
     """
-    This is the equivalent of np.random.choice. But it always returns unique choices, i.e. replace=False in numpy
+    This is the equivalent of np.random.choice. But it always returns unique choices, i.e. keep_features=False in numpy
     """
     dim_x = tf.cast(tf.shape(x)[axis], tf.int64)
     indices = tf.range(0, dim_x, dtype=tf.int64)
@@ -117,7 +116,8 @@ def create_tf_dataset(source, training, batch_size):
     # Shuffle then repeat. Batch should always be after these two (https://stackoverflow.com/a/49916221/4936825)
     if training:
         dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
-        dataset = dataset.repeat(None)
+
+    dataset = dataset.repeat(None)
 
     dataset = dataset.padded_batch(
         batch_size=batch_size,
@@ -144,11 +144,13 @@ def create_tf_dataset(source, training, batch_size):
 
     # TODO: Figure out caching. This doesn't work right now.
     # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
-    def temp_pop_sides(features):
+    def temp_pop_extras(features):
         features.pop('side_feature_1')
+        features.pop('seq_1_events')
+        features.pop('seq_2_events')
         return features
 
-    dataset = dataset.map(temp_pop_sides, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    dataset = dataset.map(temp_pop_extras, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     def pop_labels(feature_dict):
         labels = feature_dict.pop('label')
@@ -166,7 +168,7 @@ def print_features(x, select=None):
     for k in x:
         if (select is None) or (k in select):
             print(k)
-            print('\t', x[k].shape)
+            print('\t', x[k])
             print('*'*80)
 
 
@@ -179,44 +181,48 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    data_gen = ReturnsDataGen(n_items=10, n_events=10)
+    data_gen = ReturnsDataGen(
+        n_items=1000,
+        n_events=10,
+        session_cohesiveness=5,
+        positive_rate=0.5,
+        write_vocab_files=True,
+        vocab_dir='../data/vocabs'
+    )
+
     data = create_tf_dataset(
         source=data_gen,
         training=True,
         batch_size=2
     )
 
-    input_seq_mapping = {
+    sequential_input_config = {
         'items': ['seq_1_items', 'seq_2_items'],
-        'events': ['seq_1_events', 'seq_2_events']
+        # 'events': ['seq_1_events', 'seq_2_events']
     }
 
     feature_vocabularies = {
         'items': '../data/vocabs/item_vocab.txt',
-        'events': '../data/vocabs/event_vocab.txt'
+        # 'events': '../data/vocabs/event_vocab.txt'
     }
 
     embedding_dims = {
         'items': 4,
-        'events': 2
+        # 'events': 2
     }
 
-    returns_model = ReturnsModel(
-        input_seq_mapping=input_seq_mapping,
+    returns_model = ClickstreamModel(
+        sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,
+        segment_to_output=2,
         num_encoder_layers=1,
         num_attention_heads=1,
         dropout_rate=0.1,
         final_layers_dims=[10, 5]
     )
 
-    from source.constants import RESERVED_TOKENS
-    for i, (x, y) in enumerate(data.take(1)):
-        x.pop('side_feature_1')  # The model does not take in side features for now
-        print_features(x)
-        y_hat, seq_outputs = returns_model(x)
-        print('*'*80)
-        print(y_hat)
-        print('*'*80)
-        print(*seq_outputs, sep='\n')
+    for x, y in data.take(1):
+        y_hat = returns_model(x)
+
+    print(y_hat)

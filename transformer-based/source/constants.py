@@ -1,5 +1,3 @@
-import tensorflow as tf
-
 MASK_EVERY_N_ITEMS = 5
 SYNTHETIC_POSITIVE_SAMPLE_RATE = 0.5
 

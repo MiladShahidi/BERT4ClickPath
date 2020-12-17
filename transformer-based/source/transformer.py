@@ -6,33 +6,31 @@ import numpy as np
 def create_segment_markers(seq, sep=SEP):
     """
     Example:
-        seq = (before applying vocabulary)
-        [
-            ['134', '[SEP]', '423', '756'],
-            ['468', '686', '[SEP]', '142']
-        ]
+        seq =  # (batch of 2), SEP is 4 in the vocab
+            [
+                [  3   4   1 444   1 903 186   1 947   1 798   0   0   0   0   0   0   4 814 706 959 537   4]
+                [  3   4 169   1 714 169 999 696 737 320  11 666 493 229 859   1  77   4 662 990   0   0   4]
+            ]
 
-        returns:
-        [
-            [0 0 1 1]
-            [0 0 0 1]
-        ]
+        result:
+            [
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+            ]
+
+    Notice that because each sequence is padded before being concatenated, SEP (4) appears in the same position in all
+        examples across the batch. However, this function does not make that assumption and will work fine regardless.
 
     Args:
         seq: 2-D tensor with shape (batch_size, seq_len)
-        sep: The token separating the  two segments
+        sep: The marker separating the segments (SEP token)
 
     Returns:
-        a 2-D tensor of the same shape as seq, where in each row, positions up to sep token are filled with zero
-            and positions after sep are filled with 1
+        a 2-D tensor of the same shape as seq, containing the sequence number of corresponding elements in seq
     """
     tf.debugging.assert_rank(seq, 2, 'Expected 2-D tensor')
-    n0 = tf.cast(tf.where(tf.equal(seq, sep))[:, -1] + 1, tf.int32)
-    seq_len = tf.shape(seq)[1]
-    n1 = seq_len - n0
-    repeats = tf.transpose(tf.stack([n0, n1]))
-    segment_markers = tf.map_fn(lambda n0_n1: tf.repeat([0, 1], n0_n1), repeats)
-
+    sep_pos = tf.cast(tf.where(tf.equal(seq, sep), 1, 0), tf.int32)
+    segment_markers = tf.cumsum(sep_pos, axis=1)
     return segment_markers
 
 
@@ -235,7 +233,6 @@ class Encoder(tf.keras.layers.Layer):
         #  consider the fact that this will make everything more dependant on the keras embedding layer and will make it
         #  harder to remove it. We might want to replace this with an embedding feature_column, in case the latter
         #  provides more flexibility, e.g. loading embeddings from checkpoints or manipulating embeddings manually.
-        # self.embedding = tf.keras.layers.Embedding(self.input_vocab_size, self.d_model)
 
         self.enc_layers = [EncoderLayer(self.d_model, self.num_heads, self.dff, self.dropout_rate)
                            for _ in range(self.num_layers)]
@@ -273,16 +270,54 @@ class Encoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.layers.Layer):
+    """
+        The Transformer from "Attention Is All You Need", Vaswani, et. al. (2017).
+
+        https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+        Note that this is a Keras Layer, not Model. It's meant to be used as part of (i.e. a layer inside) other models.
+
+        It receives a dictionary of input features (see the call method) each of which must have the same shape of:
+
+        (batch_size, seq_len)
+
+        It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
+        embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:
+
+        (batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions
+
+    """
+    # This is the maximum number of input sequences (as marked and separated by the SEP token) this model can accept
+    # The only reason we need to prescpecify this, is to be able to create a segment embedding layer in advance.
+    # If segment embeddings are not used this becomes irrelevant
+    MAX_INPUT_SEQ = 100
+
     def __init__(self,
                  embedding_sizes,
                  embedding_dims,
                  num_layers,
                  encoder_attention_heads,
                  encoder_ff_dim,
-                 maximum_position_encoding,
                  dropout_rate,
                  item_embedding_weights=None,
                  **kwargs):
+
+        """
+
+        Args:
+            embedding_sizes: Size of the vocabulary for each input feature. One can think of this as the number of
+                rows in each embedding lookup table.
+            embedding_dims: Dimension of embedding vector for input features. One can think of this as the number of
+                columns in each embedding lookup table.
+            num_layers: Number of Encoder layers.
+            encoder_attention_heads: Number of Attention heads.
+            encoder_ff_dim: Dimension of the feed forward layers inside the Encoder (see "Attention is All You Need").
+            dropout_rate: Dropout rate
+            item_embedding_weights: Not currently implemented, but can be used to load pre-trained embeddings from a
+                checkpoint. See the instantiation of the Embedding layers.
+            **kwargs:
+        """
+
         super(Transformer, self).__init__(**kwargs)
 
         assert set(embedding_sizes.keys()) == set(embedding_dims.keys()), \
@@ -291,7 +326,7 @@ class Transformer(tf.keras.layers.Layer):
         self.num_layers = num_layers
         self.encoder_attention_heads = encoder_attention_heads
         self.encoder_ff_dim = encoder_ff_dim
-        self.maximum_position_encoding = maximum_position_encoding
+        self.maximum_position_encoding = 10000  # This used to be an argument. But I don't see why one might want to change this.
         self.dropout_rate = dropout_rate
         self.item_embedding_weights = item_embedding_weights
 
@@ -305,8 +340,6 @@ class Transformer(tf.keras.layers.Layer):
             dropout_rate=dropout_rate
         )
 
-        self.maximum_position_encoding = maximum_position_encoding
-
         self.embedding_layers = {
             feature: tf.keras.layers.Embedding(
                 input_dim=embedding_sizes[feature],
@@ -319,7 +352,7 @@ class Transformer(tf.keras.layers.Layer):
         }
 
         self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
-        self.segment_embedding_layer = tf.keras.layers.Embedding(2, self.d_model)  # Segment embeddings
+        self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)  # Segment embeddings
 
     def get_config(self):
         """
@@ -358,9 +391,9 @@ class Transformer(tf.keras.layers.Layer):
         embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
 
         # ToDo: enable segment embeddings
-        # segment_markers = create_segment_markers(events)  # (batch_size, seq_len)
-        # segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
-        # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
+        segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
+        segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
+        embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
 
         embedded_seq += self.pos_encoding[:, :seq_len, :]
 

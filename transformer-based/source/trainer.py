@@ -2,7 +2,7 @@ from input_pipeline import create_tf_dataset
 from training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
 from training_utils import BestModelSaverCallback, CustomLRSchedule
 from data_generator import ReturnsDataGen
-from returns_model import ReturnsModel
+from clickstream_model import ClickstreamModel
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
@@ -66,7 +66,7 @@ def create_model(gpu_count, ckpt_dir=None, **config):
 
     """
     with get_distribution_context(gpu_count):
-        model = ReturnsModel(**config)
+        model = ClickstreamModel(**config)
 
     if ckpt_dir is not None:
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)
@@ -110,7 +110,14 @@ def train(model,
 
     d_model = sum(model.embedding_dims.values())
 
-    lr = CustomLRSchedule(d_model=d_model, scale=training_params['lr_scale'])
+    # lr = CustomLRSchedule(d_model=d_model, scale=training_params['lr_scale'])
+    # lr = tf.keras.optimizers.schedules.ExponentialDecay(
+    #     initial_learning_rate=training_params['lr'],
+    #     decay_steps=training_params['steps_per_epoch'],
+    #     decay_rate=0.9,
+    #     staircase=True
+    # )
+    lr = training_params['lr']
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
     loss = MaskedBinaryCrossEntropy()
@@ -150,17 +157,18 @@ def train(model,
 
 
 if __name__ == '__main__':
-    model_dir_root = '../output'
+    timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
+    model_dir_root = os.path.join('../output', f'run_{timestamp}')
     saved_model_dir = os.path.join(model_dir_root, 'savedmodel')
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
     training_params = {
-        'n_epochs': 5,
+        'n_epochs': 100,
         'steps_per_epoch': 100,
         'validation_steps': 100,
         'lr_warmup_steps': 4000,
-        'lr': 1e-3,
-        'lr_scale': 0.2,
+        'lr': 1e-2,
+        'lr_scale': 1,
         'batch_size': 100,
         'max_sess_len': 200,
         'ckpt_dir': ckpt_dir,
@@ -169,27 +177,31 @@ if __name__ == '__main__':
     model_params = {
         'num_encoder_layers': 1,
         'num_attention_heads': 1,
-        'dropout_rate': 0.35,
-        'final_layers_dims': [256, 128]
+        'dropout_rate': 0.1,
+        'final_layers_dims': [1024, 512, 256]
     }
 
     input_config = {
-        'input_seq_mapping': {
+        'sequential_input_config': {
             'items': ['seq_1_items', 'seq_2_items'],
-            'events': ['seq_1_events', 'seq_2_events']
+            # 'events': ['seq_1_events', 'seq_2_events']
         },
         'feature_vocabs': {
             'items': '../data/vocabs/item_vocab.txt',
-            'events': '../data/vocabs/event_vocab.txt'
+            # 'events': '../data/vocabs/event_vocab.txt'
         },
         'embedding_dims': {
-            'items': 4,
-            'events': 2
-        }
+            'items': 5,
+            # 'events': 2
+        },
+        'segment_to_output': 2
     }
 
-    training_data_src = ReturnsDataGen(n_items=10, n_events=10)
-    validation_data_src = ReturnsDataGen(n_items=10, n_events=10)
+    N_ITEMS = 1000
+    COHESION = 100
+
+    data_src = ReturnsDataGen(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
+                              write_vocab_files=True, vocab_dir='../data/vocabs')
 
     config = {**model_params, **input_config}
     model = create_model(gpu_count=0,
@@ -197,8 +209,8 @@ if __name__ == '__main__':
                          **config)
 
     trained_model = train(model=model,
-                          training=training_data_src,
-                          validation=validation_data_src,
+                          training=data_src,
+                          validation=data_src,
                           model_dir=saved_model_dir,
                           gpu_count=0,
                           **training_params)

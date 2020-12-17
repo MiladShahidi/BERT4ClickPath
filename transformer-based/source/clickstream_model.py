@@ -7,18 +7,32 @@ from head import Head
 
 
 class TransformerInputPrep:
+    """
+    This class formats the input sequence(s) to a Transformer by concatenating them and inserting appropriate tokens.
+    The resulting sequence will have the following format:
 
+    [CLS] [SEP] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] ...
+
+    This is inspired by how BERT formats its input. The CLS token can be used (as BERT does) as a summary of the entire
+    input. For example, binary classification for sentiment analysis in NLP, or purchase intention in click-stream.
+
+    The SEP token is used to separates each sequence from the next (or from the CLS token).
+    """
     def __init__(self, seq_chain_mapping):
         """
+        Args:
+            seq_chain_mapping: Specifies how to existing features should be chained to form new ones.
+
         Example:
+        Let's say the feature set includes the following tensors:
+        session_items, basket_items, sessions_events, basket_events
 
-        ```python
-        seq_pair_mapping = {
-                            'items': ['session_items', 'basket_items'],
-                            'events': ['sessions_events', 'basket_events']
-                        }
-        ```
+        We can create two new features, items and events, by chaining the existing ones as follows:
 
+        seq_chain_mapping = {
+                             'items': ['session_items', 'basket_items'],
+                             'events': ['sessions_events', 'basket_events']
+                            }
         """
         self.seq_chain_mapping = seq_chain_mapping
 
@@ -49,15 +63,18 @@ class TransformerInputPrep:
 
         return seq_chain
 
-    def __call__(self, features, replace=True):
+    def __call__(self, features, keep_features=False):
         """
+
         Args:
-            seq_1: (batch_size, seq_1_len)
-            seq_2: (batch_size, seq_2_len)
+            features: Dictionary of feature, mapping feature names to tensors
+            keep_features: Whether to keep chained features in the returned feature dictionary
 
         Returns:
-
+            A features dictionary containing the newly created features. It will leave untouched all other features that
+            were not involved in chaining.
         """
+
         # 1 - Chaining features as specified
         for new_feature, seq_pair in self.seq_chain_mapping.items():
             sequence_pair_list = [features[name] for name in seq_pair]
@@ -78,8 +95,8 @@ class TransformerInputPrep:
         # Each sequence starts right after the previous one's SEP token. First one starts at 0.
         segment_starts = tf.concat([[0], segment_ends[:-1]+1], axis=0)  # Making sure the first start pos is 0
 
-        # 3 - Removing old features used in creating the new ones (if so specified by replace argument)
-        if replace:  # Drop features that were used in forming sequence pairs
+        # 3 - Removing old features used in creating the new ones (if so specified by keep_features argument)
+        if not keep_features:  # Drop features that were used in forming sequence pairs
             features_to_drop = set()
             for seq_pair in self.seq_chain_mapping.values():
                 features_to_drop = features_to_drop.union(set(seq_pair))
@@ -91,15 +108,20 @@ class TransformerInputPrep:
 class TokenMapper:
     # ToDo: Find a better name for this class
     """
-    This class maps tokens (words) to their index in the vocabulary, taking into account the fact that we need
-    to add a list of reserved tokens to the vocabulary before mapping.
+    This class maps tokens (e.g. item ids or event names) to their index in the vocabulary, taking into account the fact
+    that we need to add a list of reserved tokens to the vocabulary before mapping. These reserved tokens are the ones
+    that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
 
-    inputs
-    dict mapping variable name to vocab file for embeddings. item and event vocabs are mandatory.
-        could include more for other vars that must be embedded
     """
-    def __init__(self, vocabularies, reserved_tokens, **kwargs):
+    def __init__(self, vocabularies, reserved_tokens=RESERVED_TOKENS):
+        """
 
+        Args:
+            vocabularies: Dict mapping variable names to vocab files for categorical features.
+            reserved_tokens: A list of reserved tokens that will be added to the vocabulary. These may include a
+            separator token ([SEP]) to separate neighbouring sequences in the input, a classification token ([CLS])
+            for classification tasks, etc. Refer to how BERT input is formatted.
+        """
         # In some cases, multiple variables might share the same vocab file. But it's not efficient to create multiple
         # copies of the same lookup table for them. So we will do this in 2 steps to avoid duplicate lookup tables
         lookup_per_vocab_file = {
@@ -134,34 +156,101 @@ class TokenMapper:
         return self._apply_vocabs(features)
 
 
-class ReturnsModel(tf.keras.models.Model):
+class ClickstreamModel(tf.keras.models.Model):
+
+    """
+    This model closely resembles that of Chen et. al. (2019), available at https://arxiv.org/pdf/1905.06874.pdf.
+
+    It consists, for the most part, of a Transformer which takes as input a series of sequences
+    (e.g. sequence of items viewed). This Transformer then creates contextualized embeddings that correspond one for one
+    to input items. These embeddings are then passed through a Head (which can be a series of fully-connected layers)
+    to produce the output. Depending on the task, one can decide what type of Head to use and which embeddings to pass
+    through it. This is similar to how various classification layers can be mounted on top of a BERT model to perform
+    different tasks (binary classification, sequence tagging, multi-class classification with a softmax, etc.)
+
+    For instance, one can only send the output corresponding to CLS through the binary classification Head. The CLS
+    token can be trained to "summarize" the entire chain of input sequences. Or in the case of predicting returns given
+    the click-stream, one could feed the click-stream + basket (two sequences) and then pass the output of the
+    Transformer that corresponds to basket items to the Head and get a Tensor of the same length as basket.
+    The model can then be trained so that it predicts the probability of return for each item in the basket. (one would
+    need to set a maximum basket size, as the output of the model has to have a fixed length, and then pad when the
+    basket is smaller than that).
+
+    Another example is scoring items for recommendation, given the click-stream up to a certain point. In this case,
+    sequence 1 of input would be click-stream and sequence 2 will always be of length 1, containing a single target item
+    to be scored. One can then feed the output corresponding to the target item through the Head and produce a relevance
+    score.
+
+    The following is an example of how to specify the configuration of inputs:
+
+    ```python
+
+    sequential_input_config = {
+        'items': ['seq_1_items', 'seq_2_items'],
+        'events': ['seq_1_events', 'seq_2_events']
+    }
+
+    feature_vocabs = {
+        'items': '../data/vocabs/item_vocab.txt',
+        'events': '../data/vocabs/event_vocab.txt'
+    }
+
+    embedding_dims = {
+        'items': 20,
+        'events': 4
+    }
+    ```
+    In the above example the input contains two sequences. These, for example, could be session and basket in the task
+    of predicting returns. In addition, each sequence consists of two (separately embedded) elements. Items, and their
+    corresponding events, line (view, handbag) or (add_to_basket, shoe). These components will be concatenated before
+    going into the transformer. The final (batched) result will have the shape
+
+    (batch_size, seq_1_len + seq_2_len, d_model)
+
+    where d_model is the sum of the embedding dimension for each components (items and event in the above example).
+    """
 
     def __init__(self,
-                 input_seq_mapping,  # Sequences will be formatted according to this before being fed to Transformer
+                 sequential_input_config,
                  feature_vocabs,
                  embedding_dims,
+                 segment_to_output,  # ToDo: Find a better name for this. Also, it should allow multiple segments
                  num_encoder_layers,
                  num_attention_heads,
                  dropout_rate,
                  final_layers_dims,
                  **kwargs):
+        """
 
-        super(ReturnsModel, self).__init__(**kwargs)
+        Args:
+            sequential_input_config: Configuration of the sequential part of input, which is the part that will be
+                fed to the Transformer.
+            feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
+            embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
+            segment_to_output: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the Head
+                of the mode. This parameter needs a better name.
+            num_encoder_layers: Number of Encoder layers
+            num_attention_heads: Number of Attention heads in each Encoder layer
+            dropout_rate: Dropout rate
+            final_layers_dims: Dimensions of fully connected layers that come after Transformer and produce output. This
+                determines the Head of the model. In the future this will be replaced by an argument or arguments that
+                specify what type of Head should be used.
+        """
+        super(ClickstreamModel, self).__init__(**kwargs)
 
         self.embedding_dims = embedding_dims
-        # self.item_vocab_size = len(self._load_vocabulary(self.item_vocab_file))
-        # self.event_vocab_size = len(self._load_vocabulary(self.event_vocab_file))
         self.num_encoder_layers = num_encoder_layers
         self.encoder_attention_heads = num_attention_heads
-        self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as to class attributes?
+        self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
+        self.sequential_input_config = sequential_input_config
+        self.segment_to_output = segment_to_output
 
-        self.transformer_input_prep = TransformerInputPrep(input_seq_mapping)
-        self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
+        self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
+        self.token_mapper = TokenMapper(vocabularies=feature_vocabs)
 
-        # Verify that embedding_dim and feature_vocabs dicts have the same keys
-        assert set(feature_vocabs.keys()) == set(embedding_dims.keys()),\
-            "The feature_vocabs and embedding_dims dictionaries must have the same set of keys."
-
+        # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
+        # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
+        # dimension) for it, but don't provide a vocab file for it.
         embedding_sizes = {f: self.token_mapper.lookup_tables[f].size() for f in feature_vocabs.keys()}
 
         # Transformer
@@ -171,7 +260,6 @@ class ReturnsModel(tf.keras.models.Model):
             num_layers=self.num_encoder_layers,
             encoder_attention_heads=self.encoder_attention_heads,
             encoder_ff_dim=100,
-            maximum_position_encoding=10000,
             dropout_rate=self.dropout_rate
         )
 
@@ -224,19 +312,22 @@ class ReturnsModel(tf.keras.models.Model):
     def call(self, inputs, training=None, mask=None):
 
         # Traced functions are not allowed to change their input arguments
-        # features = format_transformer_input(inputs, seq_pair_mapping=self.input_seq_mapping)
         features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
         features = self.token_mapper(features)
 
-        x = self.transformer(features, training, mask)  # (batch_size, seq_len, d_model)
+        # separating sequential features that should go into the Transformer
+        sequential_features = {feature_name: features[feature_name]
+                               for feature_name in self.sequential_input_config.keys()}
+        # ToDo: Features other than the sequential ones sohuld be added to the output of the Transformer
+        x = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
 
-        # segment_starts and segment_ends marks the index in the Transformer's output tensor where each sequence begins
+        # segment_starts and segment_ends mark the index in the Transformer's output tensor where each sequence begins
         # and ends. The first segment corresponds to the [CLS] token and is therefore always
         # (batch_size, 1, d_model)
         # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
 
         # This model feeds the output corresponding to the second sequence. This is specific to this particular task
-        head_input = x[:, segment_starts[2]:segment_ends[2], ...]
+        head_input = x[:, segment_starts[self.segment_to_output]:segment_ends[self.segment_to_output], ...]
 
         logits = self.head(head_input)
 

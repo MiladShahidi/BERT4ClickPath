@@ -1,7 +1,7 @@
 import tensorflow as tf
 from constants import LABEL_PAD
 import math
-from focal_loss import SigmoidFocalCrossEntropy
+# from focal_loss import SigmoidFocalCrossEntropy
 
 
 # def custom_lr_schedule_fn(d_model, warmup_steps=4000, scale=1):
@@ -405,24 +405,3 @@ class BestModelSaverCallback(tf.keras.callbacks.Callback):
             # save_path = os.path.join(self.savedmodel_path, 'epoch_%03d' % (epoch + 1))  # epoch is 0-based
             tf.saved_model.save(self.model, self.savedmodel_path, signatures={'serving_default': self.model.model_server})
             self.best_val_loss = logs['val_loss']
-
-
-if __name__ == '__main__':
-    p = tf.constant([
-        [0.2, 0.3, 0.4],
-        [0.3, 0.5, 0.2],
-        [0.9, 0.9, 0.6],
-        [0.9, 0.6, 0.6]
-    ])
-
-    t = tf.constant([
-        [0.2, 0.3, -1],
-        [0.3, -1, -1],
-        [0.3, -1, -1],
-        [0.9, 0.6, -1]
-    ])
-
-    l = tf.keras.losses.BinaryCrossentropy()(t, p)
-    fl = SigmoidFocalCrossEntropy(gamma=0, alpha=1)(t, p)
-    print(tf.reduce_mean(fl))
-    print(l)
