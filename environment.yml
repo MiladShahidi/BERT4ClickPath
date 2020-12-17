@@ -47,7 +47,7 @@ dependencies:
 
 - pip:
   # utilities and frameworks
-  - pyhocon=0.3.57 #a more updated version breaks for merging config objects
+  - pyhocon==0.3.57 #a more updated version breaks for merging config objects
 
 # scheduling- 
   - taskflow=4.5.0
