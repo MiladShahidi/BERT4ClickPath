@@ -127,6 +127,9 @@ def train(model,
 
     # # # Training callbacks
 
+    # Reduce LR on Plateau
+    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10)
+
     # Checkpoint saver
     ckpt_timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
     ckpt_filename = 'ckpt-' + ckpt_timestamp + '-{epoch:04d}.ckpt'  # will include epoch in filename
@@ -141,9 +144,10 @@ def train(model,
 
     # Model Saver
     best_model_saver = BestModelSaverCallback(savedmodel_path=model_dir)
+
     # Early stopping
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
-    callbacks = [tensorboard, save_checkpoint, early_stopping]
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30)
+    callbacks = [tensorboard, save_checkpoint, early_stopping, reduce_lr_on_plateau]
 
     model.fit(training_dataset,
               epochs=training_params['n_epochs'],
@@ -163,7 +167,7 @@ if __name__ == '__main__':
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
     training_params = {
-        'n_epochs': 100,
+        'n_epochs': 1000,
         'steps_per_epoch': 100,
         'validation_steps': 100,
         'lr_warmup_steps': 4000,

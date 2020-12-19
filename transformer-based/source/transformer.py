@@ -162,7 +162,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential([
-      tf.keras.layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
+      tf.keras.layers.Dense(dff, activation='gelu'),  # (batch_size, seq_len, dff)
       tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
     ])
 
@@ -288,7 +288,7 @@ class Transformer(tf.keras.layers.Layer):
 
     """
     # This is the maximum number of input sequences (as marked and separated by the SEP token) this model can accept
-    # The only reason we need to prescpecify this, is to be able to create a segment embedding layer in advance.
+    # The only reason we need to specify this, is to be able to create a segment embedding layer in advance.
     # If segment embeddings are not used this becomes irrelevant
     MAX_INPUT_SEQ = 100
 
@@ -352,7 +352,7 @@ class Transformer(tf.keras.layers.Layer):
         }
 
         self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
-        self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)  # Segment embeddings
+        # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)  # Segment embeddings
 
     def get_config(self):
         """
@@ -390,11 +390,12 @@ class Transformer(tf.keras.layers.Layer):
         # d_model == sum(embedding_dims.values())
         embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
 
-        # ToDo: enable segment embeddings
-        segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
-        segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
-        embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
+        # Segment embeddings
+        # segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
+        # segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
+        # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
 
+        # ToDo: Try learnable positional embeddings from Bert4Rec: https://arxiv.org/pdf/1904.06690.pdf
         embedded_seq += self.pos_encoding[:, :seq_len, :]
 
         encoder_output = self.encoder(inputs=embedded_seq, training=training, mask=padding_mask)  # (batch_size, seq_len, d_model)

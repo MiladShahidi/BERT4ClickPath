@@ -2,6 +2,7 @@ import tensorflow as tf
 from constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
 from data_generator import ReturnsDataGen
 from clickstream_model import ClickstreamModel
+import os
 
 
 def parse_examples(serialized_example, feature_spec):
@@ -145,7 +146,7 @@ def create_tf_dataset(source, training, batch_size):
     # TODO: Figure out caching. This doesn't work right now.
     # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
     def temp_pop_extras(features):
-        features.pop('side_feature_1')
+        # features.pop('side_feature_1')
         features.pop('seq_1_events')
         features.pop('seq_2_events')
         return features
@@ -223,6 +224,6 @@ if __name__ == '__main__':
     )
 
     for x, y in data.take(1):
-        y_hat = returns_model(x)
-
-    print(y_hat)
+        print_features(x)
+        print('Label:')
+        print(y)
