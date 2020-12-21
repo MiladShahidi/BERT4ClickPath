@@ -86,13 +86,25 @@ def pandas_to_seq_example(df, group_id_column):
     """
     def to_seq_example(collected_row):
         row_dict = collected_row.to_dict()
-        row_dict = {k: tf.train.FeatureList(feature=[data_utils.to_feature(element) for element in v])
-                    for k, v in row_dict.items()}
-        row = tf.train.FeatureLists(feature_list=row_dict)
-        context_feature_dict = {group_id_column: data_utils.to_feature(collected_row.name)}
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+        sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
+                sequence_features_dict[feature_name] = feature_value
+            else:
+                context_features_dict[feature_name] = feature_value
+
+        sequence_features_dict = {k: tf.train.FeatureList(feature=[data_utils.to_feature(element) for element in v])
+                                  for k, v in sequence_features_dict.items()}
+        sequence_features_dict = tf.train.FeatureLists(feature_list=sequence_features_dict)
+
+        context_features_dict = {k: data_utils.to_feature(v) for k, v in context_features_dict.items()}
         seq_example = tf.train.SequenceExample(
-            context=tf.train.Features(feature=context_feature_dict),
-            feature_lists=row
+            context=tf.train.Features(feature=context_features_dict),
+            feature_lists=sequence_features_dict
         )
 
         return seq_example
@@ -128,34 +140,53 @@ if __name__ == '__main__':
 
     write_to_tfrecord(data, 'test_data_%d_of_%d.tfrecord')
 
+    # Reading it back
+
     tf_dataset = tf.data.TFRecordDataset('test_data_0_of_1.tfrecord')
 
     context_feature_spec = {
-        'id': tf.io.FixedLenFeature([], tf.int64)
+        'id': tf.io.FixedLenFeature([], tf.int64),
+        'int_feature': tf.io.VarLenFeature(tf.int64),
+        'str_feature': tf.io.VarLenFeature(tf.string)
     }
     sequence_feature_spec = {
-        'int_feature': tf.io.VarLenFeature(tf.int64),
-        'str_feature': tf.io.VarLenFeature(tf.string),
         'basket': tf.io.VarLenFeature(tf.int64)
     }
 
-    from pprint import pprint
-
-    for x in tf_dataset:
+    def parse_fn(x):
         parsed_context, parsed_sequence = tf.io.parse_single_sequence_example(
             serialized=x,
             context_features=context_feature_spec,
             sequence_features=sequence_feature_spec
         )
-
         # A VarLenFeature is always parsed to a SparseTensor
-        for key in parsed_sequence.keys():
-            if isinstance(parsed_sequence[key], tf.SparseTensor):
-                parsed_sequence[key] = tf.sparse.to_dense(parsed_sequence[key])
+        features_dict = {**parsed_sequence, **parsed_context}
+        for key in features_dict.keys():
+            if isinstance(features_dict[key], tf.SparseTensor):
+                features_dict[key] = tf.sparse.to_dense(features_dict[key])
 
-        print('Context:')
-        pprint(parsed_context)
-        print('Sequences:')
-        pprint(parsed_sequence)
+        return features_dict
 
-        print('*'*80)
+    tf_dataset = tf_dataset.map(parse_fn)
+
+    INPUT_PAD = 0
+    INPUT_PADDING_TOKEN = '[PAD]'
+
+    tf_dataset = tf_dataset.padded_batch(
+        batch_size=3,
+        padded_shapes={  # Pad all to longest in batch
+            'id': [],
+            'int_feature': [None],
+            'str_feature': [None],
+            'basket': [None, None]
+        },
+        padding_values={
+            'id': tf.cast(INPUT_PAD, tf.int64),
+            'int_feature': tf.cast(INPUT_PAD, tf.int64),
+            'str_feature': INPUT_PADDING_TOKEN,
+            'basket': tf.cast(INPUT_PAD, tf.int64)
+        }
+    )
+
+    for x in tf_dataset:
+        print(x)

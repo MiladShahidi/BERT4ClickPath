@@ -224,6 +224,7 @@ if __name__ == '__main__':
     )
 
     for x, y in data.take(1):
-        print_features(x)
+        print(x)
+        # print_features(x)
         print('Label:')
         print(y)
