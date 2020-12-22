@@ -25,7 +25,7 @@ def to_feature(value):
 
     # TODO: This type checking feels hacky. Are np numerical types the same on all machines and Operating Systems?
     # This used to be np.int64, but it didn't work with Pandas dataframes.
-    if isinstance(sample_value, np.int) or isinstance(sample_value, np.int64):
+    if isinstance(sample_value, np.int) or isinstance(sample_value, np.int32) or isinstance(sample_value, np.int64):
         return _int_feature(value)
     # This used to be np.float32, but it didn't work with Pandas dataframes.
     elif isinstance(sample_value, np.float) or isinstance(sample_value, np.float32):
