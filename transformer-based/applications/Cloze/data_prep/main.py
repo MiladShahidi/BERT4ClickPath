@@ -6,7 +6,7 @@ from sequence_transformer.data_prep import data_utils
 
 def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
     """
-    Read transactional data and create baskets that incluses a list of items for each session.
+    Read transactional data and create baskets that includes a list of items for each session.
     Example:
     Given the following Pandas DataFrame:
 
@@ -29,7 +29,7 @@ def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
                         userID, itemID, time_of_transaction
         pickle_file: path (including pickle name) to save dictionary of item vocabulary
         limit_user_item: int : threshold to eliminate items that have been purchased by less that this value and also
-                                         to eliminate the user that has purchased less than limit_user_item itmes
+                                         to eliminate the user that has purchased less than limit_user_item items
 
     Returns:
         A Pandas DataFrame
@@ -38,7 +38,6 @@ def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
     df = df[columns_name]
     # df = df.head(10000)
     df.columns = ['userID', 'itemID', 'timestamp']
-
 
     # remove the user that has purchased less than 10 items
     df1 = df.groupby('userID').agg({'itemID': 'count'}).rename(
@@ -181,6 +180,17 @@ def pandas_to_seq_example(df, group_id_column):
     return collected_df.apply(to_seq_example, axis=1).to_list()
 
 
+def write_to_tfrecord(data, shard_name_temp, records_per_shard=10**4):
+    shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
+    if shard_boundaries[-1] < len(data):
+        shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
+    num_shards = len(shard_boundaries) - 1
+    for i, (shard_start, shard_end) in enumerate(zip(shard_boundaries, shard_boundaries[1:])):
+        with tf.io.TFRecordWriter(shard_name_temp % (i, num_shards)) as writer:
+            for record in data[shard_start:shard_end]:
+                writer.write(record.SerializeToString())
+
+
 if __name__ == '__main__':
 
     transaction_dataset = True
@@ -196,7 +206,7 @@ if __name__ == '__main__':
 
     data = pandas_to_seq_example(df, 'userID')
 
-    data_utils.write_to_tfrecord(data, 'test_data_%d_of_%d.tfrecord')
+    write_to_tfrecord(data, 'test_data_%d_of_%d.tfrecord')
 
     # Reading it back
 

@@ -138,24 +138,6 @@ def to_sequence_example(grouped_data, encode_example=False):
         }
 
 
-def pandas_to_example_in_example(df, context_feature_name):
-    # This only accepts one context feature name
-    # This was written in haste and that's why it looks weird. I wanted to use the already existing function for
-    # converting to Example In Example. So I convert pandas groups into the format that this function expects, i.e.
-    # tuples of (context_feature_dict, example_features_dict)
-    def group_to_eie(df):
-        context_feature_value = df[context_feature_name].iloc[0]
-        group_tuple = (
-            {context_feature_name: context_feature_value},
-            df.to_dict('records')
-        )
-        return to_example_in_example(group_tuple, encode_example=True)
-
-    return df.groupby(context_feature_name).apply(group_to_eie)
-
-
-# def pandas_to_sequence_example(df, group_id_column)
-
 def pandas_train_test_split(df, train_size, context_feature_name):
     def mark_training_samples(grouped_df):
         indices = np.random.choice(grouped_df.index, size=train_size, replace=False)
@@ -169,66 +151,7 @@ def pandas_train_test_split(df, train_size, context_feature_name):
     return train_df, eval_df
 
 
-def train_test_split(grouped_data, mode, train_size=None, test_size=None, split_method='random'):
-    """
-        Splits one group of a grouped data set and returns a (grouped) subset
-    
-    Args:
-        grouped_data: One group of a grouped-by data set. It is a tuple where the first element
-        is the grouped-by key (e.g. user Id here) and the second element is a list of dicts, each of which
-        represent one row of that particular group of data.
-        train_size: number of samples to put in the training set. Either this or test_size must be provided. Not both.
-        test_size: number of samples to put in the test set. Either this or train_size must be provided. Not both.
-        mode: Whether to return the training or the test part. One of tf.estimator.ModeKeys. TRAIN will return the
-        training part of the split data, PREDICT or EVAL return the test part.
-        split_method: 'random' or 'last'. 'random' splits randomly. 'last' takes the last test_size for test.
-
-    Returns:
-        subset of rows in the group either for training or test set, in the same grouped (tuple) format
-    """
-    assert (train_size or test_size) and not (train_size and test_size),\
-        'Exactly one of train_size and test_size must be provided'
-    assert mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL, tf.estimator.ModeKeys.PREDICT],\
-        'Invalid mode'
-    assert split_method in ['random', 'last'], 'Unknown split method {}'.format(split_method)
-
-    if split_method == 'random':
-        if mode == tf.estimator.ModeKeys.TRAIN:
-            train_size = train_size or (len(grouped_data[1]) - test_size)  # in case train_size is None
-            subset = np.random.choice(grouped_data[1], size=train_size, replace=False)
-        else:
-            test_size = test_size or (len(grouped_data[1]) - train_size)  # if test_size is None
-            subset = np.random.choice(grouped_data[1], size=test_size, replace=False)
-    elif split_method == 'last':
-        if mode == tf.estimator.ModeKeys.TRAIN:
-            train_size = train_size or (len(grouped_data[1]) - test_size)  # in case train_size is None
-            subset = grouped_data[1][:train_size]
-        else:
-            test_size = test_size or (len(grouped_data[1]) - train_size)  # if test_size is None
-            subset = grouped_data[1][-test_size:]
-
-    # This function receives a tuple (because the data was grouped_by_key in Beam. It should return the result in the
-    # same format because other transforms downstream also expect grouped data
-    return grouped_data[0], subset
-
-
-def read_csv_to_dataframe(filename, header_map, nrows=None):
-    # TODO: These names need to match the names that the input_fn expects to find in tfrecords
-    column_dtypes = {
-        header_map['user']: str,
-        header_map['item']: str,
-        header_map['score']: np.float32
-    }
-    df = pd.read_csv(filename, nrows=nrows, dtype=column_dtypes, usecols=header_map.values())
-    # renaming columns according to header map
-    reverse_header_map = {v: k for k, v in header_map.items()}
-    df = df.rename(mapper=reverse_header_map, axis='columns')
-
-    return df
-
-
 def write_to_tfrecord(data, shard_name_temp, records_per_shard=10**4):
-    # TODO: Consider sharding for larger data
     shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
     if shard_boundaries[-1] < len(data):
         shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
