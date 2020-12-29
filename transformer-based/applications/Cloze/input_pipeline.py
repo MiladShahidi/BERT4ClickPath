@@ -1,7 +1,7 @@
 import tensorflow as tf
-from constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
+from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
 from data_generator import ReturnsDataGen
-from clickstream_model import ClickstreamModel
+from sequence_transformer.clickstream_model import ClickstreamModel
 import os
 
 
@@ -28,19 +28,6 @@ def random_choice(x, size, axis=0):
     return sample, sample_index
 
 
-def assign_labels(feature_dict, reduce_basket=False):
-    # returned_quantity may contain pads (depending on where it is placed in the input pipeline) which should be kept.
-    labels = tf.clip_by_value(  # clipping avoids type mismatches that happen with tf.where
-        feature_dict['returned_quantity'],
-        clip_value_min=LABEL_PAD,  # pad = -1
-        clip_value_max=1.0  # label=1 if returned_quantity >= 1 else 0
-    )
-    if reduce_basket:
-        labels = tf.reduce_max(labels)
-    feature_dict['labels'] = tf.cast(labels, tf.float32)  # Labels need to be float
-    return feature_dict
-
-
 def format_labels(feature_dict):
     """
         This mapping is applied after batching. It adds padding (-1) to the left of labels (which are associated with
@@ -63,9 +50,55 @@ def format_labels(feature_dict):
     return feature_dict
 
 
-def load_vocabulary(vocab_file):
-    with tf.io.gfile.GFile(vocab_file, 'r') as f:
-        return tf.strings.strip(f.readlines())
+def make_masked_exmples(feature_dict, negative_sample_pool):
+    item_list = feature_dict['page_view_product_skn_ids']
+    session_len = tf.cast(tf.size(item_list), tf.float32)
+    basket_size = tf.cast(tf.multiply(session_len, PRETRAINING_MASKING_PERCENTAGE), dtype=tf.int32)
+    basket_size = tf.clip_by_value(basket_size, clip_value_min=0, clip_value_max=MODEL_MAX_BASKET_SIZE)
+
+    # Randomly pick basket_size items to mask from the list of items
+    positive_samples, mask_index = random_choice(item_list, basket_size)
+
+    # Mask the chosen items by replacing them with the padding constant
+    mask = tf.fill(dims=tf.shape(mask_index), value=INPUT_MASKING_TOKEN)
+
+    # scatter_update requires the inner most (last) dimension of its inputs to be the same. I'm setting that to one.
+    masked_item_list = tf.tensor_scatter_nd_update(
+        tensor=tf.reshape(item_list, (-1, 1)),
+        indices=tf.reshape(mask_index, (-1, 1)),
+        updates=tf.reshape(mask, (-1, 1))
+    )
+
+    # # # # # # # # # # # # # # # #
+    # Lesson learned about random number generation:
+    # I was initially generating random labels as:
+    # labels = tf.keras.backend.random_binomial(shape=(basket_size,), p=POSITIVE_EXAMPLE_RATE)
+    # But this acts strangely in graph mode (which is how tf.data executes the data pipeline)
+    # The mean of 1000 draws from this with p=0.5 is somewhere around 0.7 or 0.8 (instead of 0.5)
+    # This is when the same data point is drawn 100 times. But if you draw 1000 different examples from the pipeline
+    # I'm not sure how to interpret this other than the fact that this is meant for eager execution and should not be
+    # used in graph mode (therefore, should not be part of tf.data pipeline)
+    # # # #
+    # On the other hand, tf.random.uniform (soon to be deprecated) behaves exactly as expected.
+    # According to docs there will soon be a new tf.random.Generator class. (only in tf-nightly at the moment)
+    # https://www.tensorflow.org/api_docs/python/tf/random/Generator#uniform
+    # for now, tf.compat.v1.random.experimental.get_global_generator does the same thing
+
+    basket_shape = (basket_size,)
+    # This will be replaced with tf.random.Generator in the future (currently only available in tf-nightly)
+    rand_gen = tf.compat.v1.random.experimental.get_global_generator()
+    uniform_randoms = rand_gen.uniform(shape=basket_shape)
+    labels = tf.where(uniform_randoms < SYNTHETIC_POSITIVE_SAMPLE_RATE, tf.ones(basket_shape), tf.zeros(basket_shape))
+
+    negative_samples, _ = random_choice(negative_sample_pool, basket_size)
+
+    basket = tf.where(labels == 1, x=positive_samples, y=negative_samples)  # Populate the basket
+
+    return {
+        'page_view_product_skn_ids': tf.squeeze(masked_item_list, -1),
+        'basket_product_id': basket,
+        'labels': labels,
+    }
 
 
 def create_tf_dataset(source, training, batch_size):
@@ -75,12 +108,9 @@ def create_tf_dataset(source, training, batch_size):
         dataset = tf.data.TFRecordDataset(filenames=filenames)
 
         feature_spec = {
-            'seq_1_items': tf.io.VarLenFeature(dtype=tf.string),
-            'seq_1_events': tf.io.VarLenFeature(dtype=tf.string),
-            'seq_2_items': tf.io.VarLenFeature(dtype=tf.float32),
-            'seq_2_events': tf.io.VarLenFeature(dtype=tf.float32),
-            'side_feature_1': tf.io.FixedLenFeature([], dtype=tf.float32),
-            'label': tf.io.VarLenFeature(dtype=tf.float32)
+            'reviewerID': tf.io.VarLenFeature(dtype=tf.string),
+            'asin': tf.io.VarLenFeature(dtype=tf.string),
+            'unixReviewTime': tf.io.VarLenFeature(dtype=tf.float32)
         }
 
         def parse_fn(ex):
@@ -88,28 +118,29 @@ def create_tf_dataset(source, training, batch_size):
         dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     elif callable(source):
+        pass
         # ToDo: It might be possible to define this only once (like above) and deduce type and shape from that
         #  so that we can unify this with the one above
-        data_types = {
-            'seq_1_items': tf.string,
-            'seq_1_events': tf.string,
-            'seq_2_items': tf.string,
-            'seq_2_events': tf.string,
-            'side_feature_1': tf.float32,
-            'label': tf.float32  # Label needs to be float for calculations in the loss function. int won't work
-        }
-        tensor_shapes = {
-            'seq_1_items': tf.TensorShape([None]),
-            'seq_1_events': tf.TensorShape([None]),
-            'seq_2_items': tf.TensorShape([None]),
-            'seq_2_events': tf.TensorShape([None]),
-            'side_feature_1': tf.TensorShape([]),
-            'label': tf.TensorShape([None])
-        }
-
-        dataset = tf.data.Dataset.from_generator(source,
-                                                 output_types=data_types,
-                                                 output_shapes=tensor_shapes)
+        # data_types = {
+        #     'seq_1_items': tf.string,
+        #     'seq_1_events': tf.string,
+        #     'seq_2_items': tf.string,
+        #     'seq_2_events': tf.string,
+        #     'side_feature_1': tf.float32,
+        #     'label': tf.float32  # Label needs to be float for calculations in the loss function. int won't work
+        # }
+        # tensor_shapes = {
+        #     'seq_1_items': tf.TensorShape([None]),
+        #     'seq_1_events': tf.TensorShape([None]),
+        #     'seq_2_items': tf.TensorShape([None]),
+        #     'seq_2_events': tf.TensorShape([None]),
+        #     'side_feature_1': tf.TensorShape([]),
+        #     'label': tf.TensorShape([None])
+        # }
+        #
+        # dataset = tf.data.Dataset.from_generator(source,
+        #                                          output_types=data_types,
+        #                                          output_shapes=tensor_shapes)
 
     else:
         raise TypeError('Source must be either str or callable.')
@@ -123,20 +154,14 @@ def create_tf_dataset(source, training, batch_size):
     dataset = dataset.padded_batch(
         batch_size=batch_size,
         padded_shapes={  # Pad all to longest in batch
-            'seq_1_items': [None],
-            'seq_1_events': [None],
-            'seq_2_items': [None],
-            'seq_2_events': [None],
-            'side_feature_1': [],
-            'label': [None]
+            'reviewerID': [],
+            'asin': [None],
+            'unixReviewTime': [None]
         },
         padding_values={
-            'seq_1_items': INPUT_PADDING_TOKEN,
-            'seq_1_events': INPUT_PADDING_TOKEN,
-            'seq_2_items': INPUT_PADDING_TOKEN,
-            'seq_2_events': INPUT_PADDING_TOKEN,
-            'side_feature_1': tf.cast(INPUT_PAD, tf.float32),
-            'label': LABEL_PAD
+            'reviewerID': INPUT_PADDING_TOKEN,
+            'asin': INPUT_PADDING_TOKEN,
+            'unixReviewTime': INPUT_PAD
         }
     )
 
@@ -145,13 +170,6 @@ def create_tf_dataset(source, training, batch_size):
 
     # TODO: Figure out caching. This doesn't work right now.
     # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
-    def temp_pop_extras(features):
-        # features.pop('side_feature_1')
-        features.pop('seq_1_events')
-        features.pop('seq_2_events')
-        return features
-
-    dataset = dataset.map(temp_pop_extras, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     def pop_labels(feature_dict):
         labels = feature_dict.pop('label')
@@ -182,17 +200,17 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    data_gen = ReturnsDataGen(
-        n_items=1000,
-        n_events=10,
-        session_cohesiveness=5,
-        positive_rate=0.5,
-        write_vocab_files=True,
-        vocab_dir='../data/vocabs'
-    )
+    # data_gen = ReturnsDataGen(
+    #     n_items=1000,
+    #     n_events=10,
+    #     session_cohesiveness=5,
+    #     positive_rate=0.5,
+    #     write_vocab_files=True,
+    #     vocab_dir='../data/vocabs'
+    # )
 
     data = create_tf_dataset(
-        source=data_gen,
+        source='../data',
         training=True,
         batch_size=2
     )

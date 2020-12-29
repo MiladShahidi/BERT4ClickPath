@@ -2,253 +2,80 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 from sequence_transformer.data_prep import data_utils
+import json
+import gzip
+import os
 
 
-def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
-    """
-    Read transactional data and create baskets that includes a list of items for each session.
-    Example:
-    Given the following Pandas DataFrame:
-
-           userID  date           itemID
-        0   1           11/1/2000            131
-        1   1           11/1/2000            148
-        2   1           11/1/2000            123
-        3   1           13/2/2000            198
-        4   1           13/2/2000            143
-
-    Converted to:
-
-            userID      basket
-        0   1           [131, 148, 123]
-        1   1           [198, 143]
-
-    Args:
-        filename: path (including name of the csv file) to the transaction data in csv format
-        columns_name: List of original column names in the transaction dataset which correspond to
-                        userID, itemID, time_of_transaction
-        pickle_file: path (including pickle name) to save dictionary of item vocabulary
-        limit_user_item: int : threshold to eliminate items that have been purchased by less that this value and also
-                                         to eliminate the user that has purchased less than limit_user_item items
-
-    Returns:
-        A Pandas DataFrame
-    """
-    df = pd.read_csv(filename)
-    df = df[columns_name]
-    # df = df.head(10000)
-    df.columns = ['userID', 'itemID', 'timestamp']
-
-    # remove the user that has purchased less than 10 items
-    df1 = df.groupby('userID').agg({'itemID': 'count'}).rename(
-        columns={'itemID': 'num_purchased_item'}).reset_index()
-    df1 = df1[df1['num_purchased_item'] > limit_user_item]
-    df = pd.merge(df1['userID'], df, on='userID', how='left')
-
-    # remove the products that has been purchased by less than 10 customers
-    df1 = df.groupby('itemID').agg({'userID': 'count'}).rename(
-        columns={'userID': 'num_purchased'}).reset_index()
-    df1 = df1[df1['num_purchased'] > limit_user_item]
-    df = pd.merge(df1['itemID'], df, on='itemID', how='left')
-
-    # convert PRODUCT_ID to categorical variable
-    df['itemID'] = df['itemID'].astype('category')
-    dic_product_id = {k + 1: v for k, v in enumerate(df['itemID'].cat.categories)}
-    df['itemID'] = df['itemID'].cat.codes + 1  # start the item index from 1
-    df['datetime'] = pd.to_datetime(df['timestamp'])
-    df = df.sort_values('datetime')
-
-    # with open(pickle_file, 'wb') as handle:
-    #     pickle.dump(dic_product_id, handle)
-
-    baskets = df.groupby(['userID', 'timestamp'])['itemID'].apply(list).reset_index()
-    baskets = baskets[['userID', 'itemID']]
-
-    return baskets
+def parse(path, use_columns=None):
+    g = gzip.open(path, 'rb')
+    for l in g:
+        record = json.loads(l)
+        if use_columns is not None:
+            record = {k: v for k, v in record.items() if k in use_columns}
+        yield record
 
 
-def pandas_to_seq_example(df, group_id_column):
-    """
-    This function converts a pandas DataFrame into a list of Tensorflow SequenceExample objects.
-    It performs a groupby using `group_id_column` and collect the values of all other columns into lists (simillar to
-    PySpark's `collect_list`). Then the `group_id_column` column will be put into the `context` component of the
-    SequenceExample object and all other columns (each of which is now a list) will be put in the `feature_list`
-    component.
+def get_pandas_df(path, use_columns=None, n_rows=None):
+    i = 0
+    df = {}
+    for d in parse(path, use_columns):
+        df[i] = d
+        i += 1
+        if n_rows is not None:
+            if i == n_rows:
+                break
 
-    Example:
-    Given the following Pandas DataFrame:
-
-           id  int_feature           basket
-        0   1           10            [131]
-        1   1           11       [152, 148]
-        2   2           12  [161, 106, 134]
-        3   2           13       [171, 123]
-        4   3           14            [123]
-
-    The output corresponding to each group will be a SequenceExample object which consists of two components:
-        1) context
-        2) feature_lists
-
-    For example, the output for id=2 will look like:
-
-        context {
-          feature {
-            key: "id"
-            value {
-              int64_list {
-                value: 2
-              }
-            }
-          }
-        }
-        feature_lists {
-          feature_list {
-            key: "basket"
-            value {
-              feature {
-                int64_list {
-                  value: 161
-                  value: 106
-                  value: 134
-                }
-              }
-              feature {
-                int64_list {
-                  value: 171
-                  value: 123
-                }
-              }
-            }
-          }
-          feature_list {
-            key: "int_feature"
-            value {
-              feature {
-                int64_list {
-                  value: 12
-                }
-              }
-              feature {
-                int64_list {
-                  value: 13
-                }
-              }
-            }
-          }
-        }
-
-    Notice that the column that contained a list per row, is converted into a list of lists (basket here).
-
-    Args:
-        df: A Pandas DataFrame.
-        group_id_column: The name of the column to be used for groupby.
-
-    Returns:
-        A list of tf.train.SequenceExample objects each element of which corresponds to a group in
-            df.groupby(group_id_column)
-    """
-    def to_seq_example(collected_row):
-        row_dict = collected_row.to_dict()
-        # This is what the DataFrame has been grouped by
-        context_features_dict = {group_id_column: collected_row.name}
-        sequence_features_dict = {}
-        for feature_name, feature_value in row_dict.items():
-            # Since we receive one row of the results of a groupby operation, each column is a list. That much
-            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
-            if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
-                sequence_features_dict[feature_name] = feature_value
-            else:
-                context_features_dict[feature_name] = feature_value
-
-        sequence_features_dict = {k: tf.train.FeatureList(feature=[data_utils.to_feature(element) for element in v])
-                                  for k, v in sequence_features_dict.items()}
-        sequence_features_dict = tf.train.FeatureLists(feature_list=sequence_features_dict)
-
-        context_features_dict = {k: data_utils.to_feature(v) for k, v in context_features_dict.items()}
-        seq_example = tf.train.SequenceExample(
-            context=tf.train.Features(feature=context_features_dict),
-            feature_lists=sequence_features_dict
-        )
-
-        return seq_example
-
-    collected_df = pd.DataFrame()
-    for col in df.columns:
-        if col != group_id_column:
-            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
-
-    return collected_df.apply(to_seq_example, axis=1).to_list()
-
-
-def write_to_tfrecord(data, shard_name_temp, records_per_shard=10**4):
-    shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
-    if shard_boundaries[-1] < len(data):
-        shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
-    num_shards = len(shard_boundaries) - 1
-    for i, (shard_start, shard_end) in enumerate(zip(shard_boundaries, shard_boundaries[1:])):
-        with tf.io.TFRecordWriter(shard_name_temp % (i, num_shards)) as writer:
-            for record in data[shard_start:shard_end]:
-                writer.write(record.SerializeToString())
+    return pd.DataFrame.from_dict(df, orient='index')
 
 
 if __name__ == '__main__':
+    pd.set_option('display.max_rows', 500)
+    pd.set_option('display.max_columns', 500)
+    pd.set_option('display.width', 1000)
 
-    transaction_dataset = True
-    if transaction_dataset:
-        df = process_raw_data('../data/raw_data/ta-fen-transaction.csv',
-                              ['CUSTOMER_ID', 'PRODUCT_ID', 'TRANSACTION_DT'],
-                              '../data/item_vocab.pickle', limit_user_item=10)
-    else:
-        df = pd.DataFrame({
-            'userID': [1, 1, 2, 2, 3],
-            'basket': [list(np.random.randint(100, 200, size=np.random.randint(low=1, high=10))) for _ in range(5)]
-        })
+    MIN_ITEM = 4
 
-    data = pandas_to_seq_example(df, 'userID')
+    output_path = '../data'
 
-    write_to_tfrecord(data, 'test_data_%d_of_%d.tfrecord')
+    print('Reading data...')
+    df = get_pandas_df(path='../raw_data/reviews_Beauty.json.gz',
+                       use_columns=['reviewerID', 'asin', 'unixReviewTime'],
+                       n_rows=1000)
 
-    # Reading it back
+    # df = pd.DataFrame({
+    #     'reviewerID': [1, 2, 1, 2, 3],
+    #     'asin': ['a_late', 'b_late', 'a_early', 'c_early', 'c'],
+    #     'unixReviewTime': [6, 2, 4, 1, 3]
+    # })
 
-    tf_dataset = tf.data.TFRecordDataset('test_data_0_of_1.tfrecord')
+    min_item_filter = df.groupby('reviewerID')['asin'].transform('count').ge(MIN_ITEM)
+    df = df[min_item_filter]
 
-    context_feature_spec = {
-        'userID': tf.io.FixedLenFeature([], tf.int64),
-    }
-    sequence_feature_spec = {
-        'basket': tf.io.VarLenFeature(tf.int64)
-    }
+    item_vocab = pd.unique(df['asin'])
+    vocab_path = os.path.join(output_path, 'vocabs')
+    os.makedirs(vocab_path, exist_ok=True)
+    with open(os.path.join(vocab_path, 'item_vocab.txt'), 'w') as f:
+        f.writelines('\n'.join(item_vocab))
 
-    def parse_fn(x):
-        parsed_context, parsed_sequence = tf.io.parse_single_sequence_example(
-            serialized=x,
-            context_features=context_feature_spec,
-            sequence_features=sequence_feature_spec
-        )
-        # A VarLenFeature is always parsed to a SparseTensor
-        features_dict = {**parsed_sequence, **parsed_context}
-        for key in features_dict.keys():
-            if isinstance(features_dict[key], tf.SparseTensor):
-                features_dict[key] = tf.sparse.to_dense(features_dict[key])
+    print('Converting to TF Examples...')
+    df = df.sort_values(['unixReviewTime'])
+    tf_data = data_utils.pandas_to_tf_example_list(df, group_id_column='reviewerID')
 
-        return features_dict
+    print('Writing TFRecord files...')
+    data_utils.write_to_tfrecord(tf_data, path=output_path, filename_prefix='amazon_beauty')
 
-    tf_dataset = tf_dataset.map(parse_fn)
-
-    INPUT_PAD = 0
-    INPUT_PADDING_TOKEN = '[PAD]'
-
-    tf_dataset = tf_dataset.padded_batch(
-        batch_size=3,
-        padded_shapes={  # Pad all to longest in batch
-            'userID': [],
-            'basket': [None, None]
-        },
-        padding_values={
-            'userID': tf.cast(INPUT_PAD, tf.int64),
-            'basket': tf.cast(INPUT_PAD, tf.int64)
+    # reading it back
+    if False:
+        files = [os.path.join(output_path, filename) for filename in tf.io.gfile.listdir(output_path)]
+        feature_spec = {
+            'reviewerID': tf.io.FixedLenFeature([], tf.string),
+            'asin': tf.io.VarLenFeature(tf.string),
+            'unixReviewTime': tf.io.VarLenFeature(tf.int64)
         }
-    )
-    # from pprint import pprint
-    for x in tf_dataset:
-        pprint(x)
+
+        dataset = tf.data.TFRecordDataset(files)
+
+        for x in dataset.take(1):
+            ex = tf.io.parse_single_example(x, feature_spec)
+            print(ex)

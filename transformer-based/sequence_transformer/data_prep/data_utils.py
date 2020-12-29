@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+import os
 
 
 def to_feature(value):
@@ -46,96 +47,140 @@ def encode_tf_example(raw_features):
     return tf.train.Example(features=tf.train.Features(feature=features))
 
 
-def to_example_in_example(grouped_data, encode_example=False):
+def pandas_to_tf_example_list(df, group_id_column):
+    # ToDo: It would be nice to add a sort_by argument to allow within group sorting, in case data includes a timestamp
+    def to_tf_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        key_feature = {group_id_column: collected_row.name}  # df.name is the value of group_id for this group
+        features_dict = {**row_dict, **key_feature}
+
+        return encode_tf_example(features_dict)
+
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    return collected_df.apply(to_tf_example, axis=1).to_list()
+
+
+def pandas_to_tf_seq_example_list(df, group_id_column):
     """
-        grouped_data: a tuple
-            The first element of tuple is what it is grouped by, which here are
-            the context features. The second element is a list of dicts, each
-            of which represent one row of the data. Example:
-            (
-                {'userId': b'5448543647176335931'},
-                [
-                    {'itemId': b'299826767', 'score': 0.8023795, 'userId': b'5448543647176335931'},
-                    {'itemId': b'299837992', 'score': 0.7049436, 'userId': b'5448543647176335931'},
-                    {'itemId': b'299925700', 'score': 0.6766877, 'userId': b'5448543647176335931'}
-                ]
-            )
-        This is how apache-beam represents (grouped) data
+    This function converts a pandas DataFrame into a list of Tensorflow SequenceExample objects.
+    It performs a groupby using `group_id_column` and collect the values of all other columns into lists (simillar to
+    PySpark's `collect_list`). Then the `group_id_column` column will be put into the `context` component of the
+    SequenceExample object and all other columns (each of which is now a list) will be put in the `feature_list`
+    component.
 
-        For an example of the Example-in-Example data format see `tfr.data.parse_from_example_in_example`
-        For details on tf.Example see:
-        https://medium.com/mostly-ai/tensorflow-records-what-they-are-and-how-to-use-them-c46bc4bbb564
+    Example:
+    Given the following Pandas DataFrame:
 
-        encode_example: Beam has its own ProtoExampleCoder which will encode a tf.Example. So this is set to False by
-        default. If true it will return a tf.Example instead of dict of features
+           id  int_feature           basket
+        0   1           10            [131]
+        1   1           11       [152, 148]
+        2   2           12  [161, 106, 134]
+        3   2           13       [171, 123]
+        4   3           14            [123]
+
+    The output corresponding to each group will be a SequenceExample object which consists of two components:
+        1) context
+        2) feature_lists
+
+    For example, the output for id=2 will look like:
+
+        context {
+          feature {
+            key: "id"
+            value {
+              int64_list {
+                value: 2
+              }
+            }
+          }
+        }
+        feature_lists {
+          feature_list {
+            key: "basket"
+            value {
+              feature {
+                int64_list {
+                  value: 161
+                  value: 106
+                  value: 134
+                }
+              }
+              feature {
+                int64_list {
+                  value: 171
+                  value: 123
+                }
+              }
+            }
+          }
+          feature_list {
+            key: "int_feature"
+            value {
+              feature {
+                int64_list {
+                  value: 12
+                }
+              }
+              feature {
+                int64_list {
+                  value: 13
+                }
+              }
+            }
+          }
+        }
+
+    Notice that the column that contained a list per row, is converted into a list of lists (basket here).
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of tf.train.SequenceExample objects each element of which corresponds to a group in
+            df.groupby(group_id_column)
     """
-    context_features_dict, example_dictlist = grouped_data
-    # First, remove the keys (columns of data) that are already present in context_features
-    for example_dict in example_dictlist:
-        for key in context_features_dict:
-            example_dict.pop(key, None)
+    def to_tf_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+        sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
+                sequence_features_dict[feature_name] = feature_value
+            else:
+                context_features_dict[feature_name] = feature_value
 
-    serialized_context = encode_tf_example(context_features_dict).SerializeToString()
+        sequence_features_dict = {k: tf.train.FeatureList(feature=[to_feature(element) for element in v])
+                                  for k, v in sequence_features_dict.items()}
+        sequence_features_dict = tf.train.FeatureLists(feature_list=sequence_features_dict)
 
-    serialized_examples = [encode_tf_example(example_dict).SerializeToString() for example_dict in example_dictlist]
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict),
+            feature_lists=sequence_features_dict
+        )
 
-    if encode_example:
-        eie_features = {
-            "serialized_context": tf.train.Feature(bytes_list=tf.train.BytesList(value=[serialized_context])),
-            "serialized_examples": tf.train.Feature(bytes_list=tf.train.BytesList(value=serialized_examples)),
-        }
-        return tf.train.Example(features=tf.train.Features(feature=eie_features))
-    else:
-        return {
-            "serialized_context": [serialized_context],
-            "serialized_examples": serialized_examples
-        }
+        return seq_example
 
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
 
-def to_sequence_example(grouped_data, encode_example=False):
-    """
-        grouped_data: a tuple
-            The first element of tuple is what it is grouped by, which here are
-            the context features. The second element is a list of dicts, each
-            of which represent one row of the data. Example:
-            (
-                {'userId': b'5448543647176335931'},
-                [
-                    {'itemId': b'299826767', 'score': 0.8023795, 'userId': b'5448543647176335931'},
-                    {'itemId': b'299837992', 'score': 0.7049436, 'userId': b'5448543647176335931'},
-                    {'itemId': b'299925700', 'score': 0.6766877, 'userId': b'5448543647176335931'}
-                ]
-            )
-        This is how apache-beam represents (grouped) data
-
-        For an example of the Example-in-Example data format see `tfr.data.parse_from_example_in_example`
-        For details on tf.Example see:
-        https://medium.com/mostly-ai/tensorflow-records-what-they-are-and-how-to-use-them-c46bc4bbb564
-
-        encode_example: Beam has its own ProtoExampleCoder which will encode a tf.Example. So this is set to False by
-        default. If true it will return a tf.Example instead of dict of features
-    """
-    context_features_dict, example_dictlist = grouped_data
-    # First, remove the keys (columns of data) that are already present in context_features
-    for example_dict in example_dictlist:
-        for key in context_features_dict:
-            example_dict.pop(key, None)
-
-    serialized_context = encode_tf_example(context_features_dict).SerializeToString()
-
-    serialized_examples = [encode_tf_example(example_dict).SerializeToString() for example_dict in example_dictlist]
-
-    if encode_example:
-        eie_features = {
-            "serialized_context": tf.train.Feature(bytes_list=tf.train.BytesList(value=[serialized_context])),
-            "serialized_examples": tf.train.Feature(bytes_list=tf.train.BytesList(value=serialized_examples)),
-        }
-        return tf.train.Example(features=tf.train.Features(feature=eie_features))
-    else:
-        return {
-            "serialized_context": [serialized_context],
-            "serialized_examples": serialized_examples
-        }
+    # ToDo: This function decides howto split features between the "context" and the "sequence" components of the
+    #  sequence example. It is probably better to either add this as an argument so that the caller can specify that
+    #  which would make the caller code more readable, or have this function return the resulting allocation like
+    #  component_features = ['context_feature_1' , 'context_feature_2']
+    #  sequence_features = ['seq_feature_1', 'seq_feature_2']
+    return collected_df.apply(to_tf_seq_example, axis=1).to_list()
 
 
 def pandas_train_test_split(df, train_size, context_feature_name):
@@ -151,12 +196,26 @@ def pandas_train_test_split(df, train_size, context_feature_name):
     return train_df, eval_df
 
 
-def write_to_tfrecord(data, shard_name_temp, records_per_shard=10**4):
+def write_to_tfrecord(data, path, filename_prefix, records_per_shard=10 ** 4):
+    """
+    Writes Tensorflow examples to tfrecord files.
+
+    Args:
+        data: A list of tf.Example or tf.sequence_example objects.
+        filename_prefix: Prefix for filename(s). In case data is sharded, file numbers will be appended to this prefix.
+        records_per_shard: Number of record to write in each file.
+
+    Returns:
+        None
+    """
     shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
     if shard_boundaries[-1] < len(data):
         shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
     num_shards = len(shard_boundaries) - 1
     for i, (shard_start, shard_end) in enumerate(zip(shard_boundaries, shard_boundaries[1:])):
-        with tf.io.TFRecordWriter(shard_name_temp % (i, num_shards)) as writer:
+        os.makedirs(path, exist_ok=True)
+        filename = filename_prefix + f'_{i}_of_{num_shards}.tfrecord'
+        filename = os.path.join(path, filename)
+        with tf.io.TFRecordWriter(filename) as writer:
             for record in data[shard_start:shard_end]:
                 writer.write(record.SerializeToString())
