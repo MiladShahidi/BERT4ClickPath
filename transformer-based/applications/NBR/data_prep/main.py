@@ -167,7 +167,7 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
 
 if __name__ == '__main__':
 
-    transaction_dataset = True
+    transaction_dataset = False
 
     if transaction_dataset:
         df = process_raw_data('../data/raw_data/ta-fen-transaction.csv',
@@ -184,12 +184,12 @@ if __name__ == '__main__':
     df = df[df['len'] >= MIN_SEQ_LEN]
     df.drop(columns=['len'])
     print(df)
-    vocab_path = '../data/vocab'
+    vocab_path = '../data/vocabs'
     vocab_name = 'item_vocab.txt'
     test, train, validation = train_test_val_split_vocab(df,  vocab_path, vocab_name)
 
-    test = data_utils.pandas_to_seq_example(test, 'userID', ['feature'], ['label'], SEQ_LEN)
-    train = data_utils.pandas_to_seq_example(train, 'userID', ['feature'], ['label'], SEQ_LEN)
+    test = data_utils.pandas_to_seq_example(test, 'userID', ['feature'], ['label'])
+    train = data_utils.pandas_to_seq_example(train, 'userID', ['feature'], ['label'])
 
     test_path = '../data/test/'
     if not os.path.exists(test_path):
@@ -211,8 +211,8 @@ if __name__ == '__main__':
     data_utils.write_to_tfrecord(train, train_path, 'train_data')
     # Reading it back
 
-    tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_1_of_2.tfrecord')
-    # tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_0_of_1.tfrecord')
+    # tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_1_of_2.tfrecord')
+    tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_0_of_1.tfrecord')
 
     context_feature_spec = {
         'userID': tf.io.FixedLenFeature([], tf.int64),

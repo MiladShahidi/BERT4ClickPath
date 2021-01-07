@@ -1,9 +1,12 @@
 import tensorflow as tf
-from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
+from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT_PAD
+
 # from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
 
 # from data_generator import ReturnsDataGen
-from clickstream_model import ClickstreamModel
+from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.head import SoftMaxHead
+
 import os
 
 def parse_seq_example(x, context_feature_spec, sequence_feature_spec):
@@ -271,10 +274,10 @@ if __name__ == '__main__':
     )
 
 
-    # from pprint import pprint
-    # for x in data.take(1):
-    #     pprint(x)
-    #
+    from pprint import pprint
+    for x in data.take(1):
+        pprint(x)
+
     sequential_input_config = {
         'items': ['feature1',
                   'feature2',
@@ -290,7 +293,7 @@ if __name__ == '__main__':
     }
 
     feature_vocabularies = {
-        'items': '../data/vocabs/item_vocab.txt',
+        'items': 'data/vocabs/item_vocab.txt',
         # 'events': '../data/vocabs/event_vocab.txt'
     }
 
@@ -299,15 +302,18 @@ if __name__ == '__main__':
         # 'events': 2
     }
 
+    final_layers_dims = [10, 5]
+    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=3)
+
     clickstream_model = ClickstreamModel(
         sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,
-        segment_to_head=2,
+        head_unit=softmax_head,
+        value_to_head=INPUT_MASKING_TOKEN,
         num_encoder_layers=1,
         num_attention_heads=1,
-        dropout_rate=0.1,
-        final_layers_dims=[10, 5]
+        dropout_rate=0.1
     )
 
 
