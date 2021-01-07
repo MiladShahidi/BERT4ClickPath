@@ -4,6 +4,7 @@ from sequence_transformer.transformer import Transformer
 from sequence_transformer.constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM, INPUT_MASKING_TOKEN
 from sequence_transformer.constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
 from sequence_transformer.head import BinaryClassificationHead, SoftMaxHead
+from sequence_transformer.utils import load_vocabulary
 
 
 class TransformerInputPrep:
@@ -132,18 +133,14 @@ class TokenMapper:
         self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
                               for var_name, vocab_file in vocabularies.items()}
 
-    def _create_lookup_table(self, vocab_file, tokens_to_prepend=None):
-        keys = self.load_vocabulary(vocab_file)  # words in vocab file
+    @staticmethod
+    def _create_lookup_table(vocab_file, tokens_to_prepend=None):
+        keys = load_vocabulary(vocab_file)  # words in vocab file
         if tokens_to_prepend is not None:
             keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
         values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
         initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
         return tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
-
-    @staticmethod
-    def load_vocabulary(vocab_file):
-        with tf.io.gfile.GFile(vocab_file, 'r') as f:
-            return tf.strings.strip(f.readlines())
 
     def _apply_vocabs(self, features):
         result = features.copy()  # Traced functions (by TF for exporting) should not change their input arguments

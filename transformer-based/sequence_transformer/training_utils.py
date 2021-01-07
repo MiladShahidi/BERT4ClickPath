@@ -121,7 +121,6 @@ class MaskedLoss(tf.keras.losses.Loss):
         # # # # # # # # # # #
         # # # Create the mask
         # # # # # # # # # # #
-        self.label_pad = tf.cast(self.label_pad, y_true.dtype)
         mask = tf.math.logical_not(tf.math.equal(y_true, self.label_pad))
         mask = tf.cast(mask, y_true.dtype)  # Convert Boolean tensor to numerical
 
@@ -171,6 +170,51 @@ class MaskedLoss(tf.keras.losses.Loss):
             mean_batch_loss = mean_batch_loss / weight_normalization
 
         return mean_batch_loss
+
+
+class F1Score(tf.keras.metrics.Metric):
+    # ToDo: TF doesn't have an F1 metric (tfa does, but didn't want to use that).
+    #  This used to be MaskedF1. After we created the wrapper MaskerMetric class I changed this to be a normal F1,
+    #  so that it can be wrapped by that class but didn't test it.
+    #  Test this before using it.
+    def __init__(self, name='F1Score', **kwargs):
+        super(F1Score, self).__init__(name=name, **kwargs)
+        self.tp = self.add_weight(name='tp', initializer='zeros')
+        self.condition_true = self.add_weight(name='condition_true', initializer='zeros')
+        self.predicted_true = self.add_weight(name='pred_true', initializer='zeros')
+        # self.n_items = self.add_weight(name='n_items', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.round(y_pred)  # threshold = 0.5
+
+        tp = tf.logical_and(tf.cast(y_true, tf.int32) == 1, tf.cast(y_pred, tf.int32) == 1)
+        tp = tf.cast(tp, dtype=tf.float32)
+        # mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        # mask = tf.cast(mask, dtype=tp.dtype)
+        # tp *= mask
+        # tp = tf.cast(tp, tf.float32)
+
+        condition_true = (tf.cast(y_true, tf.int32) == 1)
+        condition_true = tf.cast(condition_true, dtype=tf.float32)
+        # condition_true *= mask
+        # condition_true = tf.cast(condition_true, tf.float32)
+
+        predicted_true = (tf.cast(y_pred, tf.int32) == 1)
+        predicted_true = tf.cast(predicted_true, dtype=tf.float32)
+        # predicted_true *= mask
+        # predicted_true = tf.cast(predicted_true, tf.float32)
+
+        self.tp.assign_add(tf.reduce_sum(tp))
+        self.condition_true.assign_add(tf.reduce_sum(condition_true))
+        self.predicted_true.assign_add(tf.reduce_sum(predicted_true))
+
+    def result(self):
+        return 2 * self.tp / (self.condition_true+self.predicted_true)
+
+    def reset_states(self):
+        self.tp.assign(0.)
+        self.condition_true.assign(0.)
+        self.predicted_true.assign(0.)
 
 
 class MaskedFocalLoss(tf.keras.losses.Loss):
@@ -260,7 +304,7 @@ class MaskedMetric(tf.keras.metrics.Metric):
         if sample_weight is not None:
             raise ValueError("Masked metrics do not support sample_weight.")
 
-        mask = tf.logical_not(tf.equal(y_true, LABEL_PAD))
+        mask = tf.logical_not(tf.equal(y_true, tf.cast(LABEL_PAD, y_true.dtype)))
         self._metric.update_state(y_true, y_pred, sample_weight=mask)
 
     def result(self):

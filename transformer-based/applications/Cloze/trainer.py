@@ -1,26 +1,16 @@
 from input_pipeline import create_tf_dataset
-from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric,\
-    MaskedLoss
+from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedMetric, MaskedLoss
 from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule
-# from data_generator import ClickStreamGenerator
+from data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
-from sequence_transformer.constants import INPUT_MASKING_TOKEN
-
-
-def get_vocab_files(training):
-    item_vocab_path = os.path.join(training, 'vocabs/skn_id_vocab')
-    event_vocab_path = os.path.join(training, 'vocabs/page_type_event_name_vocab')
-    item_vocab_file = [filename for filename in tf.io.gfile.glob(os.path.join(item_vocab_path, '*'))
-                       if (not tf.io.gfile.isdir(filename)) and filename.endswith('.txt')][0]  # Expects only 1 txt file
-    event_vocab_file = [filename for filename in tf.io.gfile.glob(os.path.join(event_vocab_path, '*'))
-                        if (not tf.io.gfile.isdir(filename)) and filename.endswith('.txt')][0]
-
-    return {'item_vocab_file': item_vocab_file, 'event_vocab_file': event_vocab_file}
+from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD
+from sequence_transformer.head import SoftMaxHead
+from sequence_transformer.utils import load_vocabulary
 
 
 def create_input(training, validation, **kwargs):
@@ -36,12 +26,10 @@ def create_input(training, validation, **kwargs):
     Returns:
 
     """
-    # training_files = os.path.join(is_training, 'training_data/part*')
     training_dataset = create_tf_dataset(source=training,
                                          is_training=True,
                                          batch_size=kwargs['batch_size'])
 
-    # validation_files = os.path.join(validation, 'part*')
     validation_dataset = create_tf_dataset(source=validation,
                                            is_training=False,
                                            batch_size=kwargs['batch_size'])
@@ -98,11 +86,11 @@ def train(model,
     )
 
     metrics = [
-        PositiveRate(),
-        PredictedPositives(),
-        MaskedF1(),
-        MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
-        MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
+        # PositiveRate(),
+        # PredictedPositives(),
+        # MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
+        # MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
+        # MaskedMetric(metric=tf.keras.metrics.BinaryAccuracy(), name='Binary Accuracy'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
         # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
@@ -122,7 +110,7 @@ def train(model,
     lr = training_params['lr']
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
-    loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy)
+    loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
 
     with get_distribution_context(gpu_count):
         model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -164,29 +152,36 @@ def train(model,
 
 if __name__ == '__main__':
     timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
-    model_dir_root = os.path.join('../output', f'run_{timestamp}')
+    model_dir_root = os.path.join('training_output', f'run_{timestamp}')
     saved_model_dir = os.path.join(model_dir_root, 'savedmodel')
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
-    training_data_path = 'data'
+    root_data_dir = 'data/amazon_beauty'
+    training_data_files = os.path.join(root_data_dir, '*.tfrecord')
 
     training_params = {
         'n_epochs': 1000,
-        'steps_per_epoch': 100,
-        'validation_steps': 100,
+        'steps_per_epoch': 10,
+        'validation_steps': 10,
         'lr_warmup_steps': 4000,
         'lr': 1e-2,
         'lr_scale': 1,
-        'batch_size': 100,
+        'batch_size': 2,
         'max_sess_len': 200,
         'ckpt_dir': ckpt_dir,
     }
+
+    item_vocab_path = os.path.join(root_data_dir, 'vocabs/item_vocab.txt')
+    output_vocab_size = len(load_vocabulary(item_vocab_path))
+
+    final_layers_dims = [1024, 512, 256]
+    head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
 
     model_params = {
         'num_encoder_layers': 1,
         'num_attention_heads': 1,
         'dropout_rate': 0.1,
-        'final_layers_dims': [1024, 512, 256]
+        'head_unit': head_unit
     }
 
     input_config = {
@@ -195,8 +190,8 @@ if __name__ == '__main__':
             # 'events': ['seq_1_events', 'seq_2_events']
         },
         'feature_vocabs': {
-            'items': 'data/vocabs/item_vocab.txt',
-            # 'events': 'data/vocabs/event_vocab.txt'
+            'items': item_vocab_path,
+            # 'events':
         },
         'embedding_dims': {
             'items': 5,
@@ -205,9 +200,8 @@ if __name__ == '__main__':
         'value_to_head': INPUT_MASKING_TOKEN
     }
 
-    N_ITEMS = 1000
-    COHESION = 100
-
+    # N_ITEMS = 1000
+    # COHESION = 100
     # data_src = ClickStreamGenerator(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
     #                           write_vocab_files=True, vocab_dir='../data/vocabs')
 
@@ -217,8 +211,8 @@ if __name__ == '__main__':
                          **config)
 
     trained_model = train(model=model,
-                          training=training_data_path,
-                          validation=training_data_path,
+                          training=training_data_files,
+                          validation=training_data_files,
                           model_dir=saved_model_dir,
                           gpu_count=0,
                           **training_params)

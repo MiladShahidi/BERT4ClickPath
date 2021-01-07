@@ -84,10 +84,20 @@ def random_item_mask(item_list, masked_percentage=MASKED_PERCENTAGE, max_masked=
 
 
 def create_tf_dataset(source, is_training, batch_size):
+    """
 
+    Args:
+        source: If str, must be the path to data files (not directory). For example data/*.tfrecord
+        is_training:
+        batch_size:
+
+    Returns:
+
+    """
     if isinstance(source, str):
-        files = [os.path.join(source, filename) for filename in tf.io.gfile.listdir(source)]
-        dataset = tf.data.TFRecordDataset(filenames=files)
+        # files = [os.path.join(source, filename) for filename in tf.io.gfile.listdir(source)]
+        filenames = tf.data.Dataset.list_files(source)
+        dataset = tf.data.TFRecordDataset(filenames=filenames)
 
         feature_spec = {
             'reviewerID': tf.io.FixedLenFeature([], dtype=tf.string),
@@ -126,7 +136,8 @@ def create_tf_dataset(source, is_training, batch_size):
 
     dataset = dataset.repeat(None)
 
-    label_mapper = TokenMapper(vocabularies={'labels': 'data/vocabs/item_vocab.txt'})
+    # ToDo: This is bad. The vocab address should not a literal string in here
+    label_mapper = TokenMapper(vocabularies={'labels': 'data/amazon_beauty/vocabs/item_vocab.txt'})
 
     def item_mask(features):
         features['asin'], labels = random_item_mask(
@@ -244,3 +255,8 @@ if __name__ == '__main__':
         print('*'*80)
         print('Label:')
         print(y)
+
+        from sequence_transformer.training_utils import MaskedLoss
+        loss_fn = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+        loss = loss_fn(y_true=y, y_pred=y_hat)
+        print(loss)
