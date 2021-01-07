@@ -34,7 +34,7 @@ def create_input(training, validation, **kwargs):
     Returns:
 
     """
-    # training_files = os.path.join(training, 'training_data/part*')
+    # training_files = os.path.join(is_training, 'training_data/part*')
     training_dataset = create_tf_dataset(source=training,
                                          training=True,
                                          batch_size=kwargs['batch_size'])
@@ -198,7 +198,7 @@ if __name__ == '__main__':
             'items': 5,
             # 'events': 2
         },
-        'segment_to_output': 2
+        'segment_to_head': 2
     }
 
     N_ITEMS = 1000

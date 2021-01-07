@@ -10,7 +10,7 @@ from config import Config
 from rnn_model import DRModel
 import warnings
 warnings.filterwarnings("ignore")
-logger = dh.logger_fn("torch-log", "logs/training.log")
+logger = dh.logger_fn("torch-log", "logs/is_training.log")
 
 
 class DreamModelTraining():

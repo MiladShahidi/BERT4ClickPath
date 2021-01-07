@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 logging.info('torch version in used', torch.__version__)
 logging.info("DREAM Model Training...")
 
-logger = dh.logger_fn("torch-log", "logs/training.log")
+logger = dh.logger_fn("torch-log", "logs/is_training.log")
 
 # dilim = '-' * 120
 # logger.info(dilim)
@@ -115,7 +115,7 @@ def loss_fun(pred_dollars, dollars, real_baskets, configuration):
 
 
 def train_model(model, data,  optimizer, epoch, configuration):
-    model.train()  # turn on training mode for dropout
+    model.train()  # turn on is_training mode for dropout
     # configuration = Config()
     dr_hidden = model.init_hidden(configuration.batch_size)
     train_loss = 0

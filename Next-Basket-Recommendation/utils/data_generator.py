@@ -131,9 +131,9 @@ class ModelDataBatchType(Enum):
     Test = 3
 
 # how to use dictionary generator
-# data = ReturnsDataGen(1, 10, 2)
+# data = ClickStreamGenerator(1, 10, 2)
 # data_generator = data.get_generator(ModelDataBatchType.Training)
 # print(next(data_generator))
 
-# data = ReturnsDataGen(1, 10, 2)
+# data = ClickStreamGenerator(1, 10, 2)
 # print(next(data.generate_train_data()))

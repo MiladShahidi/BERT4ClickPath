@@ -187,7 +187,7 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    # data_gen = ReturnsDataGen(
+    # data_gen = ClickStreamGenerator(
     #     n_items=1000,
     #     n_events=10,
     #     session_cohesiveness=5,
@@ -217,11 +217,11 @@ if __name__ == '__main__':
         # 'events': 2
     }
 
-    # returns_model = ClickstreamModel(
+    # clickstream_model = ClickstreamModel(
     #     sequential_input_config=sequential_input_config,
     #     feature_vocabs=feature_vocabularies,
     #     embedding_dims=embedding_dims,
-    #     segment_to_output=2,
+    #     segment_to_head=2,
     #     num_encoder_layers=1,
     #     num_attention_heads=1,
     #     dropout_rate=0.1,

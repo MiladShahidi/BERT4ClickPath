@@ -1,9 +1,9 @@
 import tensorflow as tf
-from constants import RESERVED_TOKENS
-from transformer import Transformer
-from constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM
-from constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
-from head import Head
+from sequence_transformer.constants import RESERVED_TOKENS
+from sequence_transformer.transformer import Transformer
+from sequence_transformer.constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM, INPUT_MASKING_TOKEN
+from sequence_transformer.constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
+from sequence_transformer.head import BinaryClassificationHead, SoftMaxHead
 
 
 class TransformerInputPrep:
@@ -113,7 +113,7 @@ class TokenMapper:
     that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
 
     """
-    def __init__(self, vocabularies, reserved_tokens=RESERVED_TOKENS):
+    def __init__(self, vocabularies, reserved_tokens=None):
         """
 
         Args:
@@ -132,9 +132,10 @@ class TokenMapper:
         self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
                               for var_name, vocab_file in vocabularies.items()}
 
-    def _create_lookup_table(self, vocab_file, tokens_to_prepend):
+    def _create_lookup_table(self, vocab_file, tokens_to_prepend=None):
         keys = self.load_vocabulary(vocab_file)  # words in vocab file
-        keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
+        if tokens_to_prepend is not None:
+            keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
         values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
         initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
         return tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
@@ -163,22 +164,22 @@ class ClickstreamModel(tf.keras.models.Model):
 
     It consists, for the most part, of a Transformer which takes as input a series of sequences
     (e.g. sequence of items viewed). This Transformer then creates contextualized embeddings that correspond one for one
-    to input items. These embeddings are then passed through a Head (which can be a series of fully-connected layers)
-    to produce the output. Depending on the task, one can decide what type of Head to use and which embeddings to pass
+    to input items. These embeddings are then passed through a BinaryClassificationHead (which can be a series of fully-connected layers)
+    to produce the output. Depending on the task, one can decide what type of BinaryClassificationHead to use and which embeddings to pass
     through it. This is similar to how various classification layers can be mounted on top of a BERT model to perform
     different tasks (binary classification, sequence tagging, multi-class classification with a softmax, etc.)
 
-    For instance, one can only send the output corresponding to CLS through the binary classification Head. The CLS
+    For instance, one can only send the output corresponding to CLS through the binary classification BinaryClassificationHead. The CLS
     token can be trained to "summarize" the entire chain of input sequences. Or in the case of predicting returns given
     the click-stream, one could feed the click-stream + basket (two sequences) and then pass the output of the
-    Transformer that corresponds to basket items to the Head and get a Tensor of the same length as basket.
+    Transformer that corresponds to basket items to the BinaryClassificationHead and get a Tensor of the same length as basket.
     The model can then be trained so that it predicts the probability of return for each item in the basket. (one would
     need to set a maximum basket size, as the output of the model has to have a fixed length, and then pad when the
     basket is smaller than that).
 
     Another example is scoring items for recommendation, given the click-stream up to a certain point. In this case,
     sequence 1 of input would be click-stream and sequence 2 will always be of length 1, containing a single target item
-    to be scored. One can then feed the output corresponding to the target item through the Head and produce a relevance
+    to be scored. One can then feed the output corresponding to the target item through the BinaryClassificationHead and produce a relevance
     score.
 
     The following is an example of how to specify the configuration of inputs:
@@ -214,11 +215,12 @@ class ClickstreamModel(tf.keras.models.Model):
                  sequential_input_config,
                  feature_vocabs,
                  embedding_dims,
-                 segment_to_output,  # ToDo: Find a better name for this. Also, it should allow multiple segments
-                 num_encoder_layers,
-                 num_attention_heads,
-                 dropout_rate,
-                 final_layers_dims,
+                 head_unit,
+                 segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
+                 value_to_head=None,  # Find a better name
+                 num_encoder_layers=1,
+                 num_attention_heads=1,
+                 dropout_rate=0.1,
                  **kwargs):
         """
 
@@ -227,14 +229,17 @@ class ClickstreamModel(tf.keras.models.Model):
                 fed to the Transformer.
             feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
             embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
-            segment_to_output: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the Head
+            segment_to_head: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
                 of the mode. This parameter needs a better name.
+            value_to_head: The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
+                Example: value_to_head = '[Mask]' will send Transformer output for '[Mask]' tokens in the input sequence
+                to the BinaryClassificationHead
             num_encoder_layers: Number of Encoder layers
             num_attention_heads: Number of Attention heads in each Encoder layer
             dropout_rate: Dropout rate
             final_layers_dims: Dimensions of fully connected layers that come after Transformer and produce output. This
-                determines the Head of the model. In the future this will be replaced by an argument or arguments that
-                specify what type of Head should be used.
+                determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
+                specify what type of BinaryClassificationHead should be used.
         """
         super(ClickstreamModel, self).__init__(**kwargs)
 
@@ -243,10 +248,16 @@ class ClickstreamModel(tf.keras.models.Model):
         self.encoder_attention_heads = num_attention_heads
         self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
         self.sequential_input_config = sequential_input_config
-        self.segment_to_output = segment_to_output
+
+        assert (segment_to_head is not None or value_to_head is not None) and \
+               (segment_to_head is None or value_to_head is None), \
+               "Exactly one of segment_to_head and value_to_head must be provided."
+
+        self.segment_to_head = segment_to_head
+        self.value_to_head = value_to_head
 
         self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
-        self.token_mapper = TokenMapper(vocabularies=feature_vocabs)
+        self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
 
         # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
         # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
@@ -263,7 +274,7 @@ class ClickstreamModel(tf.keras.models.Model):
             dropout_rate=self.dropout_rate
         )
 
-        self.head = Head(dnn_layer_dims=final_layers_dims)
+        self.head = head_unit
 
     def format_features(self, features):
         # session_len and basket_size are those of longest example in the batch
@@ -312,14 +323,15 @@ class ClickstreamModel(tf.keras.models.Model):
     def call(self, inputs, training=None, mask=None):
 
         # Traced functions are not allowed to change their input arguments
-        features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
-        features = self.token_mapper(features)
+        raw_features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
+        features = self.token_mapper(raw_features)
 
         # separating sequential features that should go into the Transformer
         sequential_features = {feature_name: features[feature_name]
                                for feature_name in self.sequential_input_config.keys()}
-        # ToDo: Features other than the sequential ones sohuld be added to the output of the Transformer
-        x = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
+
+        # ToDo: Side features should be added to the output of the Transformer
+        transformer_output = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
 
         # segment_starts and segment_ends mark the index in the Transformer's output tensor where each sequence begins
         # and ends. The first segment corresponds to the [CLS] token and is therefore always
@@ -327,7 +339,50 @@ class ClickstreamModel(tf.keras.models.Model):
         # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
 
         # This model feeds the output corresponding to the second sequence. This is specific to this particular task
-        head_input = x[:, segment_starts[self.segment_to_output]:segment_ends[self.segment_to_output], ...]
+        if self.segment_to_head is not None:
+            head_input = transformer_output[:, segment_starts[self.segment_to_head]:segment_ends[self.segment_to_head], ...]
+        elif self.value_to_head is not None:
+            # This is an ugly patch
+            # We designed the Transformer so that it would accept multiple sequences and stack them. Most obvious
+            # example is a sequence of items and a sequence of events associated with those items, e.g.
+            #   (view, bag), (add_to_cart, shoe), ...
+            # This is not common in the literature at all.
+            # Here, we are trying to send some of the elements from the output of the Transformer to the
+            # BinaryClassificationHead, and we're doing so based on input values. For instance, only send positions that
+            # correspond to [MASK] inputs. But it is not clear which input sequence we should be looking at?
+            # The items? or the events? Given how rare this multi-feature input is, I think this is an unnecessary
+            # complication. And the Transformer should only expect one input feature: The items.
+            some_raw_feature_name = list(self.sequential_input_config.keys())[0]
+
+            # (batch_size, seq_len)
+            some_raw_feature = raw_features[some_raw_feature_name]
+
+            # ToDo: move this part into a method
+            # Here is what this part does:
+            # Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
+            # `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer's
+            # output. The catch is, different examples may have different number of entries that match this value.
+            # So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
+            batch_size = tf.shape(some_raw_feature)[0]
+
+            # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
+            indices = tf.where(tf.equal(some_raw_feature, self.value_to_head))
+
+            # Since all examples in the batch don't necessarily have the same number of matching entries, we will create
+            # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
+            ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
+
+            # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
+            ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
+                                                               nrows=tf.cast(batch_size, tf.int64))
+
+            ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
+
+            # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
+            # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
+            matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
+
+            head_input = matching_embeddings
 
         logits = self.head(head_input)
 
@@ -377,4 +432,4 @@ class ClickstreamModel(tf.keras.models.Model):
     #         'product_skn_id_page_views': product_skn_id_page_views
     #     }
     #
-    #     return {'scores': self.call(inputs=features, training=False)}
+    #     return {'scores': self.call(inputs=features, is_training=False)}

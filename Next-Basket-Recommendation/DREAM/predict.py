@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 logging.info("DREAM Model Prediction...")
 
-logger = dh.logger_fn("torch-log", "logs/training.log")
+logger = dh.logger_fn("torch-log", "logs/is_training.log")
 
 dilim = '-' * 120
 

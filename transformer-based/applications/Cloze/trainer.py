@@ -1,13 +1,15 @@
 from input_pipeline import create_tf_dataset
-from training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
-from training_utils import BestModelSaverCallback, CustomLRSchedule
-from data_generator import ReturnsDataGen
-from clickstream_model import ClickstreamModel
+from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric,\
+    MaskedLoss
+from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule
+# from data_generator import ClickStreamGenerator
+from sequence_transformer.clickstream_model import ClickstreamModel
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
+from sequence_transformer.constants import INPUT_MASKING_TOKEN
 
 
 def get_vocab_files(training):
@@ -34,14 +36,14 @@ def create_input(training, validation, **kwargs):
     Returns:
 
     """
-    # training_files = os.path.join(training, 'training_data/part*')
+    # training_files = os.path.join(is_training, 'training_data/part*')
     training_dataset = create_tf_dataset(source=training,
-                                         training=True,
+                                         is_training=True,
                                          batch_size=kwargs['batch_size'])
 
     # validation_files = os.path.join(validation, 'part*')
     validation_dataset = create_tf_dataset(source=validation,
-                                           training=False,
+                                           is_training=False,
                                            batch_size=kwargs['batch_size'])
 
     return training_dataset, validation_dataset
@@ -120,7 +122,7 @@ def train(model,
     lr = training_params['lr']
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
-    loss = MaskedBinaryCrossEntropy()
+    loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy)
 
     with get_distribution_context(gpu_count):
         model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -166,6 +168,8 @@ if __name__ == '__main__':
     saved_model_dir = os.path.join(model_dir_root, 'savedmodel')
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
+    training_data_path = 'data'
+
     training_params = {
         'n_epochs': 1000,
         'steps_per_epoch': 100,
@@ -187,25 +191,25 @@ if __name__ == '__main__':
 
     input_config = {
         'sequential_input_config': {
-            'items': ['seq_1_items', 'seq_2_items'],
+            'items': ['asin'],
             # 'events': ['seq_1_events', 'seq_2_events']
         },
         'feature_vocabs': {
-            'items': '../data/vocabs/item_vocab.txt',
-            # 'events': '../data/vocabs/event_vocab.txt'
+            'items': 'data/vocabs/item_vocab.txt',
+            # 'events': 'data/vocabs/event_vocab.txt'
         },
         'embedding_dims': {
             'items': 5,
             # 'events': 2
         },
-        'segment_to_output': 2
+        'value_to_head': INPUT_MASKING_TOKEN
     }
 
     N_ITEMS = 1000
     COHESION = 100
 
-    data_src = ReturnsDataGen(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
-                              write_vocab_files=True, vocab_dir='../data/vocabs')
+    # data_src = ClickStreamGenerator(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
+    #                           write_vocab_files=True, vocab_dir='../data/vocabs')
 
     config = {**model_params, **input_config}
     model = create_model(gpu_count=0,
@@ -213,8 +217,8 @@ if __name__ == '__main__':
                          **config)
 
     trained_model = train(model=model,
-                          training=data_src,
-                          validation=data_src,
+                          training=training_data_path,
+                          validation=training_data_path,
                           model_dir=saved_model_dir,
                           gpu_count=0,
                           **training_params)

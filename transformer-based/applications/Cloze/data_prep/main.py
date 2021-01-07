@@ -39,34 +39,35 @@ if __name__ == '__main__':
     output_path = '../data'
 
     print('Reading data...')
-    df = get_pandas_df(path='../raw_data/reviews_Beauty.json.gz',
-                       use_columns=['reviewerID', 'asin', 'unixReviewTime'],
-                       n_rows=1000)
-
-    # df = pd.DataFrame({
-    #     'reviewerID': [1, 2, 1, 2, 3],
-    #     'asin': ['a_late', 'b_late', 'a_early', 'c_early', 'c'],
-    #     'unixReviewTime': [6, 2, 4, 1, 3]
-    # })
-
-    min_item_filter = df.groupby('reviewerID')['asin'].transform('count').ge(MIN_ITEM)
-    df = df[min_item_filter]
-
-    item_vocab = pd.unique(df['asin'])
-    vocab_path = os.path.join(output_path, 'vocabs')
-    os.makedirs(vocab_path, exist_ok=True)
-    with open(os.path.join(vocab_path, 'item_vocab.txt'), 'w') as f:
-        f.writelines('\n'.join(item_vocab))
-
-    print('Converting to TF Examples...')
-    df = df.sort_values(['unixReviewTime'])
-    tf_data = data_utils.pandas_to_tf_example_list(df, group_id_column='reviewerID')
-
-    print('Writing TFRecord files...')
-    data_utils.write_to_tfrecord(tf_data, path=output_path, filename_prefix='amazon_beauty')
-
-    # reading it back
     if False:
+        df = get_pandas_df(path='../raw_data/reviews_Beauty.json.gz',
+                           use_columns=['reviewerID', 'asin', 'unixReviewTime'],
+                           n_rows=None)
+
+        # df = pd.DataFrame({
+        #     'reviewerID': [1, 2, 1, 2, 3],
+        #     'asin': ['a_late', 'b_late', 'a_early', 'c_early', 'c'],
+        #     'unixReviewTime': [6, 2, 4, 1, 3]
+        # })
+
+        min_item_filter = df.groupby('reviewerID')['asin'].transform('count').ge(MIN_ITEM)
+        df = df[min_item_filter]
+
+        item_vocab = pd.unique(df['asin'])
+        vocab_path = os.path.join(output_path, 'vocabs')
+        os.makedirs(vocab_path, exist_ok=True)
+        with open(os.path.join(vocab_path, 'item_vocab.txt'), 'w') as f:
+            f.writelines('\n'.join(item_vocab))
+
+        print('Converting to TF Examples...')
+        df = df.sort_values(['unixReviewTime'])
+        tf_data = data_utils.pandas_to_tf_example_list(df, group_id_column='reviewerID')
+
+        print('Writing TFRecord files...')
+        data_utils.write_to_tfrecord(tf_data, path=output_path, filename_prefix='amazon_beauty')
+
+        # reading it back
+    else:
         files = [os.path.join(output_path, filename) for filename in tf.io.gfile.listdir(output_path)]
         feature_spec = {
             'reviewerID': tf.io.FixedLenFeature([], tf.string),
@@ -78,4 +79,9 @@ if __name__ == '__main__':
 
         for x in dataset.take(1):
             ex = tf.io.parse_single_example(x, feature_spec)
+            # A VarLenFeature is always parsed to a SparseTensor
+            for key in ex.keys():
+                if isinstance(ex[key], tf.SparseTensor):
+                    ex[key] = tf.sparse.to_dense(ex[key])
+
             print(ex)

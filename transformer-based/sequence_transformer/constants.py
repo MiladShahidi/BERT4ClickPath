@@ -8,7 +8,7 @@ NUM_RESERVED_TOKENS = 10
 
 INPUT_PADDING_TOKEN = '[PAD]'
 UNKNOWN_TOKEN = '[UNK]'
-INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-training. Not used in the supervised training
+INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-is_training. Not used in the supervised is_training
 CLASSIFICATION_TOKEN = '[CLS]'
 SEPARATOR_TOKEN = '[SEP]'
 MISSING_EVENT_OR_ITEM_TOKEN = '[NA]'
