@@ -183,6 +183,139 @@ def pandas_to_tf_seq_example_list(df, group_id_column):
     return collected_df.apply(to_tf_seq_example, axis=1).to_list()
 
 
+def pandas_to_seq_example(df, group_id_column, name_list_list, name_list, seq_len):
+    """
+    This function converts a pandas DataFrame into a list of Tensorflow SequenceExample objects.
+    It performs a groupby using `group_id_column` and collect the values of all other columns into lists (simillar to
+    PySpark's `collect_list`). Then the `group_id_column` column will be put into the `context` component of the
+    SequenceExample object and all other columns (each of which is now a list) will be put in the `feature_list`
+    component.
+
+    Example:
+    Given the following Pandas DataFrame:
+
+           id  int_feature           basket
+        0   1           10            [131]
+        1   1           11       [152, 148]
+        2   2           12  [161, 106, 134]
+        3   2           13       [171, 123]
+        4   3           14            [123]
+
+    The output corresponding to each group will be a SequenceExample object which consists of two components:
+        1) context
+        2) feature_lists
+
+    For example, the output for id=2 will look like:
+
+        context {
+          feature {
+            key: "id"
+            value {
+              int64_list {
+                value: 2
+              }
+            }
+          }
+        }
+        feature_lists {
+          feature_list {
+            key: "basket"
+            value {
+              feature {
+                int64_list {
+                  value: 161
+                  value: 106
+                  value: 134
+                }
+              }
+              feature {
+                int64_list {
+                  value: 171
+                  value: 123
+                }
+              }
+            }
+          }
+          feature_list {
+            key: "int_feature"
+            value {
+              feature {
+                int64_list {
+                  value: 12
+                }
+              }
+              feature {
+                int64_list {
+                  value: 13
+                }
+              }
+            }
+          }
+        }
+
+    Notice that the column that contained a list per row, is converted into a list of lists (basket here).
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of tf.train.SequenceExample objects each element of which corresponds to a group in
+            df.groupby(group_id_column)
+    """
+    def to_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+
+        # sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            # if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
+            #     seq
+            #     uence_features_dict[feature_name] = feature_value
+            # else:
+            #     context_features_dict[feature_name] = feature_value
+            if feature_name in name_list_list:
+                # converting list of list to several list
+                for i_value, value in enumerate(feature_value):
+                    context_features_dict[feature_name+str(i_value+1)] = value
+                # TODO: ask milad if this is necessary:
+                #  fill the empty feature with [0] to avoid having batches with empty entry
+                # for i in range(i_value+1, seq_len-1):
+                #     context_features_dict[feature_name + str(i + 1)] = list([0])
+
+            elif feature_name in name_list:
+                context_features_dict[feature_name] = feature_value
+
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict)
+            # feature_lists=sequence_features_dict
+        )
+        return seq_example
+
+    # def to_seq_example1(collected_row):
+    #     row_dict = collected_row.to_dict()
+    #     row_dict = {k: tf.train.FeatureList(feature=[to_feature(element) for element in v])
+    #                 for k, v in row_dict.items()}
+    #     row = tf.train.FeatureLists(feature_list=row_dict)
+    #     context_feature_dict = {group_id_column: to_feature(collected_row.name)}
+    #     seq_example = tf.train.SequenceExample(
+    #         context=tf.train.Features(feature=context_feature_dict),
+    #         feature_lists=row
+    #     )
+    #     return seq_example
+
+    # collected_df = pd.DataFrame()
+    # for col in df.columns:
+    #     if col != group_id_column:
+    #         collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    return df.apply(to_seq_example, axis=1).to_list()
+
+
 def pandas_train_test_split(df, train_size, context_feature_name):
     def mark_training_samples(grouped_df):
         indices = np.random.choice(grouped_df.index, size=train_size, replace=False)
