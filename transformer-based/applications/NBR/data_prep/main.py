@@ -38,15 +38,15 @@ def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
     df1 = df1[df1['num_purchased'] > limit_user_item]
     df = pd.merge(df1['itemID'], df, on='itemID', how='left')
 
-    # convert PRODUCT_ID to categorical variable
-    df['itemID'] = df['itemID'].astype('category')
-    dic_product_id = {k + 1: v for k, v in enumerate(df['itemID'].cat.categories)}
-    df['itemID'] = df['itemID'].cat.codes + 1  # start the item index from 1
+    # # convert PRODUCT_ID to categorical variable
+    # df['itemID'] = df['itemID'].astype('category')
+    # dic_product_id = {k + 1: v for k, v in enumerate(df['itemID'].cat.categories)}
+    # df['itemID'] = df['itemID'].cat.codes + 1  # start the item index from 1
+    # # with open(pickle_file, 'wb') as handle:
+    # #     pickle.dump(dic_product_id, handle)
+
     df['datetime'] = pd.to_datetime(df['timestamp'])
     df = df.sort_values('datetime')
-
-    # with open(pickle_file, 'wb') as handle:
-    #     pickle.dump(dic_product_id, handle)
 
     df = df.groupby(['userID', 'timestamp'])['itemID'].apply(list).reset_index()
     df = df[['userID', 'itemID']]
@@ -123,13 +123,33 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
         return data
 
     def create_vocabulary(df, path, filename):
-        # create and write a vocabulary of item in training dataset
+        """
+        convert itemID into range of [1-size-of-vocabulary]
+        create and write a vocabulary of item in training dataset and return vocabulary size
+        Args:
+            df:
+            path:
+            filename:
+
+        Returns:
+            vocab_len : vocabulary size
+            dic_product_id : dictionary of {original item-id: converted item-id}
+        """
         import itertools
-        df['all_items'] = df.feature.apply(lambda x: list(set(list(itertools.chain.from_iterable(x)))))
+        df['all_items'] = df.basket.apply(lambda x: list(set(list(itertools.chain.from_iterable(x)))))
+
         vocab = []
         for value in df.all_items:
             vocab.extend(value)
         vocab = list(set(vocab))
+        vocab.sort()
+
+        dic_product_id = {item: i+1 for i, item in enumerate(vocab)}
+        # add unkown token to the dictionary
+        dic_product_id['unknown'] = len(vocab) + 1
+
+        vocab = [i for i in range(1, len(vocab)+1)]
+        vocab += ['unknown']
 
         # drop the intermadiate column 'all_items
         df.drop(['all_items'], axis=1, inplace=True)
@@ -144,30 +164,69 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
         with open(os.path.join(path, filename), mode='wt', encoding='utf-8') as myfile:
             myfile.write('\n'.join(str(line) for line in vocab))
 
+        return len(vocab), dic_product_id
+
     def mark_training_samples(df, train_size):
         indices = np.random.choice(df.index, size=train_size, replace=False)
         train_indices = df.index.isin(indices)
         df['train'] = train_indices
         return df
 
+    def convert_item_id_correct_range(baskets, dic):
+        if isinstance(baskets[0], list):  # Examine one value to see whether this is a list or a list of lists
+            converted_bs = []
+            for basket in baskets:
+                converted_b = []
+                for item in basket:
+                    if item in dic.keys():
+                        converted_b.append(dic[item])
+                    else:
+                        converted_b.append(dic['unknown'])
+                converted_bs.append(converted_b)
+            return converted_bs
+        else:
+            converted_b = []
+            for item in baskets:
+                if item in dic.keys():
+                    converted_b.append(dic[item])
+                else:
+                    converted_b.append(dic['unknown'])
+                return converted_b
+
     # create the test dataset by selecting the last basket as label
     test_df = dataset_preparation(df)
+
     # remove the last basket which is reserved for test dataset and process the train+validation dataset
     df['basket'] = df['basket'].apply(lambda x: x[0:-1])
-    df = dataset_preparation(df)
 
-    create_vocabulary(df, vocab_path, vocab_name)
+    vocab_size, dic = create_vocabulary(df, vocab_path, vocab_name)
+    df = dataset_preparation(df)
+    df['feature'] = df.feature.apply(lambda x: convert_item_id_correct_range(x, dic))
+    df['label'] = df.label.apply(lambda x: convert_item_id_correct_range(x, dic))
+
+    test_df['feature'] = test_df.feature.apply(lambda x: convert_item_id_correct_range(x, dic))
+    test_df['label'] = test_df.label.apply(lambda x: convert_item_id_correct_range(x, dic))
 
     df = mark_training_samples(df, int(df.shape[0]*0.8))
     train_df = df[df['train']].drop('train', axis=1)
     eval_df = df[~df['train']].drop('train', axis=1)
 
+    def multi_hop_converter(items, size):
+        one_hoted = np.zeros(size)
+        for item in items:
+            one_hoted[item - 1] = 1
+        return list(map(int, one_hoted))
+
+    # print(one_hop_converter(items))
+    test_df['label'] = test_df.label.apply(lambda x: multi_hop_converter(x, size=vocab_size))
+    train_df['label'] = train_df.label.apply(lambda x: multi_hop_converter(x, size=vocab_size))
+    eval_df['label'] = eval_df.label.apply(lambda x: multi_hop_converter(x, size=vocab_size))
     return test_df, train_df, eval_df
 
 
 if __name__ == '__main__':
 
-    transaction_dataset = False
+    transaction_dataset = True
 
     if transaction_dataset:
         df = process_raw_data('../data/raw_data/ta-fen-transaction.csv',
@@ -188,8 +247,11 @@ if __name__ == '__main__':
     vocab_name = 'item_vocab.txt'
     test, train, validation = train_test_val_split_vocab(df,  vocab_path, vocab_name)
 
+    print(test)
+    # exit()
     test = data_utils.pandas_to_seq_example(test, 'userID', ['feature'], ['label'])
     train = data_utils.pandas_to_seq_example(train, 'userID', ['feature'], ['label'])
+    validation = data_utils.pandas_to_seq_example(validation, 'userID', ['feature'], ['label'])
 
     test_path = '../data/test/'
     if not os.path.exists(test_path):
@@ -207,8 +269,17 @@ if __name__ == '__main__':
         for f in filelist:
             os.remove(os.path.join(train_path, f))
 
+    val_path = '../data/validation/'
+    if not os.path.exists(val_path):
+        os.makedirs(val_path)
+    else:
+        filelist = [f for f in os.listdir(val_path) if f.endswith(".tfrecord")]
+        for f in filelist:
+            os.remove(os.path.join(val_path, f))
+
     data_utils.write_to_tfrecord(test, test_path, 'test_data')
     data_utils.write_to_tfrecord(train, train_path, 'train_data')
+    data_utils.write_to_tfrecord(validation, val_path, 'validation_data')
     # Reading it back
 
     # tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_1_of_2.tfrecord')

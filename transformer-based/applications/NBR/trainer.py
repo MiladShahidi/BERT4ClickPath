@@ -98,14 +98,14 @@ def train(model,
     metrics = [
         PositiveRate(),
         PredictedPositives(),
-        MaskedF1(),
-        MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
-        MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
+        # MaskedF1(),
+        # MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
+        # MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.2), name='precision-at-20'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.3), name='precision-at-30')
+        MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
+        MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.2), name='precision-at-20'),
+        MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.3), name='precision-at-30')
     ]
 
     d_model = sum(model.embedding_dims.values())
@@ -187,18 +187,27 @@ if __name__ == '__main__':
 
     input_config = {
         'sequential_input_config': {
-            'items': ['seq_1_items', 'seq_2_items'],
+            'items': ['feature1',
+                      'feature2',
+                      'feature3',
+                      'feature4',
+                      'feature5',
+                      'feature6',
+                      'feature7',
+                      'feature8',
+                      'feature9',
+                      'feature10'],
             # 'events': ['seq_1_events', 'seq_2_events']
         },
         'feature_vocabs': {
-            'items': '../data/vocabs/item_vocab.txt',
+            'items': 'data/vocabs/item_vocab.txt',
             # 'events': '../data/vocabs/event_vocab.txt'
         },
         'embedding_dims': {
             'items': 5,
             # 'events': 2
         },
-        'segment_to_head': 2
+        'segment_to_head': 1
     }
 
     N_ITEMS = 1000

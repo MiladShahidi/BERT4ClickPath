@@ -5,7 +5,7 @@ from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT
 
 # from data_generator import ReturnsDataGen
 from sequence_transformer.clickstream_model import ClickstreamModel
-from sequence_transformer.head import SoftMaxHead
+from sequence_transformer.head import SoftMaxHead, MultiLabel_MultiClass_classification
 
 import os
 
@@ -289,28 +289,26 @@ if __name__ == '__main__':
                   'feature8',
                   'feature9',
                   'feature10'],
-        # 'events': ['seq_1_events', 'seq_2_events']
     }
 
     feature_vocabularies = {
         'items': 'data/vocabs/item_vocab.txt',
-        # 'events': '../data/vocabs/event_vocab.txt'
     }
 
     embedding_dims = {
         'items': 4,
-        # 'events': 2
     }
 
     final_layers_dims = [10, 5]
-    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=3)
+    softmax_head = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims, output_vocab_size=3)
 
     clickstream_model = ClickstreamModel(
         sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,
+        segment_to_head=0,  #0 is always the CLS token)
         head_unit=softmax_head,
-        value_to_head=INPUT_MASKING_TOKEN,
+        # value_to_head=INPUT_MASKING_TOKEN,
         num_encoder_layers=1,
         num_attention_heads=1,
         dropout_rate=0.1
