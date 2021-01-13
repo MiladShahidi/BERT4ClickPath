@@ -1,11 +1,18 @@
 import tensorflow as tf
-from constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD
-from data_generator import ReturnsDataGen
-from clickstream_model import ClickstreamModel
+from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT_PAD
+
+# from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
+
+# from data_generator import ReturnsDataGen
+from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.head import SoftMaxHead
+
 import os
 
-
 def parse_seq_example(x, context_feature_spec, sequence_feature_spec):
+    """
+    Parse sequences when they have list of list
+    """
     parsed_context, parsed_sequence = tf.io.parse_single_sequence_example(
         serialized=x,
         context_features=context_feature_spec,
@@ -82,6 +89,68 @@ def load_vocabulary(vocab_file):
         return tf.strings.strip(f.readlines())
 
 
+# def create_tf_dataset(source, training, batch_size):
+#
+#     if isinstance(source, str):
+#         filenames = tf.data.Dataset.list_files(source)
+#         dataset = tf.data.TFRecordDataset(filenames=filenames)
+#
+#         context_feature_spec = {
+#             'userID': tf.io.FixedLenFeature([], tf.int64)
+#         }
+#         sequence_feature_spec = {
+#             'basket': tf.io.VarLenFeature(tf.int64)
+#         }
+#
+#         def parse_fn(ex):
+#             return parse_seq_example(ex, context_feature_spec, sequence_feature_spec)
+#
+#         dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+#     else:
+#         raise TypeError('Source must be either str or callable.')
+#
+#     # Shuffle then repeat. Batch should always be after these two (https://stackoverflow.com/a/49916221/4936825)
+#     if training:
+#         dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
+#
+#     dataset = dataset.repeat(None)
+#
+#     dataset = dataset.padded_batch(
+#         batch_size=batch_size,
+#         padded_shapes={  # Pad all to longest in batch
+#             'userID': [],
+#             'basket': [None, None]
+#         },
+#         padding_values={
+#             'userID': tf.cast(INPUT_PAD, tf.int64),
+#             'basket': tf.cast(INPUT_PAD, tf.int64)
+#         }
+#     )
+#
+#     # TODO: TensorFlow docs mention wrapping map functions in py_function. I don't know if it is for optimization or
+#     #  just for eager mode compatibility. But check that out.
+#
+#     # TODO: Figure out caching. This doesn't work right now.
+#     # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
+#     # def temp_pop_extras(features):
+#     #     # features.pop('side_feature_1')
+#     #     features.pop('seq_1_events')
+#     #     features.pop('seq_2_events')
+#     #     return features
+#     #
+#     # dataset = dataset.map(temp_pop_extras, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+#
+#     # def pop_labels(feature_dict):
+#     #     labels = feature_dict.pop('label')
+#     #     return feature_dict, labels
+#     #
+#     # dataset = dataset.map(pop_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+#
+#     # TODO: Consider interleave as well
+#     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+#
+#     return dataset
+
 def create_tf_dataset(source, training, batch_size):
 
     if isinstance(source, str):
@@ -89,41 +158,24 @@ def create_tf_dataset(source, training, batch_size):
         dataset = tf.data.TFRecordDataset(filenames=filenames)
 
         context_feature_spec = {
-            'userID': tf.io.FixedLenFeature([], tf.int64)
-        }
-        sequence_feature_spec = {
-            'basket': tf.io.VarLenFeature(tf.int64)
+            'userID': tf.io.FixedLenFeature([], tf.int64),
+            'label': tf.io.VarLenFeature(tf.int64),
+            'feature1': tf.io.VarLenFeature(tf.int64),
+            'feature2': tf.io.VarLenFeature(tf.int64),
+            'feature3': tf.io.VarLenFeature(tf.int64),
+            'feature4': tf.io.VarLenFeature(tf.int64),
+            'feature5': tf.io.VarLenFeature(tf.int64),
+            'feature6': tf.io.VarLenFeature(tf.int64),
+            'feature7': tf.io.VarLenFeature(tf.int64),
+            'feature8': tf.io.VarLenFeature(tf.int64),
+            'feature9': tf.io.VarLenFeature(tf.int64),
+            'feature10': tf.io.VarLenFeature(tf.int64)
         }
 
         def parse_fn(ex):
-            return parse_seq_example(ex, context_feature_spec, sequence_feature_spec)
+            return parse_examples(ex, context_feature_spec)
 
         dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-
-    # elif callable(source):
-    #     # ToDo: It might be possible to define this only once (like above) and deduce type and shape from that
-    #     #  so that we can unify this with the one above
-    #     data_types = {
-    #         'seq_1_items': tf.string,
-    #         'seq_1_events': tf.string,
-    #         'seq_2_items': tf.string,
-    #         'seq_2_events': tf.string,
-    #         'side_feature_1': tf.float32,
-    #         'label': tf.float32  # Label needs to be float for calculations in the loss function. int won't work
-    #     }
-    #     tensor_shapes = {
-    #         'seq_1_items': tf.TensorShape([None]),
-    #         'seq_1_events': tf.TensorShape([None]),
-    #         'seq_2_items': tf.TensorShape([None]),
-    #         'seq_2_events': tf.TensorShape([None]),
-    #         'side_feature_1': tf.TensorShape([]),
-    #         'label': tf.TensorShape([None])
-    #     }
-    #
-    #     dataset = tf.data.Dataset.from_generator(source,
-    #                                              output_types=data_types,
-    #                                              output_shapes=tensor_shapes)
-
     else:
         raise TypeError('Source must be either str or callable.')
 
@@ -137,11 +189,31 @@ def create_tf_dataset(source, training, batch_size):
         batch_size=batch_size,
         padded_shapes={  # Pad all to longest in batch
             'userID': [],
-            'basket': [None, None]
+            'feature1': [None],
+            'feature2': [None],
+            'feature3': [None],
+            'feature4': [None],
+            'feature5': [None],
+            'feature6': [None],
+            'feature7': [None],
+            'feature8': [None],
+            'feature9': [None],
+            'feature10': [None],
+            'label': [None]
         },
         padding_values={
             'userID': tf.cast(INPUT_PAD, tf.int64),
-            'basket': tf.cast(INPUT_PAD, tf.int64)
+            'feature1': tf.cast(INPUT_PAD, tf.int64),
+            'feature2': tf.cast(INPUT_PAD, tf.int64),
+            'feature3': tf.cast(INPUT_PAD, tf.int64),
+            'feature4': tf.cast(INPUT_PAD, tf.int64),
+            'feature5': tf.cast(INPUT_PAD, tf.int64),
+            'feature6': tf.cast(INPUT_PAD, tf.int64),
+            'feature7': tf.cast(INPUT_PAD, tf.int64),
+            'feature8': tf.cast(INPUT_PAD, tf.int64),
+            'feature9': tf.cast(INPUT_PAD, tf.int64),
+            'feature10': tf.cast(INPUT_PAD, tf.int64),
+            'label': tf.cast(INPUT_PAD, tf.int64)
         }
     )
 
@@ -149,26 +221,25 @@ def create_tf_dataset(source, training, batch_size):
     #  just for eager mode compatibility. But check that out.
 
     # TODO: Figure out caching. This doesn't work right now.
-    # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
-    # def temp_pop_extras(features):
-    #     # features.pop('side_feature_1')
-    #     features.pop('seq_1_events')
-    #     features.pop('seq_2_events')
-    #     return features
-    #
+    dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
+    def temp_pop_extras(features):
+        features.pop('feature10')
+        features.pop('feature9')
+        return features
+
     # dataset = dataset.map(temp_pop_extras, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-    # def pop_labels(feature_dict):
-    #     labels = feature_dict.pop('label')
-    #     return feature_dict, labels
-    #
-    # dataset = dataset.map(pop_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+    def pop_labels(feature_dict):
+        labels = feature_dict.pop('label')
+        return feature_dict, labels
+
+    dataset = dataset.map(pop_labels, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     # TODO: Consider interleave as well
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     return dataset
-
 
 def print_features(x, select=None):
     for k in x:
@@ -197,18 +268,32 @@ if __name__ == '__main__':
     # )
 
     data = create_tf_dataset(
-        source='../data_prep/test_data_0_of_1.tfrecord',
+        source='data/test/*',
         training=True,
-        batch_size=20
+        batch_size=3
     )
 
+
+    from pprint import pprint
+    for x in data.take(1):
+        pprint(x)
+
     sequential_input_config = {
-        'items': ['seq_1_items', 'seq_2_items'],
+        'items': ['feature1',
+                  'feature2',
+                  'feature3',
+                  'feature4',
+                  'feature5',
+                  'feature6',
+                  'feature7',
+                  'feature8',
+                  'feature9',
+                  'feature10'],
         # 'events': ['seq_1_events', 'seq_2_events']
     }
 
     feature_vocabularies = {
-        'items': '../data/vocabs/item_vocab.txt',
+        'items': 'data/vocabs/item_vocab.txt',
         # 'events': '../data/vocabs/event_vocab.txt'
     }
 
@@ -217,18 +302,18 @@ if __name__ == '__main__':
         # 'events': 2
     }
 
-    # clickstream_model = ClickstreamModel(
-    #     sequential_input_config=sequential_input_config,
-    #     feature_vocabs=feature_vocabularies,
-    #     embedding_dims=embedding_dims,
-    #     segment_to_head=2,
-    #     num_encoder_layers=1,
-    #     num_attention_heads=1,
-    #     dropout_rate=0.1,
-    #     final_layers_dims=[10, 5]
-    # )
+    final_layers_dims = [10, 5]
+    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=3)
 
-    from pprint import pprint
-    for x in data.take(1):
-        pprint(x)
+    clickstream_model = ClickstreamModel(
+        sequential_input_config=sequential_input_config,
+        feature_vocabs=feature_vocabularies,
+        embedding_dims=embedding_dims,
+        head_unit=softmax_head,
+        value_to_head=INPUT_MASKING_TOKEN,
+        num_encoder_layers=1,
+        num_attention_heads=1,
+        dropout_rate=0.1
+    )
+
 

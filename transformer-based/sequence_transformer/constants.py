@@ -1,3 +1,8 @@
+## specific to NBR
+SEQ_LEN = 11 # Maximum number of baskets for a user
+MIN_SEQ_LEN = 3 # A User hase to have at least MIN_SEQ_LEN number of basket to be in the dataset
+##
+
 MASK_EVERY_N_ITEMS = 5
 SYNTHETIC_POSITIVE_SAMPLE_RATE = 0.5
 
@@ -8,7 +13,7 @@ NUM_RESERVED_TOKENS = 10
 
 INPUT_PADDING_TOKEN = '[PAD]'
 UNKNOWN_TOKEN = '[UNK]'
-INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-is_training. Not used in the supervised is_training
+INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-training. Not used in the supervised training
 CLASSIFICATION_TOKEN = '[CLS]'
 SEPARATOR_TOKEN = '[SEP]'
 MISSING_EVENT_OR_ITEM_TOKEN = '[NA]'
