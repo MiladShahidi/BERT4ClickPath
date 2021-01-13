@@ -16,7 +16,7 @@ def normalize_matrix(a, axis=1):
 
 class ClickStreamGenerator:
 
-    def __init__(self, n_items, n_events, session_cohesiveness, positive_rate, write_vocab_files=False, vocab_dir=None):
+    def __init__(self, n_items, n_events, session_cohesiveness, write_vocab_files=False, vocab_dir=None):
         """
 
         Args:
@@ -27,12 +27,11 @@ class ClickStreamGenerator:
                 that are further away diminish more strongly for higher values of this.
         """
         self._min_sess_len = 5
-        self._max_sess_len = 30
+        self._max_sess_len = 50
         self._min_basket_len = 1
         self._max_basket_len = 5
         self._n_items = n_items
         self._n_events = n_events
-        self.positive_rate = positive_rate
         # TODO: Write vocab_files or create IO streams
 
         self.item_names = [f'item_{i}' for i in range(self._n_items)]
@@ -97,31 +96,38 @@ class ClickStreamGenerator:
         return session_items, basket, labels
 
     def __next__(self):
-        session_length = np.random.randint(self._min_sess_len, self._max_sess_len)
+        session_length = np.random.randint(self._min_sess_len, self._max_sess_len + 1)
 
-        session_items = self._draw_sample_sequence(np.random.choice(range(self._n_items)), n_samples=session_length)
+        # session_items = self._draw_sample_sequence(np.random.choice(range(self._n_items)), n_samples=session_length)
         # masked_session, basket, labels = self._mask_session(session_items)
-
-        side_feature = np.random.random()
 
         # n_baskets = np.random.randint(low=2, high=10, dtype=np.int32)
         # basket_sizes = np.random.randint(low=2, high=10, size=n_baskets, dtype=np.int32)
         # list_of_lists = [list(np.random.uniform(size=basket_size)) for basket_size in basket_sizes]
 
+        first_item = np.random.choice(range(self._n_items))
+        # first_item = 0
+        label = np.random.randint(0, 10)
+        offset = np.random.randint(0, self._n_items//10)
         data = {
-            'asin': [self.item_names[i] if i >= 0 else INPUT_MASKING_TOKEN for i in session_items],
+            # 'asin': [self.item_names[(10*(i+offset)+label) % self._n_items] if i >= 0 else INPUT_MASKING_TOKEN
+            #          for i in range(session_length)],
+            'asin': [self.item_names[(i+first_item) % self._n_items] if i >= 0 else INPUT_MASKING_TOKEN
+                     for i in range(session_length)],
+
+            # 'asin': [self.item_names[i] if i >= 0 else INPUT_MASKING_TOKEN for i in session_items],
             'reviewerID': 'ID',
-            'unixReviewTime': [0 for _ in session_items]
+            'unixReviewTime': [0 for _ in range(session_length)],
             # 'seq_1_events': [self.event_names[0] for i in masked_session],  # Just a placeholder for now
             # 'seq_2_items': [self.item_names[i] for i in basket],
             # 'seq_2_events': [self.event_names[0] for i in basket],  # Just a silly place holder for now
             # 'side_feature_1': side_feature,
             # 'list_of_lists': list_of_lists,
-            # 'label': labels
+            # 'labels': label
         }
 
         yield data
 
 
 if __name__ == '__main__':
-    data_gen = ClickStreamGenerator(4, 4, 5, 0.3)
+    pass

@@ -330,46 +330,57 @@ class BestModelSaverCallback(tf.keras.callbacks.Callback):
 if __name__ == '__main__':
     import numpy as np
 
-    loss = tf.keras.losses.SparseCategoricalCrossentropy()
-    N_CLASSES = 4
-    BATCH = 5
-    N_MASKED = 10
-    VOCAB_SIZE = 20
+    # loss = tf.keras.losses.SparseCategoricalCrossentropy()
+    # N_CLASSES = 4
+    # BATCH = 5
+    # N_MASKED = 10
+    # VOCAB_SIZE = 20
+    #
+    # y_true_1 = [1, 2]
+    # y_pred_1 = [[0.1, 0.8, 0.1], [0.9, 0.0, 0.1]]
+    # l_1 = loss(
+    #     y_true_1,
+    #     y_pred_1
+    # )
+    #
+    # y_true_2 = [0]
+    # y_pred_2 = [[0.1, 0.8, 0.1]]
+    # l_2 = loss(
+    #     y_true_2,
+    #     y_pred_2
+    # )
+    #
+    # print(l_1)
+    # print(l_2)
+    # print(np.mean([l_1, l_2]))
+    #
+    # print('*'*80)
+    #
+    # y_true_2 = [0, -1]
+    # y_pred_2 = [[0.1, 0.8, 0.1], [0, 0, 0]]
+    #
+    # y_true = np.array([y_true_1, y_true_2])
+    # y_pred = np.array([y_pred_1, y_pred_2])
+    #
+    # print(y_true)
+    # print(y_pred)
+    #
+    # masked_loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+    #
+    # l = masked_loss(
+    #     y_true,
+    #     y_pred
+    # )
+    #
+    # print(l)
 
-    y_true_1 = [1, 2]
-    y_pred_1 = [[0.1, 0.8, 0.1], [0.9, 0.0, 0.1]]
-    l_1 = loss(
-        y_true_1,
-        y_pred_1
+    y_true = tf.convert_to_tensor(
+        [[0, 2], [0, -1]]
     )
-
-    y_true_2 = [0]
-    y_pred_2 = [[0.1, 0.8, 0.1]]
-    l_2 = loss(
-        y_true_2,
-        y_pred_2
-    )
-
-    print(l_1)
-    print(l_2)
-    print(np.mean([l_1, l_2]))
-
-    print('*'*80)
-
-    y_true_2 = [0, -1]
-    y_pred_2 = [[0.1, 0.8, 0.1], [0, 0, 0]]
-
-    y_true = np.array([y_true_1, y_true_2])
-    y_pred = np.array([y_pred_1, y_pred_2])
-
-    print(y_true)
-    print(y_pred)
-
-    masked_loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
-
-    l = masked_loss(
-        y_true,
-        y_pred
-    )
-
-    print(l)
+    y_pred = tf.convert_to_tensor([
+        [[0.8, 0.1, 0.1], [0.3, 0.4, 0.3]],
+        [[0.05, 0.95, 0], [0.3, 0.6, 0.1]]
+    ])
+    m = tf.keras.metrics.SparseCategoricalAccuracy()
+    masked_m = MaskedMetric(m, name='sca')
+    print(masked_m(y_true, y_pred))

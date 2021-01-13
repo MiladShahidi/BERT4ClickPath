@@ -19,13 +19,16 @@ def parse_examples(serialized_example, feature_spec):
     return features
 
 
-def random_choice(x, size, axis=0):
+def random_choice(x, size, axis=0, preserve_order=True):
     """
     This is the equivalent of np.random.choice. But it always returns unique choices, i.e. keep_features=False in numpy
     """
     dim_x = tf.cast(tf.shape(x)[axis], tf.int64)
     indices = tf.range(0, dim_x, dtype=tf.int64)
     sample_index = tf.random.shuffle(indices)[:size]
+    if preserve_order:
+        sample_index = tf.sort(sample_index)
+
     sample = tf.gather(x, sample_index, axis=axis)
 
     return sample, sample_index
@@ -115,17 +118,17 @@ def create_tf_dataset(source, is_training, batch_size):
         data_types = {
             'asin': tf.string,
             'reviewerID': tf.string,
-            'unixReviewTime': tf.int64
+            'unixReviewTime': tf.int64,
+            # 'labels': tf.int64
         }
         tensor_shapes = {
             'asin': tf.TensorShape([None]),
             'reviewerID': tf.TensorShape([]),
-            'unixReviewTime': tf.TensorShape([None])
+            'unixReviewTime': tf.TensorShape([None]),
+            # 'labels': tf.TensorShape([])
         }
 
-        dataset = tf.data.Dataset.from_generator(source,
-                                                 output_types=data_types,
-                                                 output_shapes=tensor_shapes)
+        dataset = tf.data.Dataset.from_generator(source, output_types=data_types, output_shapes=tensor_shapes)
 
     else:
         raise TypeError('Source must be either str or callable.')
@@ -136,8 +139,8 @@ def create_tf_dataset(source, is_training, batch_size):
 
     dataset = dataset.repeat(None)
 
-    # ToDo: This is bad. The vocab address should not a literal string in here
-    label_mapper = TokenMapper(vocabularies={'labels': 'data/amazon_beauty/vocabs/item_vocab.txt'})
+    # ToDo: This is bad. The vocab address should not be a literal string in here
+    label_mapper = TokenMapper(vocabularies={'labels': 'data/simulated/vocabs/item_vocab.txt'})
 
     def item_mask(features):
         features['asin'], labels = random_item_mask(
@@ -145,7 +148,7 @@ def create_tf_dataset(source, is_training, batch_size):
             masked_percentage=MASKED_PERCENTAGE,
             max_masked=MAX_MASKED_ITEMS
         )
-        # features['labels'] = labels
+        features['orig_labels'] = labels
         features['labels'] = label_mapper({'labels': labels})['labels']
         return features
 
@@ -157,13 +160,15 @@ def create_tf_dataset(source, is_training, batch_size):
             'reviewerID': [],
             'asin': [None],
             'unixReviewTime': [None],
-            'labels': [None]
+            'labels': [None],
+            'orig_labels': [None]
         },
         padding_values={
             'reviewerID': INPUT_PADDING_TOKEN,
             'asin': INPUT_PADDING_TOKEN,
             'unixReviewTime': tf.cast(INPUT_PAD, tf.int64),
-            'labels': tf.cast(LABEL_PAD, tf.int64)
+            'labels': tf.cast(LABEL_PAD, tf.int64),
+            'orig_labels': INPUT_PADDING_TOKEN
         }
     )
 
@@ -202,12 +207,11 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    N_ITEMS = 4
+    N_ITEMS = 40
     data_gen = ClickStreamGenerator(
         n_items=N_ITEMS,
         n_events=10,
         session_cohesiveness=5,
-        positive_rate=0.5,
         write_vocab_files=True,
         vocab_dir='data/vocabs'
     )
@@ -215,7 +219,7 @@ if __name__ == '__main__':
     data = create_tf_dataset(
         source=data_gen,
         is_training=True,
-        batch_size=4
+        batch_size=10
     )
 
     sequential_input_config = {

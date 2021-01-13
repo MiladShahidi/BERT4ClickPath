@@ -32,8 +32,23 @@ class SoftMaxHead(tf.keras.layers.Layer):
 
         super(SoftMaxHead, self).__init__(kwargs)
 
-        self.intermediate_layers = [tf.keras.layers.Dense(layer_dim, activation='relu') for layer_dim in dense_layer_dims]
-        self.output_layer = tf.keras.layers.Dense(units=output_vocab_size, activation=tf.keras.activations.softmax)
+        self.dense_layer_dims = dense_layer_dims
+        self.output_vocab_size = output_vocab_size
+
+        self.intermediate_layers = [tf.keras.layers.Dense(layer_dim, activation='relu')
+                                    for layer_dim in self.dense_layer_dims]
+        self.output_layer = tf.keras.layers.Dense(units=self.output_vocab_size, activation=tf.keras.activations.softmax)
+
+    def get_config(self):
+        """
+        Custom Keras layers and models are not serializable unless they override this method.
+        """
+        config = super(SoftMaxHead, self).get_config()
+        config.update({
+            'dense_layer_dims': self.dense_layer_dims,
+            'output_vocab_size': self.output_vocab_size
+        })
+        return config
 
     def call(self, inputs, **kwargs):
 
@@ -45,3 +60,4 @@ class SoftMaxHead(tf.keras.layers.Layer):
         logits = self.output_layer(x)  # logits.shape == (batch_size, input_len, output_layer_dim)
 
         return logits
+
