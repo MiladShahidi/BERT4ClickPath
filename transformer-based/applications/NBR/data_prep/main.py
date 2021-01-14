@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from sequence_transformer.data_prep import data_utils
-from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
+from applications.NBR.NBR_constant import SEQ_LEN, MIN_SEQ_LEN
 
 
 def process_raw_data(filename, columns_name, pickle_file, limit_user_item=10):
@@ -144,12 +144,12 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
         vocab = list(set(vocab))
         vocab.sort()
 
-        dic_product_id = {item: i+1 for i, item in enumerate(vocab)}
+        dic_product_id = {item: str(i+1) for i, item in enumerate(vocab)}
         # add unkown token to the dictionary
-        dic_product_id['unknown'] = len(vocab) + 1
+        # dic_product_id['unknown'] = len(vocab) + 1
 
         vocab = [i for i in range(1, len(vocab)+1)]
-        vocab += ['unknown']
+        # vocab += ['unknown']
 
         # drop the intermadiate column 'all_items
         df.drop(['all_items'], axis=1, inplace=True)
@@ -180,8 +180,8 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
                 for item in basket:
                     if item in dic.keys():
                         converted_b.append(dic[item])
-                    else:
-                        converted_b.append(dic['unknown'])
+                    # else:
+                    #     converted_b.append(dic['unknown'])
                 converted_bs.append(converted_b)
             return converted_bs
         else:
@@ -189,9 +189,9 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
             for item in baskets:
                 if item in dic.keys():
                     converted_b.append(dic[item])
-                else:
-                    converted_b.append(dic['unknown'])
-                return converted_b
+                # else:
+                #     converted_b.append(dic['unknown'])
+            return converted_b
 
     # create the test dataset by selecting the last basket as label
     test_df = dataset_preparation(df)
@@ -214,8 +214,8 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
     def multi_hop_converter(items, size):
         one_hoted = np.zeros(size)
         for item in items:
-            one_hoted[item - 1] = 1
-        return list(map(int, one_hoted))
+            one_hoted[int(item) - 1] = 1.0
+        return list(one_hoted)#list( map(float, one_hoted))
 
     # print(one_hop_converter(items))
     test_df['label'] = test_df.label.apply(lambda x: multi_hop_converter(x, size=vocab_size))
@@ -226,7 +226,11 @@ def train_test_val_split_vocab(df,  vocab_path, vocab_name):
 
 if __name__ == '__main__':
 
+    import datetime
+
+    start = datetime.datetime.now()
     transaction_dataset = True
+    sample_basket = [1,2,3,4]
 
     if transaction_dataset:
         df = process_raw_data('../data/raw_data/ta-fen-transaction.csv',
@@ -234,24 +238,39 @@ if __name__ == '__main__':
                               '../data/item_vocab.pickle', limit_user_item=10)
     else:
         df = pd.DataFrame({
-            'userID': [1, 1, 1, 1, 2, 2, 2,2,3,3,3,3,3],
-            'basket': [list(np.random.randint(100, 200, size=np.random.randint(low=1, high=2))) for _ in range(13)]
+            'userID': [1, 1, 1, 1, 1,1,1,1,1,1, 1, 2,2,2,2,2,2,2,2,2,2,2],
+            # 'basket': [list(np.random.randint(100, 200, size=np.random.randint(low=1, high=2))) for _ in range(13)]
+            'basket': [sample_basket for _ in range(22)]
         })
         df = df.groupby(['userID'])['basket'].apply(list).reset_index()
 
+    print(df)
+    # exit()
     df['len'] = df['basket'].apply(len)
     df = df[df['len'] >= MIN_SEQ_LEN]
     df.drop(columns=['len'])
-    print(df)
+
+    df['userID'] = df['userID'].astype('str')
+    # print(df)
     vocab_path = '../data/vocabs'
     vocab_name = 'item_vocab.txt'
     test, train, validation = train_test_val_split_vocab(df,  vocab_path, vocab_name)
 
+    # end = datetime.datetime.now()
+    # # print('1', start-end)
+    # start = datetime.datetime.now()
+
     print(test)
+    print(train)
+    print(validation)
     # exit()
     test = data_utils.pandas_to_seq_example(test, 'userID', ['feature'], ['label'])
     train = data_utils.pandas_to_seq_example(train, 'userID', ['feature'], ['label'])
     validation = data_utils.pandas_to_seq_example(validation, 'userID', ['feature'], ['label'])
+
+    end = datetime.datetime.now()
+    print('2', start - end)
+    start = datetime.datetime.now()
 
     test_path = '../data/test/'
     if not os.path.exists(test_path):
@@ -277,6 +296,10 @@ if __name__ == '__main__':
         for f in filelist:
             os.remove(os.path.join(val_path, f))
 
+    end = datetime.datetime.now()
+    print('3', start - end)
+    start = datetime.datetime.now()
+
     data_utils.write_to_tfrecord(test, test_path, 'test_data')
     data_utils.write_to_tfrecord(train, train_path, 'train_data')
     data_utils.write_to_tfrecord(validation, val_path, 'validation_data')
@@ -286,21 +309,23 @@ if __name__ == '__main__':
     tf_dataset = tf.data.TFRecordDataset('../data/test/test_data_0_of_1.tfrecord')
 
     context_feature_spec = {
-        'userID': tf.io.FixedLenFeature([], tf.int64),
-        'label': tf.io.VarLenFeature(tf.int64),
-        'feature1': tf.io.VarLenFeature(tf.int64),
-        'feature2': tf.io.VarLenFeature(tf.int64),
-        'feature3': tf.io.VarLenFeature(tf.int64),
-        'feature4': tf.io.VarLenFeature(tf.int64),
-        'feature5': tf.io.VarLenFeature(tf.int64),
-        'feature6': tf.io.VarLenFeature(tf.int64),
-        'feature7': tf.io.VarLenFeature(tf.int64),
-        'feature8': tf.io.VarLenFeature(tf.int64),
-        'feature9': tf.io.VarLenFeature(tf.int64),
-        'feature10': tf.io.VarLenFeature(tf.int64)
+        'userID': tf.io.FixedLenFeature([], tf.string),
+        'feature1': tf.io.VarLenFeature(tf.string),
+        'feature2': tf.io.VarLenFeature(tf.string),
+        'feature3': tf.io.VarLenFeature(tf.string),
+        'feature4': tf.io.VarLenFeature(tf.string),
+        'feature5': tf.io.VarLenFeature(tf.string),
+        'feature6': tf.io.VarLenFeature(tf.string),
+        'feature7': tf.io.VarLenFeature(tf.string),
+        'feature8': tf.io.VarLenFeature(tf.string),
+        'feature9': tf.io.VarLenFeature(tf.string),
+        'feature10': tf.io.VarLenFeature(tf.string),
+        'label': tf.io.VarLenFeature(tf.float32)
     }
 
-
+    end = datetime.datetime.now()
+    print('4', start - end)
+    start = datetime.datetime.now()
     # sequence_feature_spec = {
     #     'feature': tf.io.VarLenFeature(tf.int64)
     # }
@@ -327,10 +352,16 @@ if __name__ == '__main__':
         return features_dict
 
 
+    end = datetime.datetime.now()
+    print('5', start - end)
+    start = datetime.datetime.now()
+
     tf_dataset = tf_dataset.map(parse_examples)
 
     INPUT_PAD = 0
     INPUT_PADDING_TOKEN = '[PAD]'
+
+    print('INPUT_PAD', INPUT_PAD)
 
     tf_dataset = tf_dataset.padded_batch(
         batch_size=5,
@@ -350,21 +381,25 @@ if __name__ == '__main__':
             # 'feature': [SEQ_LEN, None]
         },
         padding_values={
-            'userID': tf.cast(INPUT_PAD, tf.int64),
-            'feature1': tf.cast(INPUT_PAD, tf.int64),
-            'feature2': tf.cast(INPUT_PAD, tf.int64),
-            'feature3': tf.cast(INPUT_PAD, tf.int64),
-            'feature4': tf.cast(INPUT_PAD, tf.int64),
-            'feature5': tf.cast(INPUT_PAD, tf.int64),
-            'feature6': tf.cast(INPUT_PAD, tf.int64),
-            'feature7': tf.cast(INPUT_PAD, tf.int64),
-            'feature8': tf.cast(INPUT_PAD, tf.int64),
-            'feature9': tf.cast(INPUT_PAD, tf.int64),
-            'feature10': tf.cast(INPUT_PAD, tf.int64),
-            'label': tf.cast(INPUT_PAD, tf.int64)
+            'userID': tf.cast(INPUT_PADDING_TOKEN,   tf.string),
+            'feature1': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature2': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature3': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature4': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature5': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature6': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature7': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature8': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature9': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature10': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'label': tf.cast(INPUT_PAD, tf.float32)
         }
     )
     from pprint import pprint
+
+    end = datetime.datetime.now()
+    print('6', start - end)
+    start = datetime.datetime.now()
 
     for x in tf_dataset:
         pprint(x)

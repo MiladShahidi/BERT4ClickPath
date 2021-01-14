@@ -1,5 +1,5 @@
 import tensorflow as tf
-from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT_PAD
+from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_PADDING_TOKEN
 
 # from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
 
@@ -158,18 +158,18 @@ def create_tf_dataset(source, training, batch_size):
         dataset = tf.data.TFRecordDataset(filenames=filenames)
 
         context_feature_spec = {
-            'userID': tf.io.FixedLenFeature([], tf.int64),
-            'label': tf.io.VarLenFeature(tf.int64),
-            'feature1': tf.io.VarLenFeature(tf.int64),
-            'feature2': tf.io.VarLenFeature(tf.int64),
-            'feature3': tf.io.VarLenFeature(tf.int64),
-            'feature4': tf.io.VarLenFeature(tf.int64),
-            'feature5': tf.io.VarLenFeature(tf.int64),
-            'feature6': tf.io.VarLenFeature(tf.int64),
-            'feature7': tf.io.VarLenFeature(tf.int64),
-            'feature8': tf.io.VarLenFeature(tf.int64),
-            'feature9': tf.io.VarLenFeature(tf.int64),
-            'feature10': tf.io.VarLenFeature(tf.int64)
+            'userID': tf.io.FixedLenFeature([], tf.string),
+            'feature1': tf.io.VarLenFeature(tf.string),
+            'feature2': tf.io.VarLenFeature(tf.string),
+            'feature3': tf.io.VarLenFeature(tf.string),
+            'feature4': tf.io.VarLenFeature(tf.string),
+            'feature5': tf.io.VarLenFeature(tf.string),
+            'feature6': tf.io.VarLenFeature(tf.string),
+            'feature7': tf.io.VarLenFeature(tf.string),
+            'feature8': tf.io.VarLenFeature(tf.string),
+            'feature9': tf.io.VarLenFeature(tf.string),
+            'feature10': tf.io.VarLenFeature(tf.string),
+            'label': tf.io.VarLenFeature(tf.float32)
         }
 
         def parse_fn(ex):
@@ -184,6 +184,8 @@ def create_tf_dataset(source, training, batch_size):
         dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
 
     dataset = dataset.repeat(None)
+    print('*'*10)
+    print(INPUT_PADDING_TOKEN)
 
     dataset = dataset.padded_batch(
         batch_size=batch_size,
@@ -202,18 +204,18 @@ def create_tf_dataset(source, training, batch_size):
             'label': [None]
         },
         padding_values={
-            'userID': tf.cast(INPUT_PAD, tf.int64),
-            'feature1': tf.cast(INPUT_PAD, tf.int64),
-            'feature2': tf.cast(INPUT_PAD, tf.int64),
-            'feature3': tf.cast(INPUT_PAD, tf.int64),
-            'feature4': tf.cast(INPUT_PAD, tf.int64),
-            'feature5': tf.cast(INPUT_PAD, tf.int64),
-            'feature6': tf.cast(INPUT_PAD, tf.int64),
-            'feature7': tf.cast(INPUT_PAD, tf.int64),
-            'feature8': tf.cast(INPUT_PAD, tf.int64),
-            'feature9': tf.cast(INPUT_PAD, tf.int64),
-            'feature10': tf.cast(INPUT_PAD, tf.int64),
-            'label': tf.cast(INPUT_PAD, tf.int64)
+            'userID': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature1': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature2': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature3': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature4': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature5': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature6': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature7': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature8': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature9': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'feature10': tf.cast(INPUT_PADDING_TOKEN, tf.string),
+            'label': tf.cast(INPUT_PAD, tf.float32)
         }
     )
 
@@ -221,7 +223,7 @@ def create_tf_dataset(source, training, batch_size):
     #  just for eager mode compatibility. But check that out.
 
     # TODO: Figure out caching. This doesn't work right now.
-    dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
+    # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
     def temp_pop_extras(features):
         features.pop('feature10')
         features.pop('feature9')
@@ -270,13 +272,13 @@ if __name__ == '__main__':
     data = create_tf_dataset(
         source='data/test/*',
         training=True,
-        batch_size=3
+        batch_size=1
     )
 
-
-    from pprint import pprint
-    for x in data.take(1):
-        pprint(x)
+    #
+    # from pprint import pprint
+    # for x in data.take(1):
+    #     pprint(x)
 
     sequential_input_config = {
         'items': ['feature1',
@@ -299,19 +301,38 @@ if __name__ == '__main__':
         'items': 4,
     }
 
-    final_layers_dims = [10, 5]
-    softmax_head = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims, output_vocab_size=3)
+    item_vocab_path = 'data/vocabs/item_vocab.txt'
+    output_vocab_size = len(load_vocabulary(item_vocab_path))
 
+    final_layers_dims = [1024, 512, 256]
+    head_unit = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims,
+                                                     output_vocab_size=output_vocab_size)
     clickstream_model = ClickstreamModel(
         sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,
         segment_to_head=0,  #0 is always the CLS token)
-        head_unit=softmax_head,
+        head_unit=head_unit,
         # value_to_head=INPUT_MASKING_TOKEN,
         num_encoder_layers=1,
         num_attention_heads=1,
         dropout_rate=0.1
     )
+
+    for x, y in data.take(3):
+        print_features(x)
+        # print(y)
+        print('*'*80)
+        y_hat = clickstream_model(x)
+        print('y_hat')
+        print(y_hat)
+        print('*'*80)
+        print('Label:')
+        print(y)
+        #
+        # from sequence_transformer.training_utils import MaskedLoss
+        # loss_fn = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+        # loss = loss_fn(y_true=y, y_pred=y_hat)
+        # print(loss)
 
 
