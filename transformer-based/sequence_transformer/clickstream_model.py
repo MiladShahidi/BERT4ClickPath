@@ -75,7 +75,7 @@ class TransformerInputPrep:
             A features dictionary containing the newly created features. It will leave untouched all other features that
             were not involved in chaining.
         """
-
+        features = features.copy()  # traced functions cannot change their input
         # 1 - Chaining features as specified
         for new_feature, seq_pair in self.seq_chain_mapping.items():
             sequence_pair_list = [features[name] for name in seq_pair]
@@ -106,7 +106,7 @@ class TransformerInputPrep:
         return features, segment_starts, segment_ends
 
 
-class TokenMapper:
+class TokenMapper(tf.keras.layers.Layer):
     # ToDo: Find a better name for this class
     """
     This class maps tokens (e.g. item ids or event names) to their index in the vocabulary, taking into account the fact
@@ -114,7 +114,7 @@ class TokenMapper:
     that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
 
     """
-    def __init__(self, vocabularies, reserved_tokens=None):
+    def __init__(self, vocabularies, reserved_tokens=None, **kwargs):
         """
 
         Args:
@@ -123,6 +123,10 @@ class TokenMapper:
             separator token ([SEP]) to separate neighbouring sequences in the input, a classification token ([CLS])
             for classification tasks, etc. Refer to how BERT input is formatted.
         """
+        super(TokenMapper, self).__init__(**kwargs)
+
+        self.vocabularies = vocabularies
+        self.reserved_tokens = reserved_tokens
         # In some cases, multiple variables might share the same vocab file. But it's not efficient to create multiple
         # copies of the same lookup table for them. So we will do this in 2 steps to avoid duplicate lookup tables
         lookup_per_vocab_file = {
@@ -132,6 +136,17 @@ class TokenMapper:
 
         self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
                               for var_name, vocab_file in vocabularies.items()}
+
+    def get_config(self):
+        """
+        Custom Keras layers and models are not serializable unless they override this method.
+        """
+        config = super(TokenMapper, self).get_config()
+        config.update({
+            'vocabularies': self.vocabularies,
+            'reserved_tokens': self.reserved_tokens
+        })
+        return config
 
     @staticmethod
     def _create_lookup_table(vocab_file, tokens_to_prepend=None):
@@ -150,7 +165,7 @@ class TokenMapper:
 
         return result
 
-    def __call__(self, features):
+    def call(self, features, training=None, mask=None):
         return self._apply_vocabs(features)
 
 
@@ -242,7 +257,7 @@ class ClickstreamModel(tf.keras.models.Model):
 
         self.embedding_dims = embedding_dims
         self.num_encoder_layers = num_encoder_layers
-        self.encoder_attention_heads = num_attention_heads
+        self.num_attention_heads = num_attention_heads
         self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
         self.sequential_input_config = sequential_input_config
 
@@ -266,56 +281,12 @@ class ClickstreamModel(tf.keras.models.Model):
             embedding_sizes=embedding_sizes,
             embedding_dims=embedding_dims,
             num_layers=self.num_encoder_layers,
-            encoder_attention_heads=self.encoder_attention_heads,
+            num_attention_heads=self.num_attention_heads,
             encoder_ff_dim=100,
             dropout_rate=self.dropout_rate
         )
 
         self.head = head_unit
-
-    def format_features(self, features):
-        # session_len and basket_size are those of longest example in the batch
-
-        # (batch_size, session_len)
-        session_events = self._fillna(base_tensor=features['event_name'],
-                                      fill_tensor=features['page_type'],
-                                      na_value=MISSING_EVENT_OR_ITEM)
-
-        # (batch_size, session_len)
-        session_items = self._fillna(base_tensor=features['product_skn_id_events'],
-                                     fill_tensor=features['product_skn_id_page_views'],
-                                     na_value=MISSING_EVENT_OR_ITEM)
-
-        # (batch_size, basket_size)
-        basket_events = tf.fill(dims=tf.shape(features['basket_product_id']),
-                                value=tf.cast(BUY_EVENT, session_events.dtype))
-
-        # add shippping charge
-        per_item_feature_names = [  # (batch_size, basket_size)
-            'ordered_quantity',
-            # 'shipping_charge',
-            'unit_price',
-            'discount'
-        ]
-
-        per_item_feature_list = [features[k] for k in per_item_feature_names]
-        # per_user_feature_list = [features[k] for k in per_user_feature_names]
-        all_side_features = per_item_feature_list  # + per_user_feature_list
-
-        # (batch_size, basket_size, n_per_item_features)
-        basket_side_features = tf.stack(all_side_features, axis=-1)
-
-        # (batch_size, session_len)
-        session_shaped_padding = tf.fill(dims=tf.shape(session_events), value=INPUT_PAD)
-        # (batch_size, session_len, n_per_item_features)
-        session_shaped_padding = tf.stack(values=[session_shaped_padding] * len(all_side_features), axis=-1)
-        session_shaped_padding = tf.cast(session_shaped_padding, basket_side_features.dtype)
-
-        items = self._format_seq_pair(session_items, features['basket_product_id'])
-        events = self._format_seq_pair(session_events, basket_events)
-        side_features = self._format_seq_pair(session_shaped_padding, basket_side_features)
-
-        return items, events, side_features
 
     def call(self, inputs, training=None, mask=None):
 
@@ -380,53 +351,26 @@ class ClickstreamModel(tf.keras.models.Model):
             matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
 
             head_input = matching_embeddings
+        else:
+            raise ValueError("One of value_to_head and segment_to_head must be provided.")
 
         logits = self.head(head_input)
 
         return logits
 
     # ToDo: write a helper function that produces these given the arguments to init
-    # @tf.function(input_signature=[
-    #     # Basket features: (batch_size, basket_size)
-    #     tf.TensorSpec([None, None], dtype=tf.string),   # basket_product_id
-    #     tf.TensorSpec([None, None], dtype=tf.float32),  # discount
-    #     tf.TensorSpec([None, None], dtype=tf.float32),  # ordered_quantity
-    #     tf.TensorSpec([None, None], dtype=tf.float32),  # unit_price
-    #     # Order features: (batch_size, 1)
-    #     tf.TensorSpec([None, 1], dtype=tf.float32),  # shipping_charge
-    #     # Session: (batch_size, session_length)
-    #     tf.TensorSpec([None, None], dtype=tf.string),  # event_name
-    #     tf.TensorSpec([None, None], dtype=tf.string),  # page_type
-    #     tf.TensorSpec([None, None], dtype=tf.string),  # product_skn_id_events
-    #     tf.TensorSpec([None, None], dtype=tf.string),  # product_skn_id_page_views
-    # ])
-    # def model_server(self,
-    #                  # Basket features
-    #                  basket_product_id,
-    #                  discount,
-    #                  ordered_quantity,
-    #                  unit_price,
-    #                  # Order features
-    #                  shipping_charge,
-    #                  # Session
-    #                  event_name,
-    #                  page_type,
-    #                  product_skn_id_events,
-    #                  product_skn_id_page_views):
-    #
-    #     features = {
-    #         # Basket features
-    #         'basket_product_id': basket_product_id,
-    #         'discount': discount,
-    #         'ordered_quantity': ordered_quantity,
-    #         'unit_price': unit_price,
-    #         # Order features
-    #         'shipping_charge': shipping_charge,
-    #         # Session
-    #         'event_name': event_name,
-    #         'page_type': page_type,
-    #         'product_skn_id_events': product_skn_id_events,
-    #         'product_skn_id_page_views': product_skn_id_page_views
-    #     }
-    #
-    #     return {'scores': self.call(inputs=features, is_training=False)}
+    @tf.function(input_signature=[
+        tf.TensorSpec([None, 1], dtype=tf.string),  # reviewerID
+        tf.TensorSpec([None, None], dtype=tf.string),   # asin
+        tf.TensorSpec([None, None], dtype=tf.int64),  # unixReviewTime
+    ])
+    def model_server(self, asin, reviewerID, unixReviewTime):
+
+        features = {
+            # Basket features
+            'asin': asin,
+            'reviewerID': reviewerID,
+            'unixReviewTime': unixReviewTime
+        }
+
+        return {'scores': self.call(inputs=features, training=False)}

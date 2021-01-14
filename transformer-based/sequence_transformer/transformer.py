@@ -199,7 +199,7 @@ class EncoderLayer(tf.keras.layers.Layer):
         })
         return config
 
-    def call(self, x, training, mask):
+    def call(self, x, training=None, mask=None):
         attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
         attn_output = self.dropout1(attn_output, training=training)
 
@@ -217,8 +217,8 @@ class Encoder(tf.keras.layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, dff,
                  dropout_rate, **kwargs):
         super(Encoder, self).__init__(**kwargs)
-        # This saves all arguments as attributes of the object so that they can ve saved when the model is exported
-        # This same mapping should be added to the layer's/model's config. See get_config
+        # This saves all arguments as attributes of the object so that they can be saved when the model is exported
+        # This same mapping should be added to the layer's config. See get_config
         self.num_layers = num_layers
         self.d_model = d_model
         self.num_heads = num_heads
@@ -253,8 +253,8 @@ class Encoder(tf.keras.layers.Layer):
         })
         return config
 
-    def call(self, inputs, training, mask):
-        seq_len = tf.shape(inputs)[1]
+    def call(self, inputs, training=None, mask=None):
+        # seq_len = tf.shape(inputs)[1]
         # inputs = self.embedding(inputs)  # (batch_size, input_seq_len, d_model)
 
         # inputs *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
@@ -271,20 +271,20 @@ class Encoder(tf.keras.layers.Layer):
 
 class Transformer(tf.keras.layers.Layer):
     """
-        The Transformer from "Attention Is All You Need", Vaswani, et. al. (2017).
+    An encoder-only Transformer. See "Attention Is All You Need", Vaswani, et. al. (2017).
 
-        https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+    https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
 
-        Note that this is a Keras Layer, not Model. It's meant to be used as part of (i.e. a layer inside) other models.
+    Note that this is a Keras Layer, not Model. It's meant to be used as part of (i.e. a layer inside) other models.
 
-        It receives a dictionary of input features (see the call method) each of which must have the same shape of:
+    It receives a dictionary of input features (see the call method) each of which must have the same shape of:
 
-        (batch_size, seq_len)
+    (batch_size, seq_len)
 
-        It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
-        embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:
+    It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
+    embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:
 
-        (batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions
+    (batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions
 
     """
     # This is the maximum number of input sequences (as marked and separated by the SEP token) this model can accept
@@ -293,10 +293,10 @@ class Transformer(tf.keras.layers.Layer):
     MAX_INPUT_SEQ = 100
 
     def __init__(self,
+                 num_layers,
+                 num_attention_heads,
                  embedding_sizes,
                  embedding_dims,
-                 num_layers,
-                 encoder_attention_heads,
                  encoder_ff_dim,
                  dropout_rate,
                  item_embedding_weights=None,
@@ -323,19 +323,25 @@ class Transformer(tf.keras.layers.Layer):
         assert set(embedding_sizes.keys()) == set(embedding_dims.keys()), \
             "embedding_sizes and embedding_dims must have the same set of keys."
 
+        # Some of these attributes are not used as such, but assigning them to a class attribute allows TF to trace them
+        # This is needed for serialization. I'm not completely sure though.
+        # See https://www.tensorflow.org/guide/keras/custom_layers_and_models
         self.num_layers = num_layers
-        self.encoder_attention_heads = encoder_attention_heads
+        self.num_attention_heads = num_attention_heads
+        self.embedding_sizes = embedding_sizes
+        self.embedding_dims = embedding_dims
         self.encoder_ff_dim = encoder_ff_dim
-        self.maximum_position_encoding = 10000  # This used to be an argument. But I don't see why one might want to change this.
         self.dropout_rate = dropout_rate
         self.item_embedding_weights = item_embedding_weights
+
+        self.maximum_position_encoding = 10000  # This used to be an argument. But doesn't need to be.
 
         self.d_model = sum(embedding_dims.values())
 
         self.encoder = Encoder(
             num_layers=num_layers,
             d_model=self.d_model,
-            num_heads=encoder_attention_heads,
+            num_heads=num_attention_heads,
             dff=encoder_ff_dim,
             dropout_rate=dropout_rate
         )
@@ -352,7 +358,7 @@ class Transformer(tf.keras.layers.Layer):
         }
 
         self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
-        # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)  # Segment embeddings
+        # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)
 
     def get_config(self):
         """
@@ -360,14 +366,11 @@ class Transformer(tf.keras.layers.Layer):
         """
         config = super(Transformer, self).get_config()
         config.update({
-            'item_embedding_dim': self.item_embedding_dim,
-            'event_embedding_dim': self.event_embedding_dim,
-            'item_vocab_size': self.item_vocab_size,
-            'event_vocab_size': self.event_vocab_size,
             'num_layers': self.num_layers,
-            'num_attention_heads': self.encoder_attention_heads,
+            'num_attention_heads': self.num_attention_heads,
+            'embedding_sizes': self.embedding_sizes,
+            'embedding_dims': self.embedding_dims,
             'encoder_ff_dim': self.encoder_ff_dim,
-            'maximum_position_encoding': self.maximum_position_encoding,
             'dropout_rate': self.dropout_rate,
             'item_embedding_weights': self.item_embedding_weights
         })
@@ -386,7 +389,6 @@ class Transformer(tf.keras.layers.Layer):
 
         # Concatenate embedded_features along their last dimension
         embedded_seq = tf.concat(list(embedded_features.values()), axis=-1)  # (batch_size, seq_len, d_model)
-
         # d_model == sum(embedding_dims.values())
         embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
 
