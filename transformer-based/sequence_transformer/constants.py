@@ -8,7 +8,7 @@ NUM_RESERVED_TOKENS = 10
 
 INPUT_PADDING_TOKEN = '[PAD]'
 UNKNOWN_TOKEN = '[UNK]'
-INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-training. Not used in the supervised training
+INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-is_training. Not used in the supervised is_training
 CLASSIFICATION_TOKEN = '[CLS]'
 SEPARATOR_TOKEN = '[SEP]'
 MISSING_EVENT_OR_ITEM_TOKEN = '[NA]'
@@ -25,6 +25,7 @@ RESERVED_TOKENS = [
 
 # Append [RESERVED_i] tokens to the list of reserved tokens to make it NUM_RESERVED_TOKENS long
 RESERVED_TOKENS += [f'[RESERVED_{i}]' for i in range(len(RESERVED_TOKENS), NUM_RESERVED_TOKENS)]
+
 INPUT_PAD = RESERVED_TOKENS.index(INPUT_PADDING_TOKEN)
 UNKNOWN_INPUT = RESERVED_TOKENS.index(UNKNOWN_TOKEN)
 INPUT_MASK = RESERVED_TOKENS.index(UNKNOWN_TOKEN)

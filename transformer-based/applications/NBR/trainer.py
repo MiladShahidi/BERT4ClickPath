@@ -1,13 +1,15 @@
 from input_pipeline import create_tf_dataset
-from training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
-from training_utils import BestModelSaverCallback, CustomLRSchedule
-from data_generator import ReturnsDataGen
-from clickstream_model import ClickstreamModel
+# from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
+from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, F1Score, PredictedPositives
+from data_generator import ClickStreamGenerator
+from sequence_transformer.clickstream_model import ClickstreamModel
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
+from sequence_transformer.utils import load_vocabulary
+from sequence_transformer.head import MultiLabel_MultiClass_classification, SoftMaxHead
 
 
 def get_vocab_files(training):
@@ -46,6 +48,24 @@ def create_input(training, validation, **kwargs):
 
     return training_dataset, validation_dataset
 
+
+def create_input_test(test, **kwargs):
+    """
+    Args:
+        test:
+        **kwargs:
+            Allowed kwargs are:
+                batch_size
+
+    Returns:
+
+    """
+    # training_files = os.path.join(is_training, 'training_data/part*')
+    test_dataset = create_tf_dataset(source=test,
+                                         training=False,
+                                         batch_size=kwargs['batch_size'])
+
+    return test_dataset
 
 def get_distribution_context(gpu_count):
     if gpu_count > 1:
@@ -87,26 +107,8 @@ def train(model,
           ckpt_dir=None,
           **training_params):
 
-    # train_window = (model_params['train_from'], model_params['train_until'])
-    # validation_window = (model_params['validate_from'], model_params['validate_until'])
-    training_dataset, validation_dataset = create_input(
-        training=training,
-        validation=validation,
-        **training_params  # batch_size and max_sess_len
-    )
 
-    metrics = [
-        PositiveRate(),
-        PredictedPositives(),
-        MaskedF1(),
-        MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
-        MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
-        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
-        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.2), name='precision-at-20'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.3), name='precision-at-30')
-    ]
+    metrics = [F1Score()]
 
     d_model = sum(model.embedding_dims.values())
 
@@ -120,7 +122,9 @@ def train(model,
     lr = training_params['lr']
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
-    loss = MaskedBinaryCrossEntropy()
+    # loss = MaskedBinaryCrossEntropy()
+    # loss = tf.keras.backend.binary_crossentropy
+    loss = tf.keras.losses.BinaryCrossentropy()
 
     with get_distribution_context(gpu_count):
         model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
@@ -166,58 +170,117 @@ if __name__ == '__main__':
     saved_model_dir = os.path.join(model_dir_root, 'savedmodel')
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
+    simulated_data = True
+    if simulated_data:
+        N_ITEMS = 100
+        item_vocab_dir = 'data/simulated/vocabs'
+        data_src = ClickStreamGenerator(n_items=N_ITEMS, write_vocab_files=True, vocab_dir=item_vocab_dir)
+        item_vocab_path = os.path.join(item_vocab_dir, 'item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_path))
+        training_data_src = data_src
+        validation_data_src = data_src
+        test_data_src = data_src
+    else:
+        root_data_dir = 'data'
+        training_data_files = os.path.join(root_data_dir, 'train/*.tfrecord')
+        validation_data_files = os.path.join(root_data_dir, 'validation/*.tfrecord')
+        item_vocab_path = os.path.join(root_data_dir, 'vocabs/item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_path))
+
+        training_data_src = training_data_files
+        validation_data_src = training_data_files
+
     training_params = {
         'n_epochs': 1000,
-        'steps_per_epoch': 100,
-        'validation_steps': 100,
+        'steps_per_epoch': 10,
+        'validation_steps': 10,
         'lr_warmup_steps': 4000,
         'lr': 1e-2,
-        'lr_scale': 1,
-        'batch_size': 100,
+        'lr_scale': 1e-1,
+        'batch_size': 1000,
         'max_sess_len': 200,
         'ckpt_dir': ckpt_dir,
     }
+
+    test_params = {
+        'n_epochs': 1,
+        'steps_per_epoch': 10,
+        'validation_steps': 10,
+        'lr_warmup_steps': 4000,
+        'lr': 1e-2,
+        'lr_scale': 1,
+        'batch_size': 1,
+        'max_sess_len': 200,
+        'ckpt_dir': ckpt_dir,
+    }
+
+    final_layers_dims = [1024, 512, 256]
+    head_unit = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
+    # head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
+
+
 
     model_params = {
         'num_encoder_layers': 1,
         'num_attention_heads': 1,
         'dropout_rate': 0.1,
-        'final_layers_dims': [1024, 512, 256]
+        'head_unit': head_unit
     }
 
     input_config = {
         'sequential_input_config': {
-            'items': ['seq_1_items', 'seq_2_items'],
-            # 'events': ['seq_1_events', 'seq_2_events']
+            'items': ['feature1',
+                      'feature2',
+                      'feature3',
+                      'feature4',
+                      'feature5',
+                      'feature6',
+                      'feature7',
+                      'feature8',
+                      'feature9',
+                      'feature10'],
         },
         'feature_vocabs': {
-            'items': '../data/vocabs/item_vocab.txt',
-            # 'events': '../data/vocabs/event_vocab.txt'
+            'items': 'data/vocabs/item_vocab.txt',
         },
         'embedding_dims': {
-            'items': 5,
+            'items': 30,
             # 'events': 2
         },
-        'segment_to_head': 2
+        'segment_to_head': 0
     }
 
-    N_ITEMS = 1000
-    COHESION = 100
 
-    data_src = ReturnsDataGen(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
-                              write_vocab_files=True, vocab_dir='../data/vocabs')
+
+    # data_src = ReturnsDataGen(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION, positive_rate=0.5,
+    #                           write_vocab_files=True, vocab_dir='../data/vocabs')
 
     config = {**model_params, **input_config}
     model = create_model(gpu_count=0,
                          # ckpt_dir=training_params['ckpt_dir'],
                          **config)
 
+    training_dataset, validation_dataset = create_input(
+        training=training_data_src,
+        validation=validation_data_src,
+        **training_params  # batch_size and max_sess_len
+    )
+
+    test_dataset = create_input_test(test=test_data_src, **test_params)
+
     trained_model = train(model=model,
-                          training=data_src,
-                          validation=data_src,
+                          training=training_dataset,
+                          validation=validation_dataset,
                           model_dir=saved_model_dir,
                           gpu_count=0,
                           **training_params)
 
-    # tf.keras.backend.set_learning_phase(0)
-    # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
+    for x, y in test_dataset.take(3):
+        print(x['feature1'])
+        y_hat = trained_model.predict(x)
+        print('y_hat')
+        print(y_hat)
+        print('Label:')
+        print(y)
+        print('*'*80)
+        print('*'*80)
