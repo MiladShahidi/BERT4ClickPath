@@ -106,67 +106,67 @@ class TransformerInputPrep:
         return features, segment_starts, segment_ends
 
 
-class TokenMapper(tf.keras.layers.Layer):
-    # ToDo: Find a better name for this class
-    """
-    This class maps tokens (e.g. item ids or event names) to their index in the vocabulary, taking into account the fact
-    that we need to add a list of reserved tokens to the vocabulary before mapping. These reserved tokens are the ones
-    that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
-
-    """
-    def __init__(self, vocabularies, reserved_tokens=None, **kwargs):
-        """
-
-        Args:
-            vocabularies: Dict mapping variable names to vocab files for categorical features.
-            reserved_tokens: A list of reserved tokens that will be added to the vocabulary. These may include a
-            separator token ([SEP]) to separate neighbouring sequences in the input, a classification token ([CLS])
-            for classification tasks, etc. Refer to how BERT input is formatted.
-        """
-        super(TokenMapper, self).__init__(**kwargs)
-
-        self.vocabularies = vocabularies
-        self.reserved_tokens = reserved_tokens
-        # In some cases, multiple variables might share the same vocab file. But it's not efficient to create multiple
-        # copies of the same lookup table for them. So we will do this in 2 steps to avoid duplicate lookup tables
-        lookup_per_vocab_file = {
-            vocab_file: self._create_lookup_table(vocab_file, tokens_to_prepend=reserved_tokens)
-            for vocab_file in set(vocabularies.values())
-        }
-
-        self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
-                              for var_name, vocab_file in vocabularies.items()}
-
-    def get_config(self):
-        """
-        Custom Keras layers and models are not serializable unless they override this method.
-        """
-        config = super(TokenMapper, self).get_config()
-        config.update({
-            'vocabularies': self.vocabularies,
-            'reserved_tokens': self.reserved_tokens
-        })
-        return config
-
-    @staticmethod
-    def _create_lookup_table(vocab_file, tokens_to_prepend=None):
-        keys = load_vocabulary(vocab_file)  # words in vocab file
-        if tokens_to_prepend is not None:
-            keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
-        values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
-        initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
-        return tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
-
-    def _apply_vocabs(self, features):
-        result = features.copy()  # Traced functions (by TF for exporting) should not change their input arguments
-        # features for which a vocab file was not specified won't have a lookup table and will go through unchanged.
-        for var_name in self.lookup_tables.keys():
-            result[var_name] = self.lookup_tables[var_name].lookup(result[var_name])
-
-        return result
-
-    def call(self, features, training=None, mask=None):
-        return self._apply_vocabs(features)
+# class TokenMapper(tf.keras.layers.Layer):
+#     # ToDo: Find a better name for this class
+#     """
+#     This class maps tokens (e.g. item ids or event names) to their index in the vocabulary, taking into account the fact
+#     that we need to add a list of reserved tokens to the vocabulary before mapping. These reserved tokens are the ones
+#     that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
+#
+#     """
+#     def __init__(self, vocabularies, reserved_tokens=None, **kwargs):
+#         """
+#
+#         Args:
+#             vocabularies: Dict mapping variable names to vocab files for categorical features.
+#             reserved_tokens: A list of reserved tokens that will be added to the vocabulary. These may include a
+#             separator token ([SEP]) to separate neighbouring sequences in the input, a classification token ([CLS])
+#             for classification tasks, etc. Refer to how BERT input is formatted.
+#         """
+#         super(TokenMapper, self).__init__(**kwargs)
+#
+#         self.vocabularies = vocabularies
+#         self.reserved_tokens = reserved_tokens
+#         # In some cases, multiple variables might share the same vocab file. But it's not efficient to create multiple
+#         # copies of the same lookup table for them. So we will do this in 2 steps to avoid duplicate lookup tables
+#         lookup_per_vocab_file = {
+#             vocab_file: self._create_lookup_table(vocab_file, tokens_to_prepend=reserved_tokens)
+#             for vocab_file in set(vocabularies.values())
+#         }
+#
+#         self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
+#                               for var_name, vocab_file in vocabularies.items()}
+#
+#     def get_config(self):
+#         """
+#         Custom Keras layers and models are not serializable unless they override this method.
+#         """
+#         config = super(TokenMapper, self).get_config()
+#         config.update({
+#             'vocabularies': self.vocabularies,
+#             'reserved_tokens': self.reserved_tokens
+#         })
+#         return config
+#
+#     @staticmethod
+#     def _create_lookup_table(vocab_file, tokens_to_prepend=None):
+#         keys = load_vocabulary(vocab_file)  # words in vocab file
+#         if tokens_to_prepend is not None:
+#             keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
+#         values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
+#         initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
+#         return tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
+#
+#     def _apply_vocabs(self, features):
+#         result = features.copy()  # Traced functions (by TF for exporting) should not change their input arguments
+#         # features for which a vocab file was not specified won't have a lookup table and will go through unchanged.
+#         for var_name in self.lookup_tables.keys():
+#             result[var_name] = self.lookup_tables[var_name].lookup(result[var_name])
+#
+#         return result
+#
+#     def call(self, features, training=None, mask=None):
+#         return self._apply_vocabs(features)
 
 
 class ClickstreamModel(tf.keras.models.Model):
@@ -269,12 +269,13 @@ class ClickstreamModel(tf.keras.models.Model):
         self.value_to_head = value_to_head
 
         self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
-        self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
-
+        # self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
+        self.vocab_lookup_tables = self._create_lookup_tables(vocabularies=feature_vocabs,
+                                                              tokens_to_prepend=RESERVED_TOKENS)
         # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
         # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
         # dimension) for it, but don't provide a vocab file for it.
-        embedding_sizes = {f: self.token_mapper.lookup_tables[f].size() for f in feature_vocabs.keys()}
+        embedding_sizes = {f: self.vocab_lookup_tables[f].size() for f in feature_vocabs.keys()}
 
         # Transformer
         self.transformer = Transformer(
@@ -288,13 +289,30 @@ class ClickstreamModel(tf.keras.models.Model):
 
         self.head = head_unit
 
+    @staticmethod
+    def _create_lookup_tables(vocabularies, tokens_to_prepend=None):
+        lookup_tables = {}
+        for feature_name, vocab_file in vocabularies.items():
+            keys = load_vocabulary(vocab_file)  # words in vocab file
+            if tokens_to_prepend is not None:
+                keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
+            values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
+            initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
+            lookup_tables[feature_name] = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
+
+        return lookup_tables
+
     def call(self, inputs, training=None, mask=None):
 
         # Traced functions are not allowed to change their input arguments
         raw_features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
-        features = self.token_mapper(raw_features)
 
-        # separating sequential features that should go into the Transformer
+        # We might need raw_features later. Also, we don't want to throw away feature that don't need vocab mapping
+        features = raw_features.copy()
+        for feature_name, lookup_table in self.vocab_lookup_tables.items():
+            features[feature_name] = lookup_table.lookup(features[feature_name])
+
+        # separating sequential features that should go into the Transformer from potentially non-seq "side" features
         sequential_features = {feature_name: features[feature_name]
                                for feature_name in self.sequential_input_config.keys()}
 
@@ -358,19 +376,19 @@ class ClickstreamModel(tf.keras.models.Model):
 
         return logits
 
-    # ToDo: write a helper function that produces these given the arguments to init
-    @tf.function(input_signature=[
-        tf.TensorSpec([None, 1], dtype=tf.string),  # reviewerID
-        tf.TensorSpec([None, None], dtype=tf.string),   # asin
-        tf.TensorSpec([None, None], dtype=tf.int64),  # unixReviewTime
-    ])
-    def model_server(self, asin, reviewerID, unixReviewTime):
-
-        features = {
-            # Basket features
-            'asin': asin,
-            'reviewerID': reviewerID,
-            'unixReviewTime': unixReviewTime
-        }
-
-        return {'scores': self.call(inputs=features, training=False)}
+    # # ToDo: write a helper function that produces these given the arguments to init
+    # @tf.function(input_signature=[
+    #     tf.TensorSpec([None, 1], dtype=tf.string),  # reviewerID
+    #     tf.TensorSpec([None, None], dtype=tf.string),   # asin
+    #     tf.TensorSpec([None, None], dtype=tf.int64),  # unixReviewTime
+    # ])
+    # def model_server(self, asin, reviewerID, unixReviewTime):
+    #
+    #     features = {
+    #         # Basket features
+    #         'asin': asin,
+    #         'reviewerID': reviewerID,
+    #         'unixReviewTime': unixReviewTime
+    #     }
+    #
+    #     return {'scores': self.call(inputs=features, training=False)}

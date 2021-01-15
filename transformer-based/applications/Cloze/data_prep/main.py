@@ -1,6 +1,7 @@
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+
 from sequence_transformer.data_prep import data_utils
 import json
 import gzip
@@ -29,50 +30,70 @@ def get_pandas_df(path, use_columns=None, n_rows=None):
     return pd.DataFrame.from_dict(df, orient='index')
 
 
+def read_raw_amazon_data(path, min_item_per_user=None):
+    """ Reads data from /json.gz files as formatted in Amazon data repository at https://jmcauley.ucsd.edu/data/amazon/ """
+    df = get_pandas_df(path=path,
+                       use_columns=['reviewerID', 'asin', 'unixReviewTime'],
+                       n_rows=None)
+    if min_item_per_user is not None:
+        min_item_filter = df.groupby('reviewerID')['asin'].transform('count').ge(min_item_per_user)
+        df = df[min_item_filter]
+
+    df = df.sort_values(['unixReviewTime']).drop('unixReviewTime', axis=1)
+
+    return df
+
+
+def read_bert4rec_text_data(path):
+    """ Reads data from a text file as used by Bert4Rec code. See https://github.com/FeiSun/BERT4Rec """
+    df = pd.read_csv(path, delimiter=' ', header=None, dtype={0: str, 1: str})
+    df = df.rename({0: 'reviewerID', 1: 'asin'}, axis=1)
+    return df
+
+
 if __name__ == '__main__':
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    MIN_ITEM = 4
+    MIN_ITEM = 5
 
-    output_path = '../data'
+    output_path = '../data/amazon_beauty_bert4rec'
+    import shutil
+    shutil.rmtree(output_path, ignore_errors=True)
 
     print('Reading data...')
-    if False:
-        df = get_pandas_df(path='../raw_data/reviews_Beauty.json.gz',
-                           use_columns=['reviewerID', 'asin', 'unixReviewTime'],
-                           n_rows=None)
+    if True:
+        # df = read_raw_amazon_data('../raw_data/reviews_Beauty.json.gz', min_item_per_user=MIN_ITEM)
+        df = read_bert4rec_text_data('../raw_data/beauty.txt')
 
-        # df = pd.DataFrame({
-        #     'reviewerID': [1, 2, 1, 2, 3],
-        #     'asin': ['a_late', 'b_late', 'a_early', 'c_early', 'c'],
-        #     'unixReviewTime': [6, 2, 4, 1, 3]
-        # })
-
-        min_item_filter = df.groupby('reviewerID')['asin'].transform('count').ge(MIN_ITEM)
-        df = df[min_item_filter]
+        print('# of interactions: ', len(df))
 
         item_vocab = pd.unique(df['asin'])
+        print('# of items: ', len(item_vocab))
+
+        n_users = len(pd.unique(df['reviewerID']))
+        print('# of users: ', n_users)
+
         vocab_path = os.path.join(output_path, 'vocabs')
         os.makedirs(vocab_path, exist_ok=True)
         with open(os.path.join(vocab_path, 'item_vocab.txt'), 'w') as f:
             f.writelines('\n'.join(item_vocab))
 
         print('Converting to TF Examples...')
-        df = df.sort_values(['unixReviewTime'])
+
         tf_data = data_utils.pandas_to_tf_example_list(df, group_id_column='reviewerID')
+        print('# of sequences: ', len(tf_data))
 
         print('Writing TFRecord files...')
         data_utils.write_to_tfrecord(tf_data, path=output_path, filename_prefix='amazon_beauty')
-
-        # reading it back
     else:
+        # reading it back
         files = [os.path.join(output_path, filename) for filename in tf.io.gfile.listdir(output_path)]
         feature_spec = {
             'reviewerID': tf.io.FixedLenFeature([], tf.string),
             'asin': tf.io.VarLenFeature(tf.string),
-            'unixReviewTime': tf.io.VarLenFeature(tf.int64)
+            # 'unixReviewTime': tf.io.VarLenFeature(tf.int64)
         }
 
         dataset = tf.data.TFRecordDataset(files)

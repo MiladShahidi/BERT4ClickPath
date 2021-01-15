@@ -1,0 +1,5 @@
+trainingInput:
+  runtimeVersion: "2.3"
+  pythonVersion: "3.7"
+  scaleTier: CUSTOM
+  masterType: n1-standard-4

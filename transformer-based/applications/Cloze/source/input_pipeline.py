@@ -1,11 +1,10 @@
 import tensorflow as tf
 from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
-from data_generator import ClickStreamGenerator
+from source.data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
-import os
-from applications.Cloze.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE
+from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE
 from sequence_transformer.head import SoftMaxHead
-from sequence_transformer.clickstream_model import TokenMapper
+from sequence_transformer.utils import load_vocabulary
 
 
 def parse_examples(serialized_example, feature_spec):
@@ -86,7 +85,7 @@ def random_item_mask(item_list, masked_percentage=MASKED_PERCENTAGE, max_masked=
     return masked_item_list, masked_items
 
 
-def create_tf_dataset(source, is_training, batch_size):
+def create_tf_dataset(source, is_training, batch_size, target_vocab_file):
     """
 
     Args:
@@ -139,17 +138,22 @@ def create_tf_dataset(source, is_training, batch_size):
 
     dataset = dataset.repeat(None)
 
-    # ToDo: This is bad. The vocab address should not be a literal string in here
-    label_mapper = TokenMapper(vocabularies={'labels': 'data/simulated/vocabs/item_vocab.txt'})
+    label_vocab = load_vocabulary(target_vocab_file)
+    values = tf.convert_to_tensor(range(len(label_vocab)), dtype=tf.int64)
+    initializer = tf.lookup.KeyValueTensorInitializer(keys=label_vocab, values=values)
+    label_lookup = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
 
     def item_mask(features):
+        def label_map(x):
+            return label_lookup.lookup(x)
+
         features['asin'], labels = random_item_mask(
             item_list=features['asin'],
             masked_percentage=MASKED_PERCENTAGE,
             max_masked=MAX_MASKED_ITEMS
         )
         features['orig_labels'] = labels
-        features['labels'] = label_mapper({'labels': labels})['labels']
+        features['labels'] = label_map(labels)
         return features
 
     dataset = dataset.map(item_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -219,7 +223,7 @@ if __name__ == '__main__':
     data = create_tf_dataset(
         source=data_gen,
         is_training=True,
-        batch_size=10
+        batch_size=2
     )
 
     sequential_input_config = {
@@ -254,13 +258,15 @@ if __name__ == '__main__':
     for x, y in data.take(1):
         print_features(x)
         print('*'*80)
+        print('Labels:')
+        print(y)
         y_hat = clickstream_model(x)
         print(y_hat)
-        print('*'*80)
-        print('Label:')
-        print(y)
-
-        from sequence_transformer.training_utils import MaskedLoss
-        loss_fn = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
-        loss = loss_fn(y_true=y, y_pred=y_hat)
-        print(loss)
+        # print('*'*80)
+        # print('Label:')
+        # print(y)
+        #
+        # from sequence_transformer.training_utils import MaskedLoss
+        # loss_fn = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+        # loss = loss_fn(y_true=y, y_pred=y_hat)
+        # print(loss)

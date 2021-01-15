@@ -27,7 +27,7 @@ class ClickStreamGenerator:
                 that are further away diminish more strongly for higher values of this.
         """
         self._min_sess_len = 5
-        self._max_sess_len = 50
+        self._max_sess_len = 40
         self._min_basket_len = 1
         self._max_basket_len = 5
         self._n_items = n_items
@@ -98,7 +98,7 @@ class ClickStreamGenerator:
     def __next__(self):
         session_length = np.random.randint(self._min_sess_len, self._max_sess_len + 1)
 
-        # session_items = self._draw_sample_sequence(np.random.choice(range(self._n_items)), n_samples=session_length)
+        session_items = self._draw_sample_sequence(np.random.choice(range(self._n_items)), n_samples=session_length)
         # masked_session, basket, labels = self._mask_session(session_items)
 
         # n_baskets = np.random.randint(low=2, high=10, dtype=np.int32)
@@ -112,10 +112,10 @@ class ClickStreamGenerator:
         data = {
             # 'asin': [self.item_names[(10*(i+offset)+label) % self._n_items] if i >= 0 else INPUT_MASKING_TOKEN
             #          for i in range(session_length)],
-            'asin': [self.item_names[(i+first_item) % self._n_items] if i >= 0 else INPUT_MASKING_TOKEN
-                     for i in range(session_length)],
+            # 'asin': [self.item_names[(i+first_item) % self._n_items] if i >= 0 else INPUT_MASKING_TOKEN
+            #          for i in range(session_length)],
 
-            # 'asin': [self.item_names[i] if i >= 0 else INPUT_MASKING_TOKEN for i in session_items],
+            'asin': [self.item_names[i] if i >= 0 else INPUT_MASKING_TOKEN for i in session_items],
             'reviewerID': 'ID',
             'unixReviewTime': [0 for _ in range(session_length)],
             # 'seq_1_events': [self.event_names[0] for i in masked_session],  # Just a placeholder for now
