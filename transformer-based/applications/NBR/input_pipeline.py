@@ -3,7 +3,7 @@ from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT
 
 # from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
 
-# from data_generator import ReturnsDataGen
+from data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
 from sequence_transformer.head import SoftMaxHead, MultiLabel_MultiClass_classification
 
@@ -176,6 +176,38 @@ def create_tf_dataset(source, training, batch_size):
             return parse_examples(ex, context_feature_spec)
 
         dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    elif callable(source):
+        data_types = {
+            'userID': tf.string,
+            'feature1': tf.string,
+            'feature2': tf.string,
+            'feature3': tf.string,
+            'feature4': tf.string,
+            'feature5': tf.string,
+            'feature6': tf.string,
+            'feature7': tf.string,
+            'feature8': tf.string,
+            'feature9': tf.string,
+            'feature10':tf.string,
+            'label': tf.float32
+        }
+        tensor_shapes = {
+            'userID': tf.TensorShape([]),
+            'feature1': tf.TensorShape([None]),
+            'feature2': tf.TensorShape([None]),
+            'feature3': tf.TensorShape([None]),
+            'feature4': tf.TensorShape([None]),
+            'feature5': tf.TensorShape([None]),
+            'feature6': tf.TensorShape([None]),
+            'feature7': tf.TensorShape([None]),
+            'feature8': tf.TensorShape([None]),
+            'feature9': tf.TensorShape([None]),
+            'feature10':tf.TensorShape([None]),
+            'label': tf.TensorShape([None])
+        }
+
+        dataset = tf.data.Dataset.from_generator(source, output_types=data_types, output_shapes=tensor_shapes)
+
     else:
         raise TypeError('Source must be either str or callable.')
 
@@ -225,8 +257,8 @@ def create_tf_dataset(source, training, batch_size):
     # TODO: Figure out caching. This doesn't work right now.
     # dataset = dataset.cache()  # Cache to memory to speed up subsequent reads
     def temp_pop_extras(features):
-        features.pop('feature10')
-        features.pop('feature9')
+        # features.pop('feature10')
+        # features.pop('feature9')
         return features
 
     # dataset = dataset.map(temp_pop_extras, num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -260,20 +292,23 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    # data_gen = ClickStreamGenerator(
-    #     n_items=1000,
-    #     n_events=10,
-    #     session_cohesiveness=5,
-    #     positive_rate=0.5,
-    #     write_vocab_files=True,
-    #     vocab_dir='../data/vocabs'
-    # )
+    data_gen = ClickStreamGenerator(
+        n_items=10,
+        write_vocab_files=True,
+        vocab_dir='data/vocabs'
+    )
 
     data = create_tf_dataset(
-        source='data/test/*',
+        source=data_gen,
         training=True,
         batch_size=1
     )
+
+    # data = create_tf_dataset(
+    #     source='data/test/*',
+    #     training=True,
+    #     batch_size=1
+    # )
 
     #
     # from pprint import pprint

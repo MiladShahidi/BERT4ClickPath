@@ -437,13 +437,25 @@ if __name__ == '__main__':
     #
     # print(l)
 
-    y_true = tf.convert_to_tensor(
-        [[0, 2], [0, -1]]
-    )
-    y_pred = tf.convert_to_tensor([
-        [[0.8, 0.1, 0.1], [0.3, 0.4, 0.3]],
-        [[0.05, 0.95, 0], [0.3, 0.6, 0.1]]
-    ])
-    m = tf.keras.metrics.SparseCategoricalAccuracy()
-    masked_m = MaskedMetric(m, name='sca')
-    print(masked_m(y_true, y_pred))
+    # y_true = tf.convert_to_tensor(
+    #     [[0, 2], [0, -1]]
+    # )
+    # y_pred = tf.convert_to_tensor([
+    #     [[0.8, 0.1, 0.1], [0.3, 0.4, 0.3]],
+    #     [[0.05, 0.95, 0], [0.3, 0.6, 0.1]]
+    # ])
+    # m = tf.keras.metrics.SparseCategoricalAccuracy()
+    # masked_m = MaskedMetric(m, name='sca')
+    # print(masked_m(y_true, y_pred))
+
+    y_true_2 = [[1, 0, 0], [1, 0, 0]]
+    y_pred_2 = [[0.9, 0.1, 0.1], [0.9, 0.1, 0.1]]
+    f1 = F1Score()
+    f1.update_state(y_true_2, y_pred_2)
+    l_1 = f1.result()
+    print(l_1)
+    # exit()
+    fbeta = fbeta_2()
+    fbeta.update_state(y_true_2, y_pred_2)
+    l_2 = fbeta.result()
+    print(l_2)

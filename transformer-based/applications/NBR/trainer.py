@@ -1,7 +1,7 @@
 from input_pipeline import create_tf_dataset
 # from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
 from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, F1Score, PredictedPositives
-# from data_generator import ReturnsDataGen
+from data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
 import os
 import tensorflow as tf
@@ -45,21 +45,27 @@ def create_input(training, validation, **kwargs):
     validation_dataset = create_tf_dataset(source=validation,
                                            training=False,
                                            batch_size=kwargs['batch_size'])
-    # import  pprint
-
-    # def print_features(x, select=None):
-    #     for k in x:
-    #         if (select is None) or (k in select):
-    #             print(k)
-    #             print('\t', x[k])
-    #             print('*' * 80)
-    # print('*'*100)
-    # for x, y in training_dataset.take(1):
-    #     print_features(x)
-    #     print(y)
 
     return training_dataset, validation_dataset
 
+
+def create_input_test(test, **kwargs):
+    """
+    Args:
+        test:
+        **kwargs:
+            Allowed kwargs are:
+                batch_size
+
+    Returns:
+
+    """
+    # training_files = os.path.join(is_training, 'training_data/part*')
+    test_dataset = create_tf_dataset(source=test,
+                                         training=False,
+                                         batch_size=kwargs['batch_size'])
+
+    return test_dataset
 
 def get_distribution_context(gpu_count):
     if gpu_count > 1:
@@ -101,13 +107,6 @@ def train(model,
           ckpt_dir=None,
           **training_params):
 
-    # train_window = (model_params['train_from'], model_params['train_until'])
-    # validation_window = (model_params['validate_from'], model_params['validate_until'])
-    training_dataset, validation_dataset = create_input(
-        training=training,
-        validation=validation,
-        **training_params  # batch_size and max_sess_len
-    )
 
     metrics = [F1Score()]
 
@@ -171,9 +170,25 @@ if __name__ == '__main__':
     saved_model_dir = os.path.join(model_dir_root, 'savedmodel')
     ckpt_dir = os.path.join(model_dir_root, 'ckpts')
 
-    root_data_dir = 'data'
-    training_data_files = os.path.join(root_data_dir, 'train/*.tfrecord')
-    validation_data_files = os.path.join(root_data_dir, 'validation/*.tfrecord')
+    simulated_data = True
+    if simulated_data:
+        N_ITEMS = 100
+        item_vocab_dir = 'data/simulated/vocabs'
+        data_src = ClickStreamGenerator(n_items=N_ITEMS, write_vocab_files=True, vocab_dir=item_vocab_dir)
+        item_vocab_path = os.path.join(item_vocab_dir, 'item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_path))
+        training_data_src = data_src
+        validation_data_src = data_src
+        test_data_src = data_src
+    else:
+        root_data_dir = 'data'
+        training_data_files = os.path.join(root_data_dir, 'train/*.tfrecord')
+        validation_data_files = os.path.join(root_data_dir, 'validation/*.tfrecord')
+        item_vocab_path = os.path.join(root_data_dir, 'vocabs/item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_path))
+
+        training_data_src = training_data_files
+        validation_data_src = training_data_files
 
     training_params = {
         'n_epochs': 1000,
@@ -181,14 +196,23 @@ if __name__ == '__main__':
         'validation_steps': 10,
         'lr_warmup_steps': 4000,
         'lr': 1e-2,
-        'lr_scale': 1,
-        'batch_size': 2,
+        'lr_scale': 1e-1,
+        'batch_size': 1000,
         'max_sess_len': 200,
         'ckpt_dir': ckpt_dir,
     }
 
-    item_vocab_path = os.path.join(root_data_dir, 'vocabs/item_vocab.txt')
-    output_vocab_size = len(load_vocabulary(item_vocab_path))
+    test_params = {
+        'n_epochs': 1,
+        'steps_per_epoch': 10,
+        'validation_steps': 10,
+        'lr_warmup_steps': 4000,
+        'lr': 1e-2,
+        'lr_scale': 1,
+        'batch_size': 1,
+        'max_sess_len': 200,
+        'ckpt_dir': ckpt_dir,
+    }
 
     final_layers_dims = [1024, 512, 256]
     head_unit = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
@@ -236,27 +260,27 @@ if __name__ == '__main__':
                          # ckpt_dir=training_params['ckpt_dir'],
                          **config)
 
-    # training, val = create_input(training_data_files, training_data_files, batch_size=1)
-    #
-    # for x, y in training.take(1):
-    #     # print_features(x)
-    #     # print(y)
-    #     print('*' * 80)
-    #     y_hat = model(x)
-    #     print('y_hat')
-    #     print(y_hat)
-    #     print('*' * 80)
-    #     print('Label:')
-    #     print(y)
-    #
-    # exit()
+    training_dataset, validation_dataset = create_input(
+        training=training_data_src,
+        validation=validation_data_src,
+        **training_params  # batch_size and max_sess_len
+    )
+
+    test_dataset = create_input_test(test=test_data_src, **test_params)
 
     trained_model = train(model=model,
-                          training=training_data_files,
-                          validation=validation_data_files,
+                          training=training_dataset,
+                          validation=validation_dataset,
                           model_dir=saved_model_dir,
                           gpu_count=0,
                           **training_params)
 
-    # tf.keras.backend.set_learning_phase(0)
-    # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
+    for x, y in test_dataset.take(3):
+        print(x['feature1'])
+        y_hat = trained_model.predict(x)
+        print('y_hat')
+        print(y_hat)
+        print('Label:')
+        print(y)
+        print('*'*80)
+        print('*'*80)
