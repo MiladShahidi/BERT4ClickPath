@@ -38,8 +38,5 @@ gcloud ai-platform jobs submit training $JOBNAME \
   --config=gcp_training_config.yaml \
   --runtime-version=$RUNTIME_VERSION \
   -- \
-  --input_data=gs://${BUCKET}/amazon_beauty_bert4rec \
-  --model_dir=${MODELDIR} \
-  --batch_size=500 \
-  --num_encoder_layers=4 \
-  --num_attention_heads=4
+  --input_data=gs://${BUCKET}/data/amazon_beauty_bert4rec \
+  --model_dir=${MODELDIR}

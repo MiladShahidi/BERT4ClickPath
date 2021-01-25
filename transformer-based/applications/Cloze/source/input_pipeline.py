@@ -5,6 +5,7 @@ from sequence_transformer.clickstream_model import ClickstreamModel
 from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE
 from sequence_transformer.head import SoftMaxHead
 from sequence_transformer.utils import load_vocabulary
+import os
 
 
 def parse_examples(serialized_example, feature_spec):
@@ -211,19 +212,21 @@ def dataset_benchmark(dataset, n_steps):
 
 
 if __name__ == '__main__':
-    N_ITEMS = 40
+    N_ITEMS = 10
+    input_dir = '../data/simulated'
     data_gen = ClickStreamGenerator(
         n_items=N_ITEMS,
         n_events=10,
         session_cohesiveness=5,
         write_vocab_files=True,
-        vocab_dir='data/vocabs'
+        vocab_dir='../data/simulated/vocabs'
     )
-
+    item_vocab_file = os.path.join(input_dir, 'vocabs/item_vocab.txt')
     data = create_tf_dataset(
         source=data_gen,
         is_training=True,
-        batch_size=2
+        batch_size=2,
+        target_vocab_file=item_vocab_file
     )
 
     sequential_input_config = {
@@ -232,7 +235,7 @@ if __name__ == '__main__':
     }
 
     feature_vocabularies = {
-        'items': 'data/vocabs/item_vocab.txt',
+        'items': item_vocab_file,
         # 'events': 'data/vocabs/event_vocab.txt'
     }
 
@@ -242,7 +245,7 @@ if __name__ == '__main__':
     }
 
     final_layers_dims = [10, 5]
-    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=3)
+    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=N_ITEMS)
 
     clickstream_model = ClickstreamModel(
         sequential_input_config=sequential_input_config,
@@ -262,11 +265,10 @@ if __name__ == '__main__':
         print(y)
         y_hat = clickstream_model(x)
         print(y_hat)
-        # print('*'*80)
-        # print('Label:')
-        # print(y)
-        #
-        # from sequence_transformer.training_utils import MaskedLoss
-        # loss_fn = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
-        # loss = loss_fn(y_true=y, y_pred=y_hat)
-        # print(loss)
+
+        from sequence_transformer.metrics import ClozeMaskedNDCG
+
+        metric = ClozeMaskedNDCG(k=5)
+        metric.reset_states()
+        metric.update_state(y_true=y, y_pred=y_hat)
+        print(metric.result())

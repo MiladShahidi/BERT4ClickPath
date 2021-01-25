@@ -1,6 +1,6 @@
 from input_pipeline import create_tf_dataset
 # from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
-from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, F1Score, PredictedPositives
+from sequence_transformer.metrics import BestModelSaverCallback, CustomLRSchedule, F1Score, PredictedPositives
 from data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
 import os

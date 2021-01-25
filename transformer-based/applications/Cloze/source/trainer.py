@@ -1,6 +1,9 @@
+import json
 from source.input_pipeline import create_tf_dataset
-from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedMetric, MaskedLoss
+from sequence_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
 from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule
+from sequence_transformer.losses import MaskedLoss
+from source.cloze_utils import ClozeMaskedLoss, ClozeMaskedNDCG
 from source.data_generator import ClickStreamGenerator
 from sequence_transformer.clickstream_model import ClickstreamModel
 import os
@@ -40,6 +43,10 @@ def create_input(training, validation, **kwargs):
 
 
 def get_distribution_context(gpu_count):
+    # I think this should only be called once, because every time it is called it returns a new distribution strategy
+    # object and using different objects at different stages (creating the model, compiling, etc.) will cause an error.
+    # RuntimeError: Mixing different tf.distribute.Strategy objects:
+    # <[...]MirroredStrategy object at 0x7f2e16e60410> is not <[...]MirroredStrategy object at 0x7f2>
     if gpu_count > 1:
         strategy = tf.distribute.MirroredStrategy()
         dist_context = strategy.scope()
@@ -49,16 +56,55 @@ def get_distribution_context(gpu_count):
     return dist_context
 
 
-def create_model(gpu_count, ckpt_dir=None, **config):
+def get_training_spec(training_params):
+    # This function is only used to hide away these details from the main body of code
+    metrics = [
+        # PositiveRate(),
+        # PredictedPositives(),
+        # MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
+        # MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
+        # MaskedMetric(metric=tf.keras.metrics.SparseCategoricalAccuracy(), name='Accuracy'),
+        ClozeMaskedNDCG(k=5),
+        ClozeMaskedNDCG(k=10)
+        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
+        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
+        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
+        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.2), name='precision-at-20'),
+        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.3), name='precision-at-30')
+    ]
+
+    # lr = CustomLRSchedule(d_model=d_model, scale=training_params['lr_scale'])
+    # lr = tf.keras.optimizers.schedules.ExponentialDecay(
+    #     initial_learning_rate=training_params['lr'],
+    #     decay_steps=training_params['steps_per_epoch'],
+    #     decay_rate=0.9,
+    #     staircase=True
+    # )
+    lr = training_params['lr']
+    optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-9)
+
+    # loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+    loss = ClozeMaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
+    # loss = tf.keras.losses.SparseCategoricalCrossentropy()
+
+    return {
+        'metrics': metrics,
+        'loss': loss,
+        'optimizer': optimizer
+    }
+
+
+def create_model(ckpt_dir=None, **config):
     """
+
     Args:
-        ckpt_dir:
+        ckpt_dir: Loads model weights from the latest checkpoint found in this directory.
+        **config:
 
     Returns:
 
     """
-    with get_distribution_context(gpu_count):
-        model = ClickstreamModel(**config)
+    model = ClickstreamModel(**config)
 
     if ckpt_dir is not None:
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)
@@ -75,40 +121,8 @@ def train(model,
           training_data,
           validation_data,
           model_dir,
-          gpu_count,
-          ckpt_dir=None,
+          # ckpt_dir=None,
           **training_params):
-
-    metrics = [
-        # PositiveRate(),
-        # PredictedPositives(),
-        # MaskedMetric(metric=tf.keras.metrics.Recall(), name='recall'),
-        # MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
-        MaskedMetric(metric=tf.keras.metrics.SparseCategoricalAccuracy(), name='Accuracy'),
-        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
-        # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.2), name='precision-at-20'),
-        # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.3), name='precision-at-30')
-    ]
-
-    d_model = sum(model.embedding_dims.values())
-
-    # lr = CustomLRSchedule(d_model=d_model, scale=training_params['lr_scale'])
-    # lr = tf.keras.optimizers.schedules.ExponentialDecay(
-    #     initial_learning_rate=training_params['lr'],
-    #     decay_steps=training_params['steps_per_epoch'],
-    #     decay_rate=0.9,
-    #     staircase=True
-    # )
-    lr = training_params['lr']
-    optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-
-    loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
-    # loss = tf.keras.losses.SparseCategoricalCrossentropy()
-
-    with get_distribution_context(gpu_count):
-        model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     # # # Training callbacks
     callbacks = []
@@ -116,18 +130,19 @@ def train(model,
     # Reduce LR on Plateau
     reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10)
 
-    if ckpt_dir is not None:
-        # Checkpoint saver
-        ckpt_timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
-        ckpt_filename = 'ckpt-' + ckpt_timestamp + '-{epoch:04d}.ckpt'  # will include epoch in filename
-        checkpoint_path = os.path.join(ckpt_dir, ckpt_filename)
-        save_checkpoint = ModelCheckpoint(filepath=checkpoint_path, save_best_only=False, verbose=1)
-        callbacks += [save_checkpoint]
+    # Checkpoint saver
+    ckpt_dir = os.path.join(model_dir, 'ckpts')
+    ckpt_timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch no. from older runs
+    ckpt_filename = 'ckpt-' + '{epoch:04d}'  # will include epoch in filename
+    checkpoint_path = os.path.join(ckpt_dir, ckpt_filename)
+    save_checkpoint = ModelCheckpoint(filepath=checkpoint_path, save_best_only=True, verbose=2)
+    callbacks += [save_checkpoint]
 
     # Tensorboard
     tensorboard_path = os.path.join(model_dir, 'tensorboard')
-    # TODO: Adding embeddings_freq to this callback results in the following error:
-    #  AttributeError: Embedding object has no attribute embeddings
+
+    # Adding embeddings_freq to this callback results in the following error:
+    # AttributeError: Embedding object has no attribute embeddings
     tensorboard = TensorBoard(log_dir=tensorboard_path, profile_batch=0)  # , embeddings_freq=5)
 
     # Model Saver
@@ -150,7 +165,17 @@ def train(model,
 
 
 if __name__ == '__main__':
-    timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
+    tf_config = json.loads(os.environ.get('TF_CONFIG', '{}'))
+    local_run = (tf_config == {})  # Trying to be specific and avoid logical not of a dict! (not tf_config)
+
+    if not local_run:
+        GPU_COUNT = int(tf_config['job']['master_config']['accelerator_config']['count'])
+    else:
+        GPU_COUNT = 0
+
+    PER_GPU_BATCH_SIZE = 512
+
+    timestamp = time.strftime('%d-%b-%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
     model_dir = os.path.join('../training_output', f'run_{timestamp}')
     root_data_dir = '../data/amazon_beauty_bert4rec'
 
@@ -176,14 +201,14 @@ if __name__ == '__main__':
         'lr_warmup_steps': 4000,
         'lr': 1e-3,
         'lr_scale': 1.0,
-        'batch_size': 500,
-        'max_sess_len': 200,
+        'batch_size': PER_GPU_BATCH_SIZE * (GPU_COUNT if not local_run else 1),
+        'max_sess_len': 50,  # ToDo: Enable this. This is set to 0 in BERT4Rec for Amazon Beauty dataset
         'job-dir': 'placeholder'
     }
 
     model_param_spec = {
-        'num_encoder_layers': 4,
-        'num_attention_heads': 4,
+        'num_encoder_layers': 2,
+        'num_attention_heads': 2,
         'dropout_rate': 0.1,
     }
 
@@ -217,7 +242,7 @@ if __name__ == '__main__':
             # 'events':
         },
         'embedding_dims': {
-            'items': 40,
+            'items': 64,
             # 'events': 2
         },
         'value_to_head': INPUT_MASKING_TOKEN
@@ -226,13 +251,13 @@ if __name__ == '__main__':
 
     config = {**model_params, **input_config}
 
-    final_layers_dims = [1024, 512, 256]
+    final_layers_dims = [1024, 512]
     head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
 
-    model = create_model(gpu_count=1,
-                         # ckpt_dir=training_params['ckpt_dir'],
-                         **config,
-                         head_unit=head_unit)
+    with get_distribution_context(GPU_COUNT):
+        model = create_model(head_unit=head_unit, **config)
+        training_spec = get_training_spec(training_params)  # This must be created inside the distribution scope
+        model.compile(**training_spec)
 
     training_dataset, validation_dataset = create_input(
         training=training_data_files,
@@ -246,7 +271,6 @@ if __name__ == '__main__':
         model = train(model=model,
                       training_data=training_dataset,
                       validation_data=validation_dataset,
-                      gpu_count=1,
                       **training_params)
 
     # import numpy as np
@@ -268,3 +292,8 @@ if __name__ == '__main__':
     #
     # # tf.keras.backend.set_learning_phase(0)
     # # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
+
+    # produce scores
+    # get scores and choose interventions (if in treatment)
+    # customer
+    # dashboard measuring how much gained
