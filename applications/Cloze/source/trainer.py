@@ -1,11 +1,11 @@
 import json
-from source.input_pipeline import create_tf_dataset
+from source.input_pipeline import create_cloze_dataset
 from sequence_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
-from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule
+from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, LRTensorBoard
 from sequence_transformer.losses import MaskedLoss
 from source.cloze_utils import ClozeMaskedLoss, ClozeMaskedNDCG
 from source.data_generator import ClickStreamGenerator
-from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.sequence_transformer import SequenceTransformer
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
@@ -29,15 +29,15 @@ def create_input(training, validation, **kwargs):
     Returns:
 
     """
-    training_dataset = create_tf_dataset(source=training,
-                                         is_training=True,
-                                         batch_size=kwargs['batch_size'],
-                                         target_vocab_file=kwargs['target_vocab_file'])
+    training_dataset = create_cloze_dataset(source=training,
+                                            is_training=True,
+                                            batch_size=kwargs['batch_size'],
+                                            target_vocab_file=kwargs['target_vocab_file'])
 
-    validation_dataset = create_tf_dataset(source=validation,
-                                           is_training=False,
-                                           batch_size=kwargs['batch_size'],
-                                           target_vocab_file=kwargs['target_vocab_file'])
+    validation_dataset = create_cloze_dataset(source=validation,
+                                              is_training=False,
+                                              batch_size=kwargs['batch_size'],
+                                              target_vocab_file=kwargs['target_vocab_file'])
 
     return training_dataset, validation_dataset
 
@@ -104,7 +104,7 @@ def create_model(ckpt_dir=None, **config):
     Returns:
 
     """
-    model = ClickstreamModel(**config)
+    model = SequenceTransformer(**config)
 
     if ckpt_dir is not None:
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)
@@ -128,7 +128,7 @@ def train(model,
     callbacks = []
 
     # Reduce LR on Plateau
-    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10)
+    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10, factor=0.316)
 
     # Checkpoint saver
     ckpt_dir = os.path.join(model_dir, 'ckpts')
@@ -145,13 +145,16 @@ def train(model,
     # AttributeError: Embedding object has no attribute embeddings
     tensorboard = TensorBoard(log_dir=tensorboard_path, profile_batch=0)  # , embeddings_freq=5)
 
+    # Log learning rate
+    lr_logger = LRTensorBoard(tensorboard_path + '/metrics')
+
     # Model Saver
     saved_model_dir = os.path.join(model_dir, 'savedmodel')
     best_model_saver = BestModelSaverCallback(savedmodel_path=saved_model_dir)
 
     # Early stopping
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30)
-    callbacks += [tensorboard, early_stopping, reduce_lr_on_plateau]
+    callbacks += [tensorboard, early_stopping, reduce_lr_on_plateau, lr_logger]
 
     model.fit(training_data,
               epochs=training_params['n_epochs'],
@@ -169,9 +172,9 @@ if __name__ == '__main__':
     local_run = (tf_config == {})  # Trying to be specific and avoid logical not of a dict! (not tf_config)
 
     if not local_run:
-        GPU_COUNT = int(tf_config['job']['master_config']['accelerator_config']['count'])
+        N_PROCESSORS = int(tf_config['job']['master_config']['accelerator_config']['count'])  # Cloud GPUs
     else:
-        GPU_COUNT = 0
+        N_PROCESSORS = 1  # local CPU
 
     PER_GPU_BATCH_SIZE = 512
 
@@ -192,17 +195,21 @@ if __name__ == '__main__':
     #     validation_data_src = data_src
     # else:
 
+    LOCAL_BATCH_SIZE = 10
+    CLOUD_BATCH_SIZE = PER_GPU_BATCH_SIZE * N_PROCESSORS  # In distributed training N_PROCESSORS > 1 (= no. of GPUs)
+
     training_param_spec = {
         'input_data': root_data_dir,
         'model_dir': model_dir,
         'n_epochs': 10000,
-        'steps_per_epoch': 1000,
-        'validation_steps': 100,
+        'steps_per_epoch': 1000 if not local_run else 5,
+        'validation_steps': 100 if not local_run else 1,
         'lr_warmup_steps': 4000,
         'lr': 1e-3,
         'lr_scale': 1.0,
-        'batch_size': PER_GPU_BATCH_SIZE * (GPU_COUNT if not local_run else 1),
-        'max_sess_len': 50,  # ToDo: Enable this. This is set to 0 in BERT4Rec for Amazon Beauty dataset
+        'batch_size': CLOUD_BATCH_SIZE if not local_run else LOCAL_BATCH_SIZE,
+        'max_sess_len': 50,  # ToDo: Enable this. This is set to 50 in BERT4Rec for Amazon Beauty dataset
+        'init_ckpt_dir': 'DUMMY',  # None causes problems. The arg parser needs to be updated to handle None properly
         'job-dir': 'placeholder'
     }
 
@@ -223,8 +230,7 @@ if __name__ == '__main__':
     pprint(training_params)
     print('*'*80)
 
-    training_data_files = os.path.join(training_params['input_data'], '*.tfrecord')
-    validation_data_files = training_data_files
+    data_files = os.path.join(training_params['input_data'], '*.tfrecord')
 
     item_vocab_file = os.path.join(training_params['input_data'], 'vocabs/item_vocab.txt')
     output_vocab_size = len(load_vocabulary(item_vocab_file))
@@ -254,14 +260,16 @@ if __name__ == '__main__':
     final_layers_dims = [1024, 512]
     head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
 
-    with get_distribution_context(GPU_COUNT):
-        model = create_model(head_unit=head_unit, **config)
+    with get_distribution_context(N_PROCESSORS):
+        model = create_model(ckpt_dir=training_params['init_ckpt_dir'],
+                             head_unit=head_unit, **config)
         training_spec = get_training_spec(training_params)  # This must be created inside the distribution scope
         model.compile(**training_spec)
 
+    # source data files are the same for training and validation but input_pipeline will process them differently
     training_dataset, validation_dataset = create_input(
-        training=training_data_files,
-        validation=validation_data_files,
+        training=data_files,
+        validation=data_files,
         target_vocab_file=item_vocab_file,
         **training_params  # batch_size and max_sess_len
     )
@@ -276,12 +284,13 @@ if __name__ == '__main__':
     # import numpy as np
     # import sys
     # np.set_printoptions(threshold=sys.maxsize, precision=2)
-    #
-    # for x, y in validation_dataset.take(1):
-    #     print(x['asin'])
-    #     print('*'*80)
-    #     print(y)
-    #     # y_hat = model(x)
+
+    # from source.input_pipeline import print_features
+    # for serialized_string, y in training_dataset.take(1):
+    #     print_features(serialized_string)
+    #     # print('*'*80)
+    #     # print(y)
+    #     # y_hat = model(serialized_string)
     #     # print(head_inp)
     #     # print(y_hat.numpy())
     #     # print(np.argmax(y_hat.numpy(), axis=-1))
@@ -289,9 +298,9 @@ if __name__ == '__main__':
     #     # print(emb.input_dim)
     #     # print(emb.output_dim)
     #     # print(emb(tf.convert_to_tensor(range(N_ITEMS+11))))
-    #
-    # # tf.keras.backend.set_learning_phase(0)
-    # # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
+
+    # tf.keras.backend.set_learning_phase(0)
+    # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
 
     # produce scores
     # get scores and choose interventions (if in treatment)

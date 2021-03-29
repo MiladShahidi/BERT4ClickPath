@@ -2,7 +2,7 @@ from input_pipeline import create_tf_dataset
 # from sequence_transformer.training_utils import PositiveRate, PredictedPositives, MaskedF1, MaskedMetric, MaskedBinaryCrossEntropy
 from sequence_transformer.metrics import BestModelSaverCallback, CustomLRSchedule, F1Score, PredictedPositives
 from data_generator import ClickStreamGenerator
-from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.sequence_transformer import SequenceTransformer
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
@@ -86,7 +86,7 @@ def create_model(gpu_count, ckpt_dir=None, **config):
 
     """
     with get_distribution_context(gpu_count):
-        model = ClickstreamModel(**config)
+        model = SequenceTransformer(**config)
 
     if ckpt_dir is not None:
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)

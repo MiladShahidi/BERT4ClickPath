@@ -1,9 +1,7 @@
 import tensorflow as tf
 from sequence_transformer.constants import RESERVED_TOKENS
 from sequence_transformer.transformer import Transformer
-from sequence_transformer.constants import UNKNOWN_INPUT, MISSING_EVENT_OR_ITEM, INPUT_MASKING_TOKEN
-from sequence_transformer.constants import CLS, INPUT_PAD, SEP, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
-from sequence_transformer.head import BinaryClassificationHead, SoftMaxHead
+from sequence_transformer.constants import INPUT_PAD, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
 from sequence_transformer.utils import load_vocabulary
 
 
@@ -106,70 +104,7 @@ class TransformerInputPrep:
         return features, segment_starts, segment_ends
 
 
-# class TokenMapper(tf.keras.layers.Layer):
-#     # ToDo: Find a better name for this class
-#     """
-#     This class maps tokens (e.g. item ids or event names) to their index in the vocabulary, taking into account the fact
-#     that we need to add a list of reserved tokens to the vocabulary before mapping. These reserved tokens are the ones
-#     that were used to format the input of the transformer (eg. CLS, SEP). See the `TransformerInputPrep` class.
-#
-#     """
-#     def __init__(self, vocabularies, reserved_tokens=None, **kwargs):
-#         """
-#
-#         Args:
-#             vocabularies: Dict mapping variable names to vocab files for categorical features.
-#             reserved_tokens: A list of reserved tokens that will be added to the vocabulary. These may include a
-#             separator token ([SEP]) to separate neighbouring sequences in the input, a classification token ([CLS])
-#             for classification tasks, etc. Refer to how BERT input is formatted.
-#         """
-#         super(TokenMapper, self).__init__(**kwargs)
-#
-#         self.vocabularies = vocabularies
-#         self.reserved_tokens = reserved_tokens
-#         # In some cases, multiple variables might share the same vocab file. But it's not efficient to create multiple
-#         # copies of the same lookup table for them. So we will do this in 2 steps to avoid duplicate lookup tables
-#         lookup_per_vocab_file = {
-#             vocab_file: self._create_lookup_table(vocab_file, tokens_to_prepend=reserved_tokens)
-#             for vocab_file in set(vocabularies.values())
-#         }
-#
-#         self.lookup_tables = {var_name: lookup_per_vocab_file[vocab_file]
-#                               for var_name, vocab_file in vocabularies.items()}
-#
-#     def get_config(self):
-#         """
-#         Custom Keras layers and models are not serializable unless they override this method.
-#         """
-#         config = super(TokenMapper, self).get_config()
-#         config.update({
-#             'vocabularies': self.vocabularies,
-#             'reserved_tokens': self.reserved_tokens
-#         })
-#         return config
-#
-#     @staticmethod
-#     def _create_lookup_table(vocab_file, tokens_to_prepend=None):
-#         keys = load_vocabulary(vocab_file)  # words in vocab file
-#         if tokens_to_prepend is not None:
-#             keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
-#         values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
-#         initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
-#         return tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
-#
-#     def _apply_vocabs(self, features):
-#         result = features.copy()  # Traced functions (by TF for exporting) should not change their input arguments
-#         # features for which a vocab file was not specified won't have a lookup table and will go through unchanged.
-#         for var_name in self.lookup_tables.keys():
-#             result[var_name] = self.lookup_tables[var_name].lookup(result[var_name])
-#
-#         return result
-#
-#     def call(self, features, training=None, mask=None):
-#         return self._apply_vocabs(features)
-
-
-class ClickstreamModel(tf.keras.models.Model):
+class SequenceTransformer(tf.keras.models.Model):
 
     """
     This model closely resembles that of Chen et. al. (2019), available at https://arxiv.org/pdf/1905.06874.pdf.
@@ -229,7 +164,7 @@ class ClickstreamModel(tf.keras.models.Model):
                  embedding_dims,
                  head_unit,
                  segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
-                 value_to_head=None,  # Find a better name
+                 value_to_head=None,  # Find a better name, like token_to_output
                  num_encoder_layers=1,
                  num_attention_heads=1,
                  dropout_rate=0.1,
@@ -253,7 +188,7 @@ class ClickstreamModel(tf.keras.models.Model):
                 determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
                 specify what type of BinaryClassificationHead should be used.
         """
-        super(ClickstreamModel, self).__init__(**kwargs)
+        super(SequenceTransformer, self).__init__(**kwargs)
 
         self.embedding_dims = embedding_dims
         self.num_encoder_layers = num_encoder_layers

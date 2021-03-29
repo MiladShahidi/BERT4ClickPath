@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>sequence_transformer.sequence_transformer API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>sequence_transformer.sequence_transformer</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import tensorflow as tf
+from sequence_transformer.constants import RESERVED_TOKENS
+from sequence_transformer.transformer import Transformer
+from sequence_transformer.constants import INPUT_PAD, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
+from sequence_transformer.utils import load_vocabulary
+
+
+class TransformerInputPrep:
+    &#34;&#34;&#34;
+    This class formats the input sequence(s) to a Transformer by concatenating them and inserting appropriate tokens.
+    The resulting sequence will have the following format:
+
+    [CLS] [SEP] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] ...
+
+    This is inspired by how BERT formats its input. The CLS token can be used (as BERT does) as a summary of the entire
+    input. For example, binary classification for sentiment analysis in NLP, or purchase intention in click-stream.
+
+    The SEP token is used to separates each sequence from the next (or from the CLS token).
+    &#34;&#34;&#34;
+    def __init__(self, seq_chain_mapping):
+        &#34;&#34;&#34;
+        Args:
+            seq_chain_mapping: Specifies how to existing features should be chained to form new ones.
+
+        Example:
+        Let&#39;s say the feature set includes the following tensors:
+        session_items, basket_items, sessions_events, basket_events
+
+        We can create two new features, items and events, by chaining the existing ones as follows:
+
+        seq_chain_mapping = {
+                             &#39;items&#39;: [&#39;session_items&#39;, &#39;basket_items&#39;],
+                             &#39;events&#39;: [&#39;sessions_events&#39;, &#39;basket_events&#39;]
+                            }
+        &#34;&#34;&#34;
+        self.seq_chain_mapping = seq_chain_mapping
+
+    @staticmethod
+    def _chain_sequences(sequences):
+        &#34;&#34;&#34;
+        Args:
+            sequences: A list containing (1 or more) sequence tensors to be chained
+
+        Returns:
+            The tensor resulting from concatenating the two input sequences and adding appropriate tokens
+            output looks like: [CLS] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] seq_4 ...
+        &#34;&#34;&#34;
+        session_dims = tf.unstack(tf.shape(sequences[0]))  # This is a python list
+        session_dims[1] = 1  # token is concatenated along axis 1. So it should have size 1 on this axis
+        token_shape = session_dims
+        cls_token = tf.fill(dims=token_shape, value=tf.cast(CLASSIFICATION_TOKEN, sequences[0].dtype))
+        sep_token = tf.fill(dims=token_shape, value=tf.cast(SEPARATOR_TOKEN, sequences[0].dtype))
+
+        sequences = [cls_token] + sequences
+
+        # insert sep in between sequences. Result will be [cls] [sep] seq_1 [sep] seq_2 [sep] ...
+        # The first sep is inserted for ease of calculating segment start and end positions. BERT doesn&#39;t have that sep.
+        concat_list = [sequences[i // 2] if i % 2 == 0 else sep_token for i in range(2 * len(sequences))]
+
+        # Notice axis=1. This doesn&#39;t care whether or not there are more dimensions after 1
+        seq_chain = tf.concat(concat_list, axis=1)
+
+        return seq_chain
+
+    def __call__(self, features, keep_features=False):
+        &#34;&#34;&#34;
+
+        Args:
+            features: Dictionary of feature, mapping feature names to tensors
+            keep_features: Whether to keep chained features in the returned feature dictionary
+
+        Returns:
+            A features dictionary containing the newly created features. It will leave untouched all other features that
+            were not involved in chaining.
+        &#34;&#34;&#34;
+        features = features.copy()  # traced functions cannot change their input
+        # 1 - Chaining features as specified
+        for new_feature, seq_pair in self.seq_chain_mapping.items():
+            sequence_pair_list = [features[name] for name in seq_pair]
+            features[new_feature] = self._chain_sequences(sequence_pair_list)
+
+        # 2 - Calculating start and end positions of sequences
+
+        # Using the SEP token to find out where each sequence begins and ends (including the leading CLS)
+        # Sequences in the same position are supposed to have the same length. So doesn&#39;t matter which one we use.
+        # I&#39;ll just use whichever chained feature that happens to be first
+        some_chained_feature = features[list(self.seq_chain_mapping.keys())[0]]
+        # Similarly, the lengths of sequences are the same along the batch dimension. So, I&#39;ll get rid of batch axis
+        sample_chained_tensor = some_chained_feature[0, :]  # taking first (or any) sample in the batch
+        # The following is (n, d), where d is # dimensions in condition of where. in this case 1 (see tf.where docs)
+        sep_positions = tf.where(tf.equal(sample_chained_tensor, SEPARATOR_TOKEN))
+        # So we can simply squeeze it out and get a 1-d tensor of indexes
+        segment_ends = tf.squeeze(sep_positions, axis=1)  # 1-d tensor containing positions of SEP tokens
+        # Each sequence starts right after the previous one&#39;s SEP token. First one starts at 0.
+        segment_starts = tf.concat([[0], segment_ends[:-1]+1], axis=0)  # Making sure the first start pos is 0
+
+        # 3 - Removing old features used in creating the new ones (if so specified by keep_features argument)
+        if not keep_features:  # Drop features that were used in forming sequence pairs
+            features_to_drop = set()
+            for seq_pair in self.seq_chain_mapping.values():
+                features_to_drop = features_to_drop.union(set(seq_pair))
+            features = {k: v for k, v in features.items() if k not in features_to_drop}
+
+        return features, segment_starts, segment_ends
+
+
+class SequenceTransformer(tf.keras.models.Model):
+
+    &#34;&#34;&#34;
+    This model closely resembles that of Chen et. al. (2019), available at https://arxiv.org/pdf/1905.06874.pdf.
+
+    It consists, for the most part, of a Transformer which takes as input a series of sequences
+    (e.g. sequence of items viewed). This Transformer then creates contextualized embeddings that correspond one for one
+    to input items. These embeddings are then passed through a BinaryClassificationHead (which can be a series of fully-connected layers)
+    to produce the output. Depending on the task, one can decide what type of BinaryClassificationHead to use and which embeddings to pass
+    through it. This is similar to how various classification layers can be mounted on top of a BERT model to perform
+    different tasks (binary classification, sequence tagging, multi-class classification with a softmax, etc.)
+
+    For instance, one can only send the output corresponding to CLS through the binary classification BinaryClassificationHead. The CLS
+    token can be trained to &#34;summarize&#34; the entire chain of input sequences. Or in the case of predicting returns given
+    the click-stream, one could feed the click-stream + basket (two sequences) and then pass the output of the
+    Transformer that corresponds to basket items to the BinaryClassificationHead and get a Tensor of the same length as basket.
+    The model can then be trained so that it predicts the probability of return for each item in the basket. (one would
+    need to set a maximum basket size, as the output of the model has to have a fixed length, and then pad when the
+    basket is smaller than that).
+
+    Another example is scoring items for recommendation, given the click-stream up to a certain point. In this case,
+    sequence 1 of input would be click-stream and sequence 2 will always be of length 1, containing a single target item
+    to be scored. One can then feed the output corresponding to the target item through the BinaryClassificationHead and produce a relevance
+    score.
+
+    The following is an example of how to specify the configuration of inputs:
+
+    ```python
+
+    sequential_input_config = {
+        &#39;items&#39;: [&#39;seq_1_items&#39;, &#39;seq_2_items&#39;],
+        &#39;events&#39;: [&#39;seq_1_events&#39;, &#39;seq_2_events&#39;]
+    }
+
+    feature_vocabs = {
+        &#39;items&#39;: &#39;../data/vocabs/item_vocab.txt&#39;,
+        &#39;events&#39;: &#39;../data/vocabs/event_vocab.txt&#39;
+    }
+
+    embedding_dims = {
+        &#39;items&#39;: 20,
+        &#39;events&#39;: 4
+    }
+    ```
+    In the above example the input contains two sequences. These, for example, could be session and basket in the task
+    of predicting returns. In addition, each sequence consists of two (separately embedded) elements. Items, and their
+    corresponding events, line (view, handbag) or (add_to_basket, shoe). These components will be concatenated before
+    going into the transformer. The final (batched) result will have the shape
+
+    (batch_size, seq_1_len + seq_2_len, d_model)
+
+    where d_model is the sum of the embedding dimension for each components (items and event in the above example).
+    &#34;&#34;&#34;
+
+    def __init__(self,
+                 sequential_input_config,
+                 feature_vocabs,
+                 embedding_dims,
+                 head_unit,
+                 segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
+                 value_to_head=None,  # Find a better name, like token_to_output
+                 num_encoder_layers=1,
+                 num_attention_heads=1,
+                 dropout_rate=0.1,
+                 **kwargs):
+        &#34;&#34;&#34;
+
+        Args:
+            sequential_input_config: Configuration of the sequential part of input, which is the part that will be
+                fed to the Transformer.
+            feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
+            embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
+            segment_to_head: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
+                of the mode. This parameter needs a better name.
+            value_to_head: The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
+                Example: value_to_head = &#39;[Mask]&#39; will send Transformer output for &#39;[Mask]&#39; tokens in the input sequence
+                to the BinaryClassificationHead
+            num_encoder_layers: Number of Encoder layers
+            num_attention_heads: Number of Attention heads in each Encoder layer
+            dropout_rate: Dropout rate
+            final_layers_dims: Dimensions of fully connected layers that come after Transformer and produce output. This
+                determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
+                specify what type of BinaryClassificationHead should be used.
+        &#34;&#34;&#34;
+        super(SequenceTransformer, self).__init__(**kwargs)
+
+        self.embedding_dims = embedding_dims
+        self.num_encoder_layers = num_encoder_layers
+        self.num_attention_heads = num_attention_heads
+        self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
+        self.sequential_input_config = sequential_input_config
+
+        assert (segment_to_head is not None or value_to_head is not None) and \
+               (segment_to_head is None or value_to_head is None), \
+               &#34;Exactly one of segment_to_head and value_to_head must be provided.&#34;
+
+        self.segment_to_head = segment_to_head
+        self.value_to_head = value_to_head
+
+        self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
+        # self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
+        self.vocab_lookup_tables = self._create_lookup_tables(vocabularies=feature_vocabs,
+                                                              tokens_to_prepend=RESERVED_TOKENS)
+        # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
+        # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
+        # dimension) for it, but don&#39;t provide a vocab file for it.
+        embedding_sizes = {f: self.vocab_lookup_tables[f].size() for f in feature_vocabs.keys()}
+
+        # Transformer
+        self.transformer = Transformer(
+            embedding_sizes=embedding_sizes,
+            embedding_dims=embedding_dims,
+            num_layers=self.num_encoder_layers,
+            num_attention_heads=self.num_attention_heads,
+            encoder_ff_dim=100,
+            dropout_rate=self.dropout_rate
+        )
+
+        self.head = head_unit
+
+    @staticmethod
+    def _create_lookup_tables(vocabularies, tokens_to_prepend=None):
+        lookup_tables = {}
+        for feature_name, vocab_file in vocabularies.items():
+            keys = load_vocabulary(vocab_file)  # words in vocab file
+            if tokens_to_prepend is not None:
+                keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
+            values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
+            initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
+            lookup_tables[feature_name] = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
+
+        return lookup_tables
+
+    def call(self, inputs, training=None, mask=None):
+
+        # Traced functions are not allowed to change their input arguments
+        raw_features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
+
+        # We might need raw_features later. Also, we don&#39;t want to throw away feature that don&#39;t need vocab mapping
+        features = raw_features.copy()
+        for feature_name, lookup_table in self.vocab_lookup_tables.items():
+            features[feature_name] = lookup_table.lookup(features[feature_name])
+
+        # separating sequential features that should go into the Transformer from potentially non-seq &#34;side&#34; features
+        sequential_features = {feature_name: features[feature_name]
+                               for feature_name in self.sequential_input_config.keys()}
+
+        # ToDo: Side features should be added to the output of the Transformer
+        transformer_output = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
+
+        # segment_starts and segment_ends mark the index in the Transformer&#39;s output tensor where each sequence begins
+        # and ends. The first segment corresponds to the [CLS] token and is therefore always
+        # (batch_size, 1, d_model)
+        # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
+
+        # This model feeds the output corresponding to the second sequence. This is specific to this particular task
+        if self.segment_to_head is not None:
+            head_input = transformer_output[:, segment_starts[self.segment_to_head]:segment_ends[self.segment_to_head], ...]
+        elif self.value_to_head is not None:
+            # This is an ugly patch
+            # We designed the Transformer so that it would accept multiple sequences and stack them. Most obvious
+            # example is a sequence of items and a sequence of events associated with those items, e.g.
+            #   (view, bag), (add_to_cart, shoe), ...
+            # This is not common in the literature at all.
+            # Here, we are trying to send some of the elements from the output of the Transformer to the
+            # BinaryClassificationHead, and we&#39;re doing so based on input values. For instance, only send positions that
+            # correspond to [MASK] inputs. But it is not clear which input sequence we should be looking at?
+            # The items? or the events? Given how rare this multi-feature input is, I think this is an unnecessary
+            # complication. And the Transformer should only expect one input feature: The items.
+            some_raw_feature_name = list(self.sequential_input_config.keys())[0]
+
+            # (batch_size, seq_len)
+            some_raw_feature = raw_features[some_raw_feature_name]
+
+            # ToDo: move this part into a method
+            # Here is what this part does:
+            # Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
+            # `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer&#39;s
+            # output. The catch is, different examples may have different number of entries that match this value.
+            # So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
+            batch_size = tf.shape(some_raw_feature)[0]
+
+            # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
+            indices = tf.where(tf.equal(some_raw_feature, self.value_to_head))
+
+            # Since all examples in the batch don&#39;t necessarily have the same number of matching entries, we will create
+            # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
+            ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
+
+            # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
+            ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
+                                                               nrows=tf.cast(batch_size, tf.int64))
+
+            ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
+
+            # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
+            # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
+            matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
+
+            head_input = matching_embeddings
+        else:
+            raise ValueError(&#34;One of value_to_head and segment_to_head must be provided.&#34;)
+
+        logits = self.head(head_input)
+
+        return logits
+
+    # # ToDo: write a helper function that produces these given the arguments to init
+    # @tf.function(input_signature=[
+    #     tf.TensorSpec([None, 1], dtype=tf.string),  # reviewerID
+    #     tf.TensorSpec([None, None], dtype=tf.string),   # asin
+    #     tf.TensorSpec([None, None], dtype=tf.int64),  # unixReviewTime
+    # ])
+    # def model_server(self, asin, reviewerID, unixReviewTime):
+    #
+    #     features = {
+    #         # Basket features
+    #         &#39;asin&#39;: asin,
+    #         &#39;reviewerID&#39;: reviewerID,
+    #         &#39;unixReviewTime&#39;: unixReviewTime
+    #     }
+    #
+    #     return {&#39;scores&#39;: self.call(inputs=features, training=False)}</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="sequence_transformer.sequence_transformer.SequenceTransformer"><code class="flex name class">
+<span>class <span class="ident">SequenceTransformer</span></span>
+<span>(</span><span>sequential_input_config, feature_vocabs, embedding_dims, head_unit, segment_to_head=None, value_to_head=None, num_encoder_layers=1, num_attention_heads=1, dropout_rate=0.1, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This model closely resembles that of Chen et. al. (2019), available at <a href="https://arxiv.org/pdf/1905.06874.pdf.">https://arxiv.org/pdf/1905.06874.pdf.</a></p>
+<p>It consists, for the most part, of a Transformer which takes as input a series of sequences
+(e.g. sequence of items viewed). This Transformer then creates contextualized embeddings that correspond one for one
+to input items. These embeddings are then passed through a BinaryClassificationHead (which can be a series of fully-connected layers)
+to produce the output. Depending on the task, one can decide what type of BinaryClassificationHead to use and which embeddings to pass
+through it. This is similar to how various classification layers can be mounted on top of a BERT model to perform
+different tasks (binary classification, sequence tagging, multi-class classification with a softmax, etc.)</p>
+<p>For instance, one can only send the output corresponding to CLS through the binary classification BinaryClassificationHead. The CLS
+token can be trained to "summarize" the entire chain of input sequences. Or in the case of predicting returns given
+the click-stream, one could feed the click-stream + basket (two sequences) and then pass the output of the
+Transformer that corresponds to basket items to the BinaryClassificationHead and get a Tensor of the same length as basket.
+The model can then be trained so that it predicts the probability of return for each item in the basket. (one would
+need to set a maximum basket size, as the output of the model has to have a fixed length, and then pad when the
+basket is smaller than that).</p>
+<p>Another example is scoring items for recommendation, given the click-stream up to a certain point. In this case,
+sequence 1 of input would be click-stream and sequence 2 will always be of length 1, containing a single target item
+to be scored. One can then feed the output corresponding to the target item through the BinaryClassificationHead and produce a relevance
+score.</p>
+<p>The following is an example of how to specify the configuration of inputs:</p>
+<pre><code class="language-python">
+sequential_input_config = {
+    'items': ['seq_1_items', 'seq_2_items'],
+    'events': ['seq_1_events', 'seq_2_events']
+}
+
+feature_vocabs = {
+    'items': '../data/vocabs/item_vocab.txt',
+    'events': '../data/vocabs/event_vocab.txt'
+}
+
+embedding_dims = {
+    'items': 20,
+    'events': 4
+}
+</code></pre>
+<p>In the above example the input contains two sequences. These, for example, could be session and basket in the task
+of predicting returns. In addition, each sequence consists of two (separately embedded) elements. Items, and their
+corresponding events, line (view, handbag) or (add_to_basket, shoe). These components will be concatenated before
+going into the transformer. The final (batched) result will have the shape</p>
+<p>(batch_size, seq_1_len + seq_2_len, d_model)</p>
+<p>where d_model is the sum of the embedding dimension for each components (items and event in the above example).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>sequential_input_config</code></strong></dt>
+<dd>Configuration of the sequential part of input, which is the part that will be
+fed to the Transformer.</dd>
+<dt><strong><code>feature_vocabs</code></strong></dt>
+<dd>Dictionary mapping categorical feature names to vocabulary files.</dd>
+<dt><strong><code>embedding_dims</code></strong></dt>
+<dd>Dictionary that specifies the embedding dimension for embedded features.</dd>
+<dt><strong><code>segment_to_head</code></strong></dt>
+<dd>Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
+of the mode. This parameter needs a better name.</dd>
+<dt><strong><code>value_to_head</code></strong></dt>
+<dd>The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
+Example: value_to_head = '[Mask]' will send Transformer output for '[Mask]' tokens in the input sequence
+to the BinaryClassificationHead</dd>
+<dt><strong><code>num_encoder_layers</code></strong></dt>
+<dd>Number of Encoder layers</dd>
+<dt><strong><code>num_attention_heads</code></strong></dt>
+<dd>Number of Attention heads in each Encoder layer</dd>
+<dt><strong><code>dropout_rate</code></strong></dt>
+<dd>Dropout rate</dd>
+<dt><strong><code>final_layers_dims</code></strong></dt>
+<dd>Dimensions of fully connected layers that come after Transformer and produce output. This
+determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
+specify what type of BinaryClassificationHead should be used.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SequenceTransformer(tf.keras.models.Model):
+
+    &#34;&#34;&#34;
+    This model closely resembles that of Chen et. al. (2019), available at https://arxiv.org/pdf/1905.06874.pdf.
+
+    It consists, for the most part, of a Transformer which takes as input a series of sequences
+    (e.g. sequence of items viewed). This Transformer then creates contextualized embeddings that correspond one for one
+    to input items. These embeddings are then passed through a BinaryClassificationHead (which can be a series of fully-connected layers)
+    to produce the output. Depending on the task, one can decide what type of BinaryClassificationHead to use and which embeddings to pass
+    through it. This is similar to how various classification layers can be mounted on top of a BERT model to perform
+    different tasks (binary classification, sequence tagging, multi-class classification with a softmax, etc.)
+
+    For instance, one can only send the output corresponding to CLS through the binary classification BinaryClassificationHead. The CLS
+    token can be trained to &#34;summarize&#34; the entire chain of input sequences. Or in the case of predicting returns given
+    the click-stream, one could feed the click-stream + basket (two sequences) and then pass the output of the
+    Transformer that corresponds to basket items to the BinaryClassificationHead and get a Tensor of the same length as basket.
+    The model can then be trained so that it predicts the probability of return for each item in the basket. (one would
+    need to set a maximum basket size, as the output of the model has to have a fixed length, and then pad when the
+    basket is smaller than that).
+
+    Another example is scoring items for recommendation, given the click-stream up to a certain point. In this case,
+    sequence 1 of input would be click-stream and sequence 2 will always be of length 1, containing a single target item
+    to be scored. One can then feed the output corresponding to the target item through the BinaryClassificationHead and produce a relevance
+    score.
+
+    The following is an example of how to specify the configuration of inputs:
+
+    ```python
+
+    sequential_input_config = {
+        &#39;items&#39;: [&#39;seq_1_items&#39;, &#39;seq_2_items&#39;],
+        &#39;events&#39;: [&#39;seq_1_events&#39;, &#39;seq_2_events&#39;]
+    }
+
+    feature_vocabs = {
+        &#39;items&#39;: &#39;../data/vocabs/item_vocab.txt&#39;,
+        &#39;events&#39;: &#39;../data/vocabs/event_vocab.txt&#39;
+    }
+
+    embedding_dims = {
+        &#39;items&#39;: 20,
+        &#39;events&#39;: 4
+    }
+    ```
+    In the above example the input contains two sequences. These, for example, could be session and basket in the task
+    of predicting returns. In addition, each sequence consists of two (separately embedded) elements. Items, and their
+    corresponding events, line (view, handbag) or (add_to_basket, shoe). These components will be concatenated before
+    going into the transformer. The final (batched) result will have the shape
+
+    (batch_size, seq_1_len + seq_2_len, d_model)
+
+    where d_model is the sum of the embedding dimension for each components (items and event in the above example).
+    &#34;&#34;&#34;
+
+    def __init__(self,
+                 sequential_input_config,
+                 feature_vocabs,
+                 embedding_dims,
+                 head_unit,
+                 segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
+                 value_to_head=None,  # Find a better name, like token_to_output
+                 num_encoder_layers=1,
+                 num_attention_heads=1,
+                 dropout_rate=0.1,
+                 **kwargs):
+        &#34;&#34;&#34;
+
+        Args:
+            sequential_input_config: Configuration of the sequential part of input, which is the part that will be
+                fed to the Transformer.
+            feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
+            embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
+            segment_to_head: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
+                of the mode. This parameter needs a better name.
+            value_to_head: The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
+                Example: value_to_head = &#39;[Mask]&#39; will send Transformer output for &#39;[Mask]&#39; tokens in the input sequence
+                to the BinaryClassificationHead
+            num_encoder_layers: Number of Encoder layers
+            num_attention_heads: Number of Attention heads in each Encoder layer
+            dropout_rate: Dropout rate
+            final_layers_dims: Dimensions of fully connected layers that come after Transformer and produce output. This
+                determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
+                specify what type of BinaryClassificationHead should be used.
+        &#34;&#34;&#34;
+        super(SequenceTransformer, self).__init__(**kwargs)
+
+        self.embedding_dims = embedding_dims
+        self.num_encoder_layers = num_encoder_layers
+        self.num_attention_heads = num_attention_heads
+        self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
+        self.sequential_input_config = sequential_input_config
+
+        assert (segment_to_head is not None or value_to_head is not None) and \
+               (segment_to_head is None or value_to_head is None), \
+               &#34;Exactly one of segment_to_head and value_to_head must be provided.&#34;
+
+        self.segment_to_head = segment_to_head
+        self.value_to_head = value_to_head
+
+        self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
+        # self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
+        self.vocab_lookup_tables = self._create_lookup_tables(vocabularies=feature_vocabs,
+                                                              tokens_to_prepend=RESERVED_TOKENS)
+        # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
+        # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
+        # dimension) for it, but don&#39;t provide a vocab file for it.
+        embedding_sizes = {f: self.vocab_lookup_tables[f].size() for f in feature_vocabs.keys()}
+
+        # Transformer
+        self.transformer = Transformer(
+            embedding_sizes=embedding_sizes,
+            embedding_dims=embedding_dims,
+            num_layers=self.num_encoder_layers,
+            num_attention_heads=self.num_attention_heads,
+            encoder_ff_dim=100,
+            dropout_rate=self.dropout_rate
+        )
+
+        self.head = head_unit
+
+    @staticmethod
+    def _create_lookup_tables(vocabularies, tokens_to_prepend=None):
+        lookup_tables = {}
+        for feature_name, vocab_file in vocabularies.items():
+            keys = load_vocabulary(vocab_file)  # words in vocab file
+            if tokens_to_prepend is not None:
+                keys = tf.concat([tokens_to_prepend, keys], axis=0)  # prepend reserved tokes to the vocabulary
+            values = tf.convert_to_tensor(range(len(keys)), dtype=tf.int64)
+            initializer = tf.lookup.KeyValueTensorInitializer(keys=keys, values=values)
+            lookup_tables[feature_name] = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
+
+        return lookup_tables
+
+    def call(self, inputs, training=None, mask=None):
+
+        # Traced functions are not allowed to change their input arguments
+        raw_features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
+
+        # We might need raw_features later. Also, we don&#39;t want to throw away feature that don&#39;t need vocab mapping
+        features = raw_features.copy()
+        for feature_name, lookup_table in self.vocab_lookup_tables.items():
+            features[feature_name] = lookup_table.lookup(features[feature_name])
+
+        # separating sequential features that should go into the Transformer from potentially non-seq &#34;side&#34; features
+        sequential_features = {feature_name: features[feature_name]
+                               for feature_name in self.sequential_input_config.keys()}
+
+        # ToDo: Side features should be added to the output of the Transformer
+        transformer_output = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
+
+        # segment_starts and segment_ends mark the index in the Transformer&#39;s output tensor where each sequence begins
+        # and ends. The first segment corresponds to the [CLS] token and is therefore always
+        # (batch_size, 1, d_model)
+        # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
+
+        # This model feeds the output corresponding to the second sequence. This is specific to this particular task
+        if self.segment_to_head is not None:
+            head_input = transformer_output[:, segment_starts[self.segment_to_head]:segment_ends[self.segment_to_head], ...]
+        elif self.value_to_head is not None:
+            # This is an ugly patch
+            # We designed the Transformer so that it would accept multiple sequences and stack them. Most obvious
+            # example is a sequence of items and a sequence of events associated with those items, e.g.
+            #   (view, bag), (add_to_cart, shoe), ...
+            # This is not common in the literature at all.
+            # Here, we are trying to send some of the elements from the output of the Transformer to the
+            # BinaryClassificationHead, and we&#39;re doing so based on input values. For instance, only send positions that
+            # correspond to [MASK] inputs. But it is not clear which input sequence we should be looking at?
+            # The items? or the events? Given how rare this multi-feature input is, I think this is an unnecessary
+            # complication. And the Transformer should only expect one input feature: The items.
+            some_raw_feature_name = list(self.sequential_input_config.keys())[0]
+
+            # (batch_size, seq_len)
+            some_raw_feature = raw_features[some_raw_feature_name]
+
+            # ToDo: move this part into a method
+            # Here is what this part does:
+            # Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
+            # `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer&#39;s
+            # output. The catch is, different examples may have different number of entries that match this value.
+            # So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
+            batch_size = tf.shape(some_raw_feature)[0]
+
+            # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
+            indices = tf.where(tf.equal(some_raw_feature, self.value_to_head))
+
+            # Since all examples in the batch don&#39;t necessarily have the same number of matching entries, we will create
+            # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
+            ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
+
+            # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
+            ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
+                                                               nrows=tf.cast(batch_size, tf.int64))
+
+            ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
+
+            # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
+            # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
+            matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
+
+            head_input = matching_embeddings
+        else:
+            raise ValueError(&#34;One of value_to_head and segment_to_head must be provided.&#34;)
+
+        logits = self.head(head_input)
+
+        return logits</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.engine.training.Model</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+<li>tensorflow.python.keras.utils.version_utils.ModelVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.sequence_transformer.SequenceTransformer.call"><code class="name flex">
+<span>def <span class="ident">call</span></span>(<span>self, inputs, training=None, mask=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calls the model on new inputs.</p>
+<p>In this case <code>call</code> just reapplies
+all ops in the graph to the new inputs
+(e.g. build a new computational graph from the provided inputs).</p>
+<h2 id="arguments">Arguments</h2>
+<p>inputs: A tensor or list of tensors.
+training: Boolean or boolean scalar tensor, indicating whether to run
+the <code>Network</code> in training mode or inference mode.
+mask: A mask or list of masks. A mask can be
+either a tensor or None (no mask).</p>
+<h2 id="returns">Returns</h2>
+<p>A tensor if there is a single output, or
+a list of tensors if there are more than one outputs.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def call(self, inputs, training=None, mask=None):
+
+    # Traced functions are not allowed to change their input arguments
+    raw_features, segment_starts, segment_ends = self.transformer_input_prep(features=inputs)
+
+    # We might need raw_features later. Also, we don&#39;t want to throw away feature that don&#39;t need vocab mapping
+    features = raw_features.copy()
+    for feature_name, lookup_table in self.vocab_lookup_tables.items():
+        features[feature_name] = lookup_table.lookup(features[feature_name])
+
+    # separating sequential features that should go into the Transformer from potentially non-seq &#34;side&#34; features
+    sequential_features = {feature_name: features[feature_name]
+                           for feature_name in self.sequential_input_config.keys()}
+
+    # ToDo: Side features should be added to the output of the Transformer
+    transformer_output = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
+
+    # segment_starts and segment_ends mark the index in the Transformer&#39;s output tensor where each sequence begins
+    # and ends. The first segment corresponds to the [CLS] token and is therefore always
+    # (batch_size, 1, d_model)
+    # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
+
+    # This model feeds the output corresponding to the second sequence. This is specific to this particular task
+    if self.segment_to_head is not None:
+        head_input = transformer_output[:, segment_starts[self.segment_to_head]:segment_ends[self.segment_to_head], ...]
+    elif self.value_to_head is not None:
+        # This is an ugly patch
+        # We designed the Transformer so that it would accept multiple sequences and stack them. Most obvious
+        # example is a sequence of items and a sequence of events associated with those items, e.g.
+        #   (view, bag), (add_to_cart, shoe), ...
+        # This is not common in the literature at all.
+        # Here, we are trying to send some of the elements from the output of the Transformer to the
+        # BinaryClassificationHead, and we&#39;re doing so based on input values. For instance, only send positions that
+        # correspond to [MASK] inputs. But it is not clear which input sequence we should be looking at?
+        # The items? or the events? Given how rare this multi-feature input is, I think this is an unnecessary
+        # complication. And the Transformer should only expect one input feature: The items.
+        some_raw_feature_name = list(self.sequential_input_config.keys())[0]
+
+        # (batch_size, seq_len)
+        some_raw_feature = raw_features[some_raw_feature_name]
+
+        # ToDo: move this part into a method
+        # Here is what this part does:
+        # Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
+        # `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer&#39;s
+        # output. The catch is, different examples may have different number of entries that match this value.
+        # So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
+        batch_size = tf.shape(some_raw_feature)[0]
+
+        # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
+        indices = tf.where(tf.equal(some_raw_feature, self.value_to_head))
+
+        # Since all examples in the batch don&#39;t necessarily have the same number of matching entries, we will create
+        # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
+        ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
+
+        # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
+        ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
+                                                           nrows=tf.cast(batch_size, tf.int64))
+
+        ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
+
+        # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
+        # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
+        matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
+
+        head_input = matching_embeddings
+    else:
+        raise ValueError(&#34;One of value_to_head and segment_to_head must be provided.&#34;)
+
+    logits = self.head(head_input)
+
+    return logits</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.sequence_transformer.TransformerInputPrep"><code class="flex name class">
+<span>class <span class="ident">TransformerInputPrep</span></span>
+<span>(</span><span>seq_chain_mapping)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This class formats the input sequence(s) to a Transformer by concatenating them and inserting appropriate tokens.
+The resulting sequence will have the following format:</p>
+<p>[CLS] [SEP] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] &hellip;</p>
+<p>This is inspired by how BERT formats its input. The CLS token can be used (as BERT does) as a summary of the entire
+input. For example, binary classification for sentiment analysis in NLP, or purchase intention in click-stream.</p>
+<p>The SEP token is used to separates each sequence from the next (or from the CLS token).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>seq_chain_mapping</code></strong></dt>
+<dd>Specifies how to existing features should be chained to form new ones.</dd>
+</dl>
+<p>Example:
+Let's say the feature set includes the following tensors:
+session_items, basket_items, sessions_events, basket_events</p>
+<p>We can create two new features, items and events, by chaining the existing ones as follows:</p>
+<p>seq_chain_mapping = {
+'items': ['session_items', 'basket_items'],
+'events': ['sessions_events', 'basket_events']
+}</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TransformerInputPrep:
+    &#34;&#34;&#34;
+    This class formats the input sequence(s) to a Transformer by concatenating them and inserting appropriate tokens.
+    The resulting sequence will have the following format:
+
+    [CLS] [SEP] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] ...
+
+    This is inspired by how BERT formats its input. The CLS token can be used (as BERT does) as a summary of the entire
+    input. For example, binary classification for sentiment analysis in NLP, or purchase intention in click-stream.
+
+    The SEP token is used to separates each sequence from the next (or from the CLS token).
+    &#34;&#34;&#34;
+    def __init__(self, seq_chain_mapping):
+        &#34;&#34;&#34;
+        Args:
+            seq_chain_mapping: Specifies how to existing features should be chained to form new ones.
+
+        Example:
+        Let&#39;s say the feature set includes the following tensors:
+        session_items, basket_items, sessions_events, basket_events
+
+        We can create two new features, items and events, by chaining the existing ones as follows:
+
+        seq_chain_mapping = {
+                             &#39;items&#39;: [&#39;session_items&#39;, &#39;basket_items&#39;],
+                             &#39;events&#39;: [&#39;sessions_events&#39;, &#39;basket_events&#39;]
+                            }
+        &#34;&#34;&#34;
+        self.seq_chain_mapping = seq_chain_mapping
+
+    @staticmethod
+    def _chain_sequences(sequences):
+        &#34;&#34;&#34;
+        Args:
+            sequences: A list containing (1 or more) sequence tensors to be chained
+
+        Returns:
+            The tensor resulting from concatenating the two input sequences and adding appropriate tokens
+            output looks like: [CLS] seq_1 [SEP] seq_2 [SEP] seq_3 [SEP] seq_4 ...
+        &#34;&#34;&#34;
+        session_dims = tf.unstack(tf.shape(sequences[0]))  # This is a python list
+        session_dims[1] = 1  # token is concatenated along axis 1. So it should have size 1 on this axis
+        token_shape = session_dims
+        cls_token = tf.fill(dims=token_shape, value=tf.cast(CLASSIFICATION_TOKEN, sequences[0].dtype))
+        sep_token = tf.fill(dims=token_shape, value=tf.cast(SEPARATOR_TOKEN, sequences[0].dtype))
+
+        sequences = [cls_token] + sequences
+
+        # insert sep in between sequences. Result will be [cls] [sep] seq_1 [sep] seq_2 [sep] ...
+        # The first sep is inserted for ease of calculating segment start and end positions. BERT doesn&#39;t have that sep.
+        concat_list = [sequences[i // 2] if i % 2 == 0 else sep_token for i in range(2 * len(sequences))]
+
+        # Notice axis=1. This doesn&#39;t care whether or not there are more dimensions after 1
+        seq_chain = tf.concat(concat_list, axis=1)
+
+        return seq_chain
+
+    def __call__(self, features, keep_features=False):
+        &#34;&#34;&#34;
+
+        Args:
+            features: Dictionary of feature, mapping feature names to tensors
+            keep_features: Whether to keep chained features in the returned feature dictionary
+
+        Returns:
+            A features dictionary containing the newly created features. It will leave untouched all other features that
+            were not involved in chaining.
+        &#34;&#34;&#34;
+        features = features.copy()  # traced functions cannot change their input
+        # 1 - Chaining features as specified
+        for new_feature, seq_pair in self.seq_chain_mapping.items():
+            sequence_pair_list = [features[name] for name in seq_pair]
+            features[new_feature] = self._chain_sequences(sequence_pair_list)
+
+        # 2 - Calculating start and end positions of sequences
+
+        # Using the SEP token to find out where each sequence begins and ends (including the leading CLS)
+        # Sequences in the same position are supposed to have the same length. So doesn&#39;t matter which one we use.
+        # I&#39;ll just use whichever chained feature that happens to be first
+        some_chained_feature = features[list(self.seq_chain_mapping.keys())[0]]
+        # Similarly, the lengths of sequences are the same along the batch dimension. So, I&#39;ll get rid of batch axis
+        sample_chained_tensor = some_chained_feature[0, :]  # taking first (or any) sample in the batch
+        # The following is (n, d), where d is # dimensions in condition of where. in this case 1 (see tf.where docs)
+        sep_positions = tf.where(tf.equal(sample_chained_tensor, SEPARATOR_TOKEN))
+        # So we can simply squeeze it out and get a 1-d tensor of indexes
+        segment_ends = tf.squeeze(sep_positions, axis=1)  # 1-d tensor containing positions of SEP tokens
+        # Each sequence starts right after the previous one&#39;s SEP token. First one starts at 0.
+        segment_starts = tf.concat([[0], segment_ends[:-1]+1], axis=0)  # Making sure the first start pos is 0
+
+        # 3 - Removing old features used in creating the new ones (if so specified by keep_features argument)
+        if not keep_features:  # Drop features that were used in forming sequence pairs
+            features_to_drop = set()
+            for seq_pair in self.seq_chain_mapping.values():
+                features_to_drop = features_to_drop.union(set(seq_pair))
+            features = {k: v for k, v in features.items() if k not in features_to_drop}
+
+        return features, segment_starts, segment_ends</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="sequence_transformer" href="index.html">sequence_transformer</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="sequence_transformer.sequence_transformer.SequenceTransformer" href="#sequence_transformer.sequence_transformer.SequenceTransformer">SequenceTransformer</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.sequence_transformer.SequenceTransformer.call" href="#sequence_transformer.sequence_transformer.SequenceTransformer.call">call</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.sequence_transformer.TransformerInputPrep" href="#sequence_transformer.sequence_transformer.TransformerInputPrep">TransformerInputPrep</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

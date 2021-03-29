@@ -1,0 +1,6 @@
+# ToDo: mask ratio
+# ToDo: test on last item
+# ToDo: ML-1M
+# ToDo: Train on original Amazon Data
+# ToDo: HR@k
+# ToDo: Dropout?

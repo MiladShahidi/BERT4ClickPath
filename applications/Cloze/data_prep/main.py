@@ -1,7 +1,4 @@
-import tensorflow as tf
 import pandas as pd
-import numpy as np
-
 from sequence_transformer.data_prep import data_utils
 import json
 import gzip

@@ -4,7 +4,7 @@ from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, INPUT
 # from sequence_transformer.constants import SEQ_LEN, MIN_SEQ_LEN
 
 from data_generator import ClickStreamGenerator
-from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.sequence_transformer import SequenceTransformer
 from sequence_transformer.head import SoftMaxHead, MultiLabel_MultiClass_classification
 
 import os
@@ -312,8 +312,8 @@ if __name__ == '__main__':
 
     #
     # from pprint import pprint
-    # for x in data.take(1):
-    #     pprint(x)
+    # for serialized_string in data.take(1):
+    #     pprint(serialized_string)
 
     sequential_input_config = {
         'items': ['feature1',
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     final_layers_dims = [1024, 512, 256]
     head_unit = MultiLabel_MultiClass_classification(dense_layer_dims=final_layers_dims,
                                                      output_vocab_size=output_vocab_size)
-    clickstream_model = ClickstreamModel(
+    clickstream_model = SequenceTransformer(
         sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,

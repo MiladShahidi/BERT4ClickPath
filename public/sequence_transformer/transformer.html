@@ -1,0 +1,1908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>sequence_transformer.transformer API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>sequence_transformer.transformer</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import tensorflow as tf
+from sequence_transformer.constants import INPUT_PAD, SEP, ITEM_EMBEDDING_LAYER_NAME
+import numpy as np
+
+
+def create_segment_markers(seq, sep=SEP):
+    &#34;&#34;&#34;
+    Example:
+        seq =  # (batch of 2), SEP is 4 in the vocab
+            [
+                [  3   4   1 444   1 903 186   1 947   1 798   0   0   0   0   0   0   4 814 706 959 537   4]
+                [  3   4 169   1 714 169 999 696 737 320  11 666 493 229 859   1  77   4 662 990   0   0   4]
+            ]
+
+        result:
+            [
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+            ]
+
+    Notice that because each sequence is padded before being concatenated, SEP (4) appears in the same position in all
+        examples across the batch. However, this function does not make that assumption and will work fine regardless.
+
+    Args:
+        seq: 2-D tensor with shape (batch_size, seq_len)
+        sep: The marker separating the segments (SEP token)
+
+    Returns:
+        a 2-D tensor of the same shape as seq, containing the sequence number of corresponding elements in seq
+    &#34;&#34;&#34;
+    tf.debugging.assert_rank(seq, 2, &#39;Expected 2-D tensor&#39;)
+    sep_pos = tf.cast(tf.where(tf.equal(seq, sep), 1, 0), tf.int32)
+    segment_markers = tf.cumsum(sep_pos, axis=1)
+    return segment_markers
+
+
+# ToDo: Keras now provides native padding and masking layers. Consider using those instead of manual masking
+def create_padding_mask(seq):
+    seq = tf.cast(tf.math.equal(seq, INPUT_PAD), tf.float32)
+    # add extra dimensions so it will match attention logits. We need to add the padding to the attention logits later.
+    return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
+
+
+def get_angles(pos, i, d_model):
+    angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+    return pos * angle_rates
+
+
+def positional_encoding(position, d_model):
+    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+                            np.arange(d_model)[np.newaxis, :], d_model)
+
+    # apply sin to even indices in the array; 2i
+    angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+
+    # apply cos to odd indices in the array; 2i+1
+    angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+
+    pos_encoding = angle_rads[np.newaxis, ...]
+
+    return tf.cast(pos_encoding, dtype=tf.float32)
+
+
+def scaled_dot_product_attention(q, k, v, mask=None):
+    &#34;&#34;&#34;Calculate the attention weights.
+    q, k, v must have matching leading dimensions.
+    k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
+    The mask has different shapes depending on its type(padding or look ahead)
+    but it must be broadcastable for addition.
+    Note: Look ahead mask is not used in our case
+
+    Args:
+      q: query shape == (..., seq_len_q, depth)
+      k: key shape == (..., seq_len_k, depth)
+      v: value shape == (..., seq_len_v, depth_v)
+      mask: Float tensor with shape broadcastable
+            to (..., seq_len_q, seq_len_k). Defaults to None.
+
+    Returns:
+      output, attention_weights
+    &#34;&#34;&#34;
+
+    matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+
+    # scale matmul_qk
+    dk = tf.cast(tf.shape(k)[-1], tf.float32)
+    scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+    # add the mask to the scaled tensor.
+    if mask is not None:
+        scaled_attention_logits += (mask * -1e9)
+
+    # softmax is normalized on the last axis (seq_len_k) so that the scores add up to 1.
+    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+    output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+
+    return output, attention_weights
+
+
+class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads, **kwargs):
+        super(MultiHeadAttention, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can ve saved when the model is exported
+        # This same mapping should be added to the layer&#39;s/model&#39;s config. See get_config
+        self.num_heads = num_heads
+        self.d_model = d_model
+
+        assert self.d_model % self.num_heads == 0
+
+        self.depth = d_model // self.num_heads
+
+        self.wq = tf.keras.layers.Dense(self.d_model)
+        self.wk = tf.keras.layers.Dense(self.d_model)
+        self.wv = tf.keras.layers.Dense(self.d_model)
+
+        self.dense = tf.keras.layers.Dense(self.d_model)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(MultiHeadAttention, self).get_config()
+        config.update({
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads
+        })
+        return config
+
+    # TODO: Why do they split q, k and v between heads? The paper doesn&#39;t do this.
+    def split_heads(self, x, batch_size):
+        &#34;&#34;&#34;Split the last dimension into (num_heads, depth).
+        Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
+        &#34;&#34;&#34;
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
+
+    def call(self, v, k, q, mask):
+        batch_size = tf.shape(q)[0]
+        q = self.wq(q)  # (batch_size, seq_len, d_model)
+        k = self.wk(k)  # (batch_size, seq_len, d_model)
+        v = self.wv(v)  # (batch_size, seq_len, d_model)
+
+        q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
+        k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
+        v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
+
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        scaled_attention, attention_weights = scaled_dot_product_attention(
+            q, k, v, mask)
+
+        scaled_attention = tf.transpose(scaled_attention,
+                                        perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
+
+        concat_attention = tf.reshape(scaled_attention,
+                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
+
+        output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
+
+        return output, attention_weights
+
+
+def point_wise_feed_forward_network(d_model, dff):
+    return tf.keras.Sequential([
+      tf.keras.layers.Dense(dff, activation=&#39;relu&#39;),  # (batch_size, seq_len, dff)
+      tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
+    ])
+
+
+class EncoderLayer(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads, dff, rate=0.1, **kwargs):
+        super(EncoderLayer, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can be saved when the model is exported
+        # This same mapping should be added to the layer&#39;s/model&#39;s config. See get_config
+        self.dff = dff
+        self.rate = rate
+        self.d_model = d_model
+        self.num_heads = num_heads
+
+        self.mha = MultiHeadAttention(self.d_model, self.num_heads)
+        self.ffn = point_wise_feed_forward_network(self.d_model, self.dff)
+
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+
+        self.dropout1 = tf.keras.layers.Dropout(self.rate)
+        self.dropout2 = tf.keras.layers.Dropout(self.rate)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(EncoderLayer, self).get_config()
+        config.update({
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads,
+            &#39;dff&#39;: self.dff,
+            &#39;rate&#39;: self.rate
+        })
+        return config
+
+    def call(self, x, training=None, mask=None):
+        attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
+        attn_output = self.dropout1(attn_output, training=training)
+
+        out1 = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, d_model)
+
+        ffn_output = self.ffn(out1)  # (batch_size, input_seq_len, d_model)
+        ffn_output = self.dropout2(ffn_output, training=training)
+
+        out2 = self.layernorm2(out1 + ffn_output)  # (batch_size, input_seq_len, d_model)
+
+        return out2
+
+
+class Encoder(tf.keras.layers.Layer):
+    def __init__(self, num_layers, d_model, num_heads, dff,
+                 dropout_rate, **kwargs):
+        super(Encoder, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can be saved when the model is exported
+        # This same mapping should be added to the layer&#39;s config. See get_config
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.dff = dff
+        self.dropout_rate = dropout_rate
+        # self.maximum_position_encoding = maximum_position_encoding
+
+        # TODO: It is possible to have the embedding layer produce a mask tensor by setting mask_zero=True
+        #  In that case all subsequent layers must support masking.
+        #  See: https://www.tensorflow.org/guide/keras/masking_and_padding
+        #  This could be a more robust and fool-proof way of implementing masking. But before spending time on this
+        #  consider the fact that this will make everything more dependant on the keras embedding layer and will make it
+        #  harder to remove it. We might want to replace this with an embedding feature_column, in case the latter
+        #  provides more flexibility, e.g. loading embeddings from checkpoints or manipulating embeddings manually.
+
+        self.enc_layers = [EncoderLayer(self.d_model, self.num_heads, self.dff, self.dropout_rate)
+                           for _ in range(self.num_layers)]
+
+        self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(Encoder, self).get_config()
+        config.update({
+            &#39;num_layers&#39;: self.num_layers,
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads,
+            &#39;dff&#39;: self.dff,
+            &#39;dropout_rate&#39;: self.dropout_rate
+        })
+        return config
+
+    def call(self, inputs, training=None, mask=None):
+        # seq_len = tf.shape(inputs)[1]
+        # inputs = self.embedding(inputs)  # (batch_size, input_seq_len, d_model)
+
+        # inputs *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+        # inputs += self.pos_encoding[:, :seq_len, :]
+
+        inputs = self.dropout(inputs, training=training)
+
+        for i in range(self.num_layers):
+            inputs = self.enc_layers[i](inputs, training, mask)
+
+        return inputs  # (batch_size, input_seq_len, d_model)
+
+
+class Transformer(tf.keras.layers.Layer):
+    &#34;&#34;&#34;
+    An encoder-only Transformer. See &#34;Attention Is All You Need&#34;, Vaswani, et. al. (2017).
+
+    https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+    Note that this is a Keras Layer, not Model. It&#39;s meant to be used as part of (i.e. a layer inside) other models.
+
+    It receives a dictionary of input features (see the call method) each of which must have the same shape of:
+
+    (batch_size, seq_len)
+
+    It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
+    embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:
+
+    (batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions
+
+    &#34;&#34;&#34;
+    # This is the maximum number of input sequences (as marked and separated by the SEP token) this model can accept
+    # The only reason we need to specify this, is to be able to create a segment embedding layer in advance.
+    # If segment embeddings are not used this becomes irrelevant
+    MAX_INPUT_SEQ = 100
+
+    def __init__(self,
+                 num_layers,
+                 num_attention_heads,
+                 embedding_sizes,
+                 embedding_dims,
+                 encoder_ff_dim,
+                 dropout_rate,
+                 item_embedding_weights=None,
+                 **kwargs):
+
+        &#34;&#34;&#34;
+
+        Args:
+            embedding_sizes: Size of the vocabulary for each input feature. One can think of this as the number of
+                rows in each embedding lookup table.
+            embedding_dims: Dimension of embedding vector for input features. One can think of this as the number of
+                columns in each embedding lookup table.
+            num_layers: Number of Encoder layers.
+            encoder_attention_heads: Number of Attention heads.
+            encoder_ff_dim: Dimension of the feed forward layers inside the Encoder (see &#34;Attention is All You Need&#34;).
+            dropout_rate: Dropout rate
+            item_embedding_weights: Not currently implemented, but can be used to load pre-trained embeddings from a
+                checkpoint. See the instantiation of the Embedding layers.
+            **kwargs:
+        &#34;&#34;&#34;
+
+        super(Transformer, self).__init__(**kwargs)
+
+        assert set(embedding_sizes.keys()) == set(embedding_dims.keys()), \
+            &#34;embedding_sizes and embedding_dims must have the same set of keys.&#34;
+
+        # Some of these attributes are not used as such, but assigning them to a class attribute allows TF to trace them
+        # This is needed for serialization. I&#39;m not completely sure though.
+        # See https://www.tensorflow.org/guide/keras/custom_layers_and_models
+        self.num_layers = num_layers
+        self.num_attention_heads = num_attention_heads
+        self.embedding_sizes = embedding_sizes
+        self.embedding_dims = embedding_dims
+        self.encoder_ff_dim = encoder_ff_dim
+        self.dropout_rate = dropout_rate
+        self.item_embedding_weights = item_embedding_weights
+
+        self.maximum_position_encoding = 10000  # This used to be an argument. But doesn&#39;t need to be.
+
+        self.d_model = sum(embedding_dims.values())
+
+        self.encoder = Encoder(
+            num_layers=num_layers,
+            d_model=self.d_model,
+            num_heads=num_attention_heads,
+            dff=encoder_ff_dim,
+            dropout_rate=dropout_rate
+        )
+
+        self.embedding_layers = {
+            feature: tf.keras.layers.Embedding(
+                input_dim=embedding_sizes[feature],
+                output_dim=embedding_dims[feature],
+                # The followings are to enable loading from checkpoints
+                # weights=embedding_weights,  # I verified that passing None to this is equivalent to not passing it
+                # name=EMBEDDING_LAYER_NAME  # Ensures that we know the name of this layer and can later load by name
+            )
+            for feature in embedding_dims.keys()
+        }
+
+        self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
+        # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(Transformer, self).get_config()
+        config.update({
+            &#39;num_layers&#39;: self.num_layers,
+            &#39;num_attention_heads&#39;: self.num_attention_heads,
+            &#39;embedding_sizes&#39;: self.embedding_sizes,
+            &#39;embedding_dims&#39;: self.embedding_dims,
+            &#39;encoder_ff_dim&#39;: self.encoder_ff_dim,
+            &#39;dropout_rate&#39;: self.dropout_rate,
+            &#39;item_embedding_weights&#39;: self.item_embedding_weights
+        })
+        return config
+
+    def call(self, inputs, training=None, mask=None):
+        some_feature = inputs[list(inputs.keys())[0]]
+        seq_len = tf.shape(some_feature)[1]  # features are (batch_size, seq_len) before being embedded
+
+        # All sequence features are padded the same way. It doesn&#39;t matter which one is used to create the mask
+        padding_mask = create_padding_mask(some_feature)  # (batch_size, seq_len)
+
+        # Convert to embeddings
+        embedded_features = {feature_name: self.embedding_layers[feature_name](inputs[feature_name])
+                             for feature_name in inputs.keys()}
+
+        # Concatenate embedded_features along their last dimension
+        embedded_seq = tf.concat(list(embedded_features.values()), axis=-1)  # (batch_size, seq_len, d_model)
+        # d_model == sum(embedding_dims.values())
+        embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+        # Segment embeddings
+        # segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
+        # segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
+        # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
+
+        # ToDo: Try learnable positional embeddings from Bert4Rec: https://arxiv.org/pdf/1904.06690.pdf
+        embedded_seq += self.pos_encoding[:, :seq_len, :]
+
+        encoder_output = self.encoder(inputs=embedded_seq, training=training, mask=padding_mask)  # (batch_size, seq_len, d_model)
+
+        return encoder_output
+
+
+if __name__ == &#39;__main__&#39;:
+    pass</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="sequence_transformer.transformer.create_padding_mask"><code class="name flex">
+<span>def <span class="ident">create_padding_mask</span></span>(<span>seq)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_padding_mask(seq):
+    seq = tf.cast(tf.math.equal(seq, INPUT_PAD), tf.float32)
+    # add extra dimensions so it will match attention logits. We need to add the padding to the attention logits later.
+    return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.create_segment_markers"><code class="name flex">
+<span>def <span class="ident">create_segment_markers</span></span>(<span>seq, sep=4)</span>
+</code></dt>
+<dd>
+<div class="desc"><h2 id="example">Example</h2>
+<p>seq =
+# (batch of 2), SEP is 4 in the vocab
+[
+[
+3
+4
+1 444
+1 903 186
+1 947
+1 798
+0
+0
+0
+0
+0
+0
+4 814 706 959 537
+4]
+[
+3
+4 169
+1 714 169 999 696 737 320
+11 666 493 229 859
+1
+77
+4 662 990
+0
+0
+4]
+]</p>
+<p>result:
+[
+[0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+[0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+]</p>
+<p>Notice that because each sequence is padded before being concatenated, SEP (4) appears in the same position in all
+examples across the batch. However, this function does not make that assumption and will work fine regardless.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>seq</code></strong></dt>
+<dd>2-D tensor with shape (batch_size, seq_len)</dd>
+<dt><strong><code>sep</code></strong></dt>
+<dd>The marker separating the segments (SEP token)</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>a 2-D tensor of the same shape as seq, containing the sequence number of corresponding elements in seq</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_segment_markers(seq, sep=SEP):
+    &#34;&#34;&#34;
+    Example:
+        seq =  # (batch of 2), SEP is 4 in the vocab
+            [
+                [  3   4   1 444   1 903 186   1 947   1 798   0   0   0   0   0   0   4 814 706 959 537   4]
+                [  3   4 169   1 714 169 999 696 737 320  11 666 493 229 859   1  77   4 662 990   0   0   4]
+            ]
+
+        result:
+            [
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+                [0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 3]
+            ]
+
+    Notice that because each sequence is padded before being concatenated, SEP (4) appears in the same position in all
+        examples across the batch. However, this function does not make that assumption and will work fine regardless.
+
+    Args:
+        seq: 2-D tensor with shape (batch_size, seq_len)
+        sep: The marker separating the segments (SEP token)
+
+    Returns:
+        a 2-D tensor of the same shape as seq, containing the sequence number of corresponding elements in seq
+    &#34;&#34;&#34;
+    tf.debugging.assert_rank(seq, 2, &#39;Expected 2-D tensor&#39;)
+    sep_pos = tf.cast(tf.where(tf.equal(seq, sep), 1, 0), tf.int32)
+    segment_markers = tf.cumsum(sep_pos, axis=1)
+    return segment_markers</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.get_angles"><code class="name flex">
+<span>def <span class="ident">get_angles</span></span>(<span>pos, i, d_model)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_angles(pos, i, d_model):
+    angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+    return pos * angle_rates</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.point_wise_feed_forward_network"><code class="name flex">
+<span>def <span class="ident">point_wise_feed_forward_network</span></span>(<span>d_model, dff)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def point_wise_feed_forward_network(d_model, dff):
+    return tf.keras.Sequential([
+      tf.keras.layers.Dense(dff, activation=&#39;relu&#39;),  # (batch_size, seq_len, dff)
+      tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
+    ])</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.positional_encoding"><code class="name flex">
+<span>def <span class="ident">positional_encoding</span></span>(<span>position, d_model)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def positional_encoding(position, d_model):
+    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+                            np.arange(d_model)[np.newaxis, :], d_model)
+
+    # apply sin to even indices in the array; 2i
+    angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+
+    # apply cos to odd indices in the array; 2i+1
+    angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+
+    pos_encoding = angle_rads[np.newaxis, ...]
+
+    return tf.cast(pos_encoding, dtype=tf.float32)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.scaled_dot_product_attention"><code class="name flex">
+<span>def <span class="ident">scaled_dot_product_attention</span></span>(<span>q, k, v, mask=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the attention weights.
+q, k, v must have matching leading dimensions.
+k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
+The mask has different shapes depending on its type(padding or look ahead)
+but it must be broadcastable for addition.
+Note: Look ahead mask is not used in our case</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>q</code></strong></dt>
+<dd>query shape == (&hellip;, seq_len_q, depth)</dd>
+<dt><strong><code>k</code></strong></dt>
+<dd>key shape == (&hellip;, seq_len_k, depth)</dd>
+<dt><strong><code>v</code></strong></dt>
+<dd>value shape == (&hellip;, seq_len_v, depth_v)</dd>
+<dt><strong><code>mask</code></strong></dt>
+<dd>Float tensor with shape broadcastable
+to (&hellip;, seq_len_q, seq_len_k). Defaults to None.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>output, attention_weights</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def scaled_dot_product_attention(q, k, v, mask=None):
+    &#34;&#34;&#34;Calculate the attention weights.
+    q, k, v must have matching leading dimensions.
+    k, v must have matching penultimate dimension, i.e.: seq_len_k = seq_len_v.
+    The mask has different shapes depending on its type(padding or look ahead)
+    but it must be broadcastable for addition.
+    Note: Look ahead mask is not used in our case
+
+    Args:
+      q: query shape == (..., seq_len_q, depth)
+      k: key shape == (..., seq_len_k, depth)
+      v: value shape == (..., seq_len_v, depth_v)
+      mask: Float tensor with shape broadcastable
+            to (..., seq_len_q, seq_len_k). Defaults to None.
+
+    Returns:
+      output, attention_weights
+    &#34;&#34;&#34;
+
+    matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+
+    # scale matmul_qk
+    dk = tf.cast(tf.shape(k)[-1], tf.float32)
+    scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+    # add the mask to the scaled tensor.
+    if mask is not None:
+        scaled_attention_logits += (mask * -1e9)
+
+    # softmax is normalized on the last axis (seq_len_k) so that the scores add up to 1.
+    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
+    output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+
+    return output, attention_weights</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="sequence_transformer.transformer.Encoder"><code class="flex name class">
+<span>class <span class="ident">Encoder</span></span>
+<span>(</span><span>num_layers, d_model, num_heads, dff, dropout_rate, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the class from which all layers inherit.</p>
+<p>A layer is a callable object that takes as input one or more tensors and
+that outputs one or more tensors. It involves <em>computation</em>, defined
+in the <code>call()</code> method, and a <em>state</em> (weight variables), defined
+either in the constructor <code>__init__()</code> or in the <code>build()</code> method.</p>
+<p>Users will just instantiate a layer and then treat it as a callable.</p>
+<h2 id="arguments">Arguments</h2>
+<p>trainable: Boolean, whether the layer's variables should be trainable.
+name: String name of the layer.
+dtype: The dtype of the layer's computations and weights (default of
+<code>None</code> means use <code>tf.keras.backend.floatx</code> in TensorFlow 2, or the type
+of the first input in TensorFlow 1).
+dynamic: Set this to <code>True</code> if your layer should only be run eagerly, and
+should not be used to generate a static computation graph.
+This would be the case for a Tree-RNN or a recursive network,
+for example, or generally for any layer that manipulates tensors
+using Python control flow. If <code>False</code>, we assume that the layer can
+safely be used to generate a static computation graph.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>The name of the layer (string).</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>The dtype of the layer's computations and weights. If mixed
+precision is used with a <code>tf.keras.mixed_precision.experimental.Policy</code>,
+this is instead just the dtype of the layer's weights, as the computations
+are done in a different dtype.</dd>
+<dt><strong><code>trainable_weights</code></strong></dt>
+<dd>List of variables to be included in backprop.</dd>
+<dt><strong><code>non_trainable_weights</code></strong></dt>
+<dd>List of variables that should not be
+included in backprop.</dd>
+<dt><strong><code>weights</code></strong></dt>
+<dd>The concatenation of the lists trainable_weights and
+non_trainable_weights (in this order).</dd>
+<dt><strong><code>trainable</code></strong></dt>
+<dd>Whether the layer should be trained (boolean), i.e. whether
+its potentially-trainable weights should be returned as part of
+<code>layer.trainable_weights</code>.</dd>
+<dt><strong><code>input_spec</code></strong></dt>
+<dd>Optional (list of) <code>InputSpec</code> object(s) specifying the
+constraints on inputs that can be accepted by the layer.</dd>
+</dl>
+<p>We recommend that descendants of <code>Layer</code> implement the following methods:</p>
+<ul>
+<li><code>__init__()</code>: Defines custom layer attributes, and creates layer state
+variables that do not depend on input shapes, using <code>add_weight()</code>.</li>
+<li><code>build(self, input_shape)</code>: This method can be used to create weights that
+depend on the shape(s) of the input(s), using <code>add_weight()</code>. <code>__call__()</code>
+will automatically build the layer (if it has not been built yet) by
+calling <code>build()</code>.</li>
+<li><code>call(self, *args, **kwargs)</code>: Called in <code>__call__</code> after making sure
+<code>build()</code> has been called. <code>call()</code> performs the logic of applying the
+layer to the input tensors (which should be passed in as argument).
+Two reserved keyword arguments you can optionally use in <code>call()</code> are:<ul>
+<li><code>training</code> (boolean, whether the call is in
+inference mode or training mode)</li>
+<li><code>mask</code> (boolean tensor encoding masked timesteps in the input, used
+in RNN layers)</li>
+</ul>
+</li>
+<li><code>get_config(self)</code>: Returns a dictionary containing the configuration used
+to initialize this layer. If the keys differ from the arguments
+in <code>__init__</code>, then override <code>from_config(self)</code> as well.
+This method is used when saving
+the layer or a model that contains this layer.</li>
+</ul>
+<p>Examples:</p>
+<p>Here's a basic example: a layer with two variables, <code>w</code> and <code>b</code>,
+that returns <code>y = w . x + b</code>.
+It shows how to implement <code>build()</code> and <code>call()</code>.
+Variables set as attributes of a layer are tracked as weights
+of the layers (in <code>layer.weights</code>).</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):  # Create the state of the layer (weights)
+    w_init = tf.random_normal_initializer()
+    self.w = tf.Variable(
+        initial_value=w_init(shape=(input_shape[-1], self.units),
+                             dtype='float32'),
+        trainable=True)
+    b_init = tf.zeros_initializer()
+    self.b = tf.Variable(
+        initial_value=b_init(shape=(self.units,), dtype='float32'),
+        trainable=True)
+
+  def call(self, inputs):  # Defines the computation from inputs to outputs
+      return tf.matmul(inputs, self.w) + self.b
+
+# Instantiates the layer.
+linear_layer = SimpleDense(4)
+
+# This will also call `build(input_shape)` and create the weights.
+y = linear_layer(tf.ones((2, 2)))
+assert len(linear_layer.weights) == 2
+
+# These weights are trainable, so they're listed in `trainable_weights`:
+assert len(linear_layer.trainable_weights) == 2
+</code></pre>
+<p>Note that the method <code>add_weight()</code> offers a shortcut to create weights:</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):
+      self.w = self.add_weight(shape=(input_shape[-1], self.units),
+                               initializer='random_normal',
+                               trainable=True)
+      self.b = self.add_weight(shape=(self.units,),
+                               initializer='random_normal',
+                               trainable=True)
+
+  def call(self, inputs):
+      return tf.matmul(inputs, self.w) + self.b
+</code></pre>
+<p>Besides trainable weights, updated via backpropagation during training,
+layers can also have non-trainable weights. These weights are meant to
+be updated manually during <code>call()</code>. Here's a example layer that computes
+the running sum of its inputs:</p>
+<pre><code class="language-python">class ComputeSum(Layer):
+
+  def __init__(self, input_dim):
+      super(ComputeSum, self).__init__()
+      # Create a non-trainable weight.
+      self.total = tf.Variable(initial_value=tf.zeros((input_dim,)),
+                               trainable=False)
+
+  def call(self, inputs):
+      self.total.assign_add(tf.reduce_sum(inputs, axis=0))
+      return self.total
+
+my_sum = ComputeSum(2)
+x = tf.ones((2, 2))
+
+y = my_sum(x)
+print(y.numpy())  # [2. 2.]
+
+y = my_sum(x)
+print(y.numpy())  # [4. 4.]
+
+assert my_sum.weights == [my_sum.total]
+assert my_sum.non_trainable_weights == [my_sum.total]
+assert my_sum.trainable_weights == []
+</code></pre>
+<p>For more information about creating layers, see the guide
+<a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models">Writing custom layers and models with Keras</a></p>
+<p>About the layer's <code>dtype</code> attribute:</p>
+<p>Each layer has a dtype, which is typically the dtype of the layer's
+computations and variables. A layer's dtype can be queried via the
+<code>Layer.dtype</code> property. The dtype is specified with the <code>dtype</code> constructor
+argument. In TensorFlow 2, the dtype defaults to <code>tf.keras.backend.floatx()</code>
+if no dtype is passed. <code>floatx()</code> itself defaults to "float32". Additionally,
+layers will cast their inputs to the layer's dtype in TensorFlow 2. When mixed
+precision is used, layers may have different computation and variable dtypes.
+See <code>tf.keras.mixed_precision.experimental.Policy</code> for details on layer
+dtypes.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Encoder(tf.keras.layers.Layer):
+    def __init__(self, num_layers, d_model, num_heads, dff,
+                 dropout_rate, **kwargs):
+        super(Encoder, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can be saved when the model is exported
+        # This same mapping should be added to the layer&#39;s config. See get_config
+        self.num_layers = num_layers
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.dff = dff
+        self.dropout_rate = dropout_rate
+        # self.maximum_position_encoding = maximum_position_encoding
+
+        # TODO: It is possible to have the embedding layer produce a mask tensor by setting mask_zero=True
+        #  In that case all subsequent layers must support masking.
+        #  See: https://www.tensorflow.org/guide/keras/masking_and_padding
+        #  This could be a more robust and fool-proof way of implementing masking. But before spending time on this
+        #  consider the fact that this will make everything more dependant on the keras embedding layer and will make it
+        #  harder to remove it. We might want to replace this with an embedding feature_column, in case the latter
+        #  provides more flexibility, e.g. loading embeddings from checkpoints or manipulating embeddings manually.
+
+        self.enc_layers = [EncoderLayer(self.d_model, self.num_heads, self.dff, self.dropout_rate)
+                           for _ in range(self.num_layers)]
+
+        self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(Encoder, self).get_config()
+        config.update({
+            &#39;num_layers&#39;: self.num_layers,
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads,
+            &#39;dff&#39;: self.dff,
+            &#39;dropout_rate&#39;: self.dropout_rate
+        })
+        return config
+
+    def call(self, inputs, training=None, mask=None):
+        # seq_len = tf.shape(inputs)[1]
+        # inputs = self.embedding(inputs)  # (batch_size, input_seq_len, d_model)
+
+        # inputs *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+        # inputs += self.pos_encoding[:, :seq_len, :]
+
+        inputs = self.dropout(inputs, training=training)
+
+        for i in range(self.num_layers):
+            inputs = self.enc_layers[i](inputs, training, mask)
+
+        return inputs  # (batch_size, input_seq_len, d_model)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.transformer.Encoder.call"><code class="name flex">
+<span>def <span class="ident">call</span></span>(<span>self, inputs, training=None, mask=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is where the layer's logic lives.</p>
+<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
+from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
+layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
+method to support masking.</p>
+<h2 id="arguments">Arguments</h2>
+<p>inputs: Input tensor, or list/tuple of input tensors.
+**kwargs: Additional keyword arguments. Currently unused.</p>
+<h2 id="returns">Returns</h2>
+<p>A tensor or list/tuple of tensors.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def call(self, inputs, training=None, mask=None):
+    # seq_len = tf.shape(inputs)[1]
+    # inputs = self.embedding(inputs)  # (batch_size, input_seq_len, d_model)
+
+    # inputs *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+    # inputs += self.pos_encoding[:, :seq_len, :]
+
+    inputs = self.dropout(inputs, training=training)
+
+    for i in range(self.num_layers):
+        inputs = self.enc_layers[i](inputs, training, mask)
+
+    return inputs  # (batch_size, input_seq_len, d_model)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.Encoder.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Custom Keras layers and models are not serializable unless they override this method.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_config(self):
+    &#34;&#34;&#34;
+    Custom Keras layers and models are not serializable unless they override this method.
+    &#34;&#34;&#34;
+    config = super(Encoder, self).get_config()
+    config.update({
+        &#39;num_layers&#39;: self.num_layers,
+        &#39;d_model&#39;: self.d_model,
+        &#39;num_heads&#39;: self.num_heads,
+        &#39;dff&#39;: self.dff,
+        &#39;dropout_rate&#39;: self.dropout_rate
+    })
+    return config</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.transformer.EncoderLayer"><code class="flex name class">
+<span>class <span class="ident">EncoderLayer</span></span>
+<span>(</span><span>d_model, num_heads, dff, rate=0.1, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the class from which all layers inherit.</p>
+<p>A layer is a callable object that takes as input one or more tensors and
+that outputs one or more tensors. It involves <em>computation</em>, defined
+in the <code>call()</code> method, and a <em>state</em> (weight variables), defined
+either in the constructor <code>__init__()</code> or in the <code>build()</code> method.</p>
+<p>Users will just instantiate a layer and then treat it as a callable.</p>
+<h2 id="arguments">Arguments</h2>
+<p>trainable: Boolean, whether the layer's variables should be trainable.
+name: String name of the layer.
+dtype: The dtype of the layer's computations and weights (default of
+<code>None</code> means use <code>tf.keras.backend.floatx</code> in TensorFlow 2, or the type
+of the first input in TensorFlow 1).
+dynamic: Set this to <code>True</code> if your layer should only be run eagerly, and
+should not be used to generate a static computation graph.
+This would be the case for a Tree-RNN or a recursive network,
+for example, or generally for any layer that manipulates tensors
+using Python control flow. If <code>False</code>, we assume that the layer can
+safely be used to generate a static computation graph.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>The name of the layer (string).</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>The dtype of the layer's computations and weights. If mixed
+precision is used with a <code>tf.keras.mixed_precision.experimental.Policy</code>,
+this is instead just the dtype of the layer's weights, as the computations
+are done in a different dtype.</dd>
+<dt><strong><code>trainable_weights</code></strong></dt>
+<dd>List of variables to be included in backprop.</dd>
+<dt><strong><code>non_trainable_weights</code></strong></dt>
+<dd>List of variables that should not be
+included in backprop.</dd>
+<dt><strong><code>weights</code></strong></dt>
+<dd>The concatenation of the lists trainable_weights and
+non_trainable_weights (in this order).</dd>
+<dt><strong><code>trainable</code></strong></dt>
+<dd>Whether the layer should be trained (boolean), i.e. whether
+its potentially-trainable weights should be returned as part of
+<code>layer.trainable_weights</code>.</dd>
+<dt><strong><code>input_spec</code></strong></dt>
+<dd>Optional (list of) <code>InputSpec</code> object(s) specifying the
+constraints on inputs that can be accepted by the layer.</dd>
+</dl>
+<p>We recommend that descendants of <code>Layer</code> implement the following methods:</p>
+<ul>
+<li><code>__init__()</code>: Defines custom layer attributes, and creates layer state
+variables that do not depend on input shapes, using <code>add_weight()</code>.</li>
+<li><code>build(self, input_shape)</code>: This method can be used to create weights that
+depend on the shape(s) of the input(s), using <code>add_weight()</code>. <code>__call__()</code>
+will automatically build the layer (if it has not been built yet) by
+calling <code>build()</code>.</li>
+<li><code>call(self, *args, **kwargs)</code>: Called in <code>__call__</code> after making sure
+<code>build()</code> has been called. <code>call()</code> performs the logic of applying the
+layer to the input tensors (which should be passed in as argument).
+Two reserved keyword arguments you can optionally use in <code>call()</code> are:<ul>
+<li><code>training</code> (boolean, whether the call is in
+inference mode or training mode)</li>
+<li><code>mask</code> (boolean tensor encoding masked timesteps in the input, used
+in RNN layers)</li>
+</ul>
+</li>
+<li><code>get_config(self)</code>: Returns a dictionary containing the configuration used
+to initialize this layer. If the keys differ from the arguments
+in <code>__init__</code>, then override <code>from_config(self)</code> as well.
+This method is used when saving
+the layer or a model that contains this layer.</li>
+</ul>
+<p>Examples:</p>
+<p>Here's a basic example: a layer with two variables, <code>w</code> and <code>b</code>,
+that returns <code>y = w . x + b</code>.
+It shows how to implement <code>build()</code> and <code>call()</code>.
+Variables set as attributes of a layer are tracked as weights
+of the layers (in <code>layer.weights</code>).</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):  # Create the state of the layer (weights)
+    w_init = tf.random_normal_initializer()
+    self.w = tf.Variable(
+        initial_value=w_init(shape=(input_shape[-1], self.units),
+                             dtype='float32'),
+        trainable=True)
+    b_init = tf.zeros_initializer()
+    self.b = tf.Variable(
+        initial_value=b_init(shape=(self.units,), dtype='float32'),
+        trainable=True)
+
+  def call(self, inputs):  # Defines the computation from inputs to outputs
+      return tf.matmul(inputs, self.w) + self.b
+
+# Instantiates the layer.
+linear_layer = SimpleDense(4)
+
+# This will also call `build(input_shape)` and create the weights.
+y = linear_layer(tf.ones((2, 2)))
+assert len(linear_layer.weights) == 2
+
+# These weights are trainable, so they're listed in `trainable_weights`:
+assert len(linear_layer.trainable_weights) == 2
+</code></pre>
+<p>Note that the method <code>add_weight()</code> offers a shortcut to create weights:</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):
+      self.w = self.add_weight(shape=(input_shape[-1], self.units),
+                               initializer='random_normal',
+                               trainable=True)
+      self.b = self.add_weight(shape=(self.units,),
+                               initializer='random_normal',
+                               trainable=True)
+
+  def call(self, inputs):
+      return tf.matmul(inputs, self.w) + self.b
+</code></pre>
+<p>Besides trainable weights, updated via backpropagation during training,
+layers can also have non-trainable weights. These weights are meant to
+be updated manually during <code>call()</code>. Here's a example layer that computes
+the running sum of its inputs:</p>
+<pre><code class="language-python">class ComputeSum(Layer):
+
+  def __init__(self, input_dim):
+      super(ComputeSum, self).__init__()
+      # Create a non-trainable weight.
+      self.total = tf.Variable(initial_value=tf.zeros((input_dim,)),
+                               trainable=False)
+
+  def call(self, inputs):
+      self.total.assign_add(tf.reduce_sum(inputs, axis=0))
+      return self.total
+
+my_sum = ComputeSum(2)
+x = tf.ones((2, 2))
+
+y = my_sum(x)
+print(y.numpy())  # [2. 2.]
+
+y = my_sum(x)
+print(y.numpy())  # [4. 4.]
+
+assert my_sum.weights == [my_sum.total]
+assert my_sum.non_trainable_weights == [my_sum.total]
+assert my_sum.trainable_weights == []
+</code></pre>
+<p>For more information about creating layers, see the guide
+<a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models">Writing custom layers and models with Keras</a></p>
+<p>About the layer's <code>dtype</code> attribute:</p>
+<p>Each layer has a dtype, which is typically the dtype of the layer's
+computations and variables. A layer's dtype can be queried via the
+<code>Layer.dtype</code> property. The dtype is specified with the <code>dtype</code> constructor
+argument. In TensorFlow 2, the dtype defaults to <code>tf.keras.backend.floatx()</code>
+if no dtype is passed. <code>floatx()</code> itself defaults to "float32". Additionally,
+layers will cast their inputs to the layer's dtype in TensorFlow 2. When mixed
+precision is used, layers may have different computation and variable dtypes.
+See <code>tf.keras.mixed_precision.experimental.Policy</code> for details on layer
+dtypes.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class EncoderLayer(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads, dff, rate=0.1, **kwargs):
+        super(EncoderLayer, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can be saved when the model is exported
+        # This same mapping should be added to the layer&#39;s/model&#39;s config. See get_config
+        self.dff = dff
+        self.rate = rate
+        self.d_model = d_model
+        self.num_heads = num_heads
+
+        self.mha = MultiHeadAttention(self.d_model, self.num_heads)
+        self.ffn = point_wise_feed_forward_network(self.d_model, self.dff)
+
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+
+        self.dropout1 = tf.keras.layers.Dropout(self.rate)
+        self.dropout2 = tf.keras.layers.Dropout(self.rate)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(EncoderLayer, self).get_config()
+        config.update({
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads,
+            &#39;dff&#39;: self.dff,
+            &#39;rate&#39;: self.rate
+        })
+        return config
+
+    def call(self, x, training=None, mask=None):
+        attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
+        attn_output = self.dropout1(attn_output, training=training)
+
+        out1 = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, d_model)
+
+        ffn_output = self.ffn(out1)  # (batch_size, input_seq_len, d_model)
+        ffn_output = self.dropout2(ffn_output, training=training)
+
+        out2 = self.layernorm2(out1 + ffn_output)  # (batch_size, input_seq_len, d_model)
+
+        return out2</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.transformer.EncoderLayer.call"><code class="name flex">
+<span>def <span class="ident">call</span></span>(<span>self, x, training=None, mask=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is where the layer's logic lives.</p>
+<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
+from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
+layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
+method to support masking.</p>
+<h2 id="arguments">Arguments</h2>
+<p>inputs: Input tensor, or list/tuple of input tensors.
+**kwargs: Additional keyword arguments. Currently unused.</p>
+<h2 id="returns">Returns</h2>
+<p>A tensor or list/tuple of tensors.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def call(self, x, training=None, mask=None):
+    attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
+    attn_output = self.dropout1(attn_output, training=training)
+
+    out1 = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, d_model)
+
+    ffn_output = self.ffn(out1)  # (batch_size, input_seq_len, d_model)
+    ffn_output = self.dropout2(ffn_output, training=training)
+
+    out2 = self.layernorm2(out1 + ffn_output)  # (batch_size, input_seq_len, d_model)
+
+    return out2</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.EncoderLayer.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Custom Keras layers and models are not serializable unless they override this method.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_config(self):
+    &#34;&#34;&#34;
+    Custom Keras layers and models are not serializable unless they override this method.
+    &#34;&#34;&#34;
+    config = super(EncoderLayer, self).get_config()
+    config.update({
+        &#39;d_model&#39;: self.d_model,
+        &#39;num_heads&#39;: self.num_heads,
+        &#39;dff&#39;: self.dff,
+        &#39;rate&#39;: self.rate
+    })
+    return config</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.transformer.MultiHeadAttention"><code class="flex name class">
+<span>class <span class="ident">MultiHeadAttention</span></span>
+<span>(</span><span>d_model, num_heads, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the class from which all layers inherit.</p>
+<p>A layer is a callable object that takes as input one or more tensors and
+that outputs one or more tensors. It involves <em>computation</em>, defined
+in the <code>call()</code> method, and a <em>state</em> (weight variables), defined
+either in the constructor <code>__init__()</code> or in the <code>build()</code> method.</p>
+<p>Users will just instantiate a layer and then treat it as a callable.</p>
+<h2 id="arguments">Arguments</h2>
+<p>trainable: Boolean, whether the layer's variables should be trainable.
+name: String name of the layer.
+dtype: The dtype of the layer's computations and weights (default of
+<code>None</code> means use <code>tf.keras.backend.floatx</code> in TensorFlow 2, or the type
+of the first input in TensorFlow 1).
+dynamic: Set this to <code>True</code> if your layer should only be run eagerly, and
+should not be used to generate a static computation graph.
+This would be the case for a Tree-RNN or a recursive network,
+for example, or generally for any layer that manipulates tensors
+using Python control flow. If <code>False</code>, we assume that the layer can
+safely be used to generate a static computation graph.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>The name of the layer (string).</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>The dtype of the layer's computations and weights. If mixed
+precision is used with a <code>tf.keras.mixed_precision.experimental.Policy</code>,
+this is instead just the dtype of the layer's weights, as the computations
+are done in a different dtype.</dd>
+<dt><strong><code>trainable_weights</code></strong></dt>
+<dd>List of variables to be included in backprop.</dd>
+<dt><strong><code>non_trainable_weights</code></strong></dt>
+<dd>List of variables that should not be
+included in backprop.</dd>
+<dt><strong><code>weights</code></strong></dt>
+<dd>The concatenation of the lists trainable_weights and
+non_trainable_weights (in this order).</dd>
+<dt><strong><code>trainable</code></strong></dt>
+<dd>Whether the layer should be trained (boolean), i.e. whether
+its potentially-trainable weights should be returned as part of
+<code>layer.trainable_weights</code>.</dd>
+<dt><strong><code>input_spec</code></strong></dt>
+<dd>Optional (list of) <code>InputSpec</code> object(s) specifying the
+constraints on inputs that can be accepted by the layer.</dd>
+</dl>
+<p>We recommend that descendants of <code>Layer</code> implement the following methods:</p>
+<ul>
+<li><code>__init__()</code>: Defines custom layer attributes, and creates layer state
+variables that do not depend on input shapes, using <code>add_weight()</code>.</li>
+<li><code>build(self, input_shape)</code>: This method can be used to create weights that
+depend on the shape(s) of the input(s), using <code>add_weight()</code>. <code>__call__()</code>
+will automatically build the layer (if it has not been built yet) by
+calling <code>build()</code>.</li>
+<li><code>call(self, *args, **kwargs)</code>: Called in <code>__call__</code> after making sure
+<code>build()</code> has been called. <code>call()</code> performs the logic of applying the
+layer to the input tensors (which should be passed in as argument).
+Two reserved keyword arguments you can optionally use in <code>call()</code> are:<ul>
+<li><code>training</code> (boolean, whether the call is in
+inference mode or training mode)</li>
+<li><code>mask</code> (boolean tensor encoding masked timesteps in the input, used
+in RNN layers)</li>
+</ul>
+</li>
+<li><code>get_config(self)</code>: Returns a dictionary containing the configuration used
+to initialize this layer. If the keys differ from the arguments
+in <code>__init__</code>, then override <code>from_config(self)</code> as well.
+This method is used when saving
+the layer or a model that contains this layer.</li>
+</ul>
+<p>Examples:</p>
+<p>Here's a basic example: a layer with two variables, <code>w</code> and <code>b</code>,
+that returns <code>y = w . x + b</code>.
+It shows how to implement <code>build()</code> and <code>call()</code>.
+Variables set as attributes of a layer are tracked as weights
+of the layers (in <code>layer.weights</code>).</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):  # Create the state of the layer (weights)
+    w_init = tf.random_normal_initializer()
+    self.w = tf.Variable(
+        initial_value=w_init(shape=(input_shape[-1], self.units),
+                             dtype='float32'),
+        trainable=True)
+    b_init = tf.zeros_initializer()
+    self.b = tf.Variable(
+        initial_value=b_init(shape=(self.units,), dtype='float32'),
+        trainable=True)
+
+  def call(self, inputs):  # Defines the computation from inputs to outputs
+      return tf.matmul(inputs, self.w) + self.b
+
+# Instantiates the layer.
+linear_layer = SimpleDense(4)
+
+# This will also call `build(input_shape)` and create the weights.
+y = linear_layer(tf.ones((2, 2)))
+assert len(linear_layer.weights) == 2
+
+# These weights are trainable, so they're listed in `trainable_weights`:
+assert len(linear_layer.trainable_weights) == 2
+</code></pre>
+<p>Note that the method <code>add_weight()</code> offers a shortcut to create weights:</p>
+<pre><code class="language-python">class SimpleDense(Layer):
+
+  def __init__(self, units=32):
+      super(SimpleDense, self).__init__()
+      self.units = units
+
+  def build(self, input_shape):
+      self.w = self.add_weight(shape=(input_shape[-1], self.units),
+                               initializer='random_normal',
+                               trainable=True)
+      self.b = self.add_weight(shape=(self.units,),
+                               initializer='random_normal',
+                               trainable=True)
+
+  def call(self, inputs):
+      return tf.matmul(inputs, self.w) + self.b
+</code></pre>
+<p>Besides trainable weights, updated via backpropagation during training,
+layers can also have non-trainable weights. These weights are meant to
+be updated manually during <code>call()</code>. Here's a example layer that computes
+the running sum of its inputs:</p>
+<pre><code class="language-python">class ComputeSum(Layer):
+
+  def __init__(self, input_dim):
+      super(ComputeSum, self).__init__()
+      # Create a non-trainable weight.
+      self.total = tf.Variable(initial_value=tf.zeros((input_dim,)),
+                               trainable=False)
+
+  def call(self, inputs):
+      self.total.assign_add(tf.reduce_sum(inputs, axis=0))
+      return self.total
+
+my_sum = ComputeSum(2)
+x = tf.ones((2, 2))
+
+y = my_sum(x)
+print(y.numpy())  # [2. 2.]
+
+y = my_sum(x)
+print(y.numpy())  # [4. 4.]
+
+assert my_sum.weights == [my_sum.total]
+assert my_sum.non_trainable_weights == [my_sum.total]
+assert my_sum.trainable_weights == []
+</code></pre>
+<p>For more information about creating layers, see the guide
+<a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models">Writing custom layers and models with Keras</a></p>
+<p>About the layer's <code>dtype</code> attribute:</p>
+<p>Each layer has a dtype, which is typically the dtype of the layer's
+computations and variables. A layer's dtype can be queried via the
+<code>Layer.dtype</code> property. The dtype is specified with the <code>dtype</code> constructor
+argument. In TensorFlow 2, the dtype defaults to <code>tf.keras.backend.floatx()</code>
+if no dtype is passed. <code>floatx()</code> itself defaults to "float32". Additionally,
+layers will cast their inputs to the layer's dtype in TensorFlow 2. When mixed
+precision is used, layers may have different computation and variable dtypes.
+See <code>tf.keras.mixed_precision.experimental.Policy</code> for details on layer
+dtypes.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads, **kwargs):
+        super(MultiHeadAttention, self).__init__(**kwargs)
+        # This saves all arguments as attributes of the object so that they can ve saved when the model is exported
+        # This same mapping should be added to the layer&#39;s/model&#39;s config. See get_config
+        self.num_heads = num_heads
+        self.d_model = d_model
+
+        assert self.d_model % self.num_heads == 0
+
+        self.depth = d_model // self.num_heads
+
+        self.wq = tf.keras.layers.Dense(self.d_model)
+        self.wk = tf.keras.layers.Dense(self.d_model)
+        self.wv = tf.keras.layers.Dense(self.d_model)
+
+        self.dense = tf.keras.layers.Dense(self.d_model)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(MultiHeadAttention, self).get_config()
+        config.update({
+            &#39;d_model&#39;: self.d_model,
+            &#39;num_heads&#39;: self.num_heads
+        })
+        return config
+
+    # TODO: Why do they split q, k and v between heads? The paper doesn&#39;t do this.
+    def split_heads(self, x, batch_size):
+        &#34;&#34;&#34;Split the last dimension into (num_heads, depth).
+        Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
+        &#34;&#34;&#34;
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
+
+    def call(self, v, k, q, mask):
+        batch_size = tf.shape(q)[0]
+        q = self.wq(q)  # (batch_size, seq_len, d_model)
+        k = self.wk(k)  # (batch_size, seq_len, d_model)
+        v = self.wv(v)  # (batch_size, seq_len, d_model)
+
+        q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
+        k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
+        v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
+
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        scaled_attention, attention_weights = scaled_dot_product_attention(
+            q, k, v, mask)
+
+        scaled_attention = tf.transpose(scaled_attention,
+                                        perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
+
+        concat_attention = tf.reshape(scaled_attention,
+                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
+
+        output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
+
+        return output, attention_weights</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.transformer.MultiHeadAttention.call"><code class="name flex">
+<span>def <span class="ident">call</span></span>(<span>self, v, k, q, mask)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is where the layer's logic lives.</p>
+<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
+from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
+layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
+method to support masking.</p>
+<h2 id="arguments">Arguments</h2>
+<p>inputs: Input tensor, or list/tuple of input tensors.
+**kwargs: Additional keyword arguments. Currently unused.</p>
+<h2 id="returns">Returns</h2>
+<p>A tensor or list/tuple of tensors.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def call(self, v, k, q, mask):
+    batch_size = tf.shape(q)[0]
+    q = self.wq(q)  # (batch_size, seq_len, d_model)
+    k = self.wk(k)  # (batch_size, seq_len, d_model)
+    v = self.wv(v)  # (batch_size, seq_len, d_model)
+
+    q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
+    k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
+    v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
+
+    # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
+    # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+    scaled_attention, attention_weights = scaled_dot_product_attention(
+        q, k, v, mask)
+
+    scaled_attention = tf.transpose(scaled_attention,
+                                    perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
+
+    concat_attention = tf.reshape(scaled_attention,
+                                  (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
+
+    output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
+
+    return output, attention_weights</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.MultiHeadAttention.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Custom Keras layers and models are not serializable unless they override this method.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_config(self):
+    &#34;&#34;&#34;
+    Custom Keras layers and models are not serializable unless they override this method.
+    &#34;&#34;&#34;
+    config = super(MultiHeadAttention, self).get_config()
+    config.update({
+        &#39;d_model&#39;: self.d_model,
+        &#39;num_heads&#39;: self.num_heads
+    })
+    return config</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.MultiHeadAttention.split_heads"><code class="name flex">
+<span>def <span class="ident">split_heads</span></span>(<span>self, x, batch_size)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Split the last dimension into (num_heads, depth).
+Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def split_heads(self, x, batch_size):
+    &#34;&#34;&#34;Split the last dimension into (num_heads, depth).
+    Transpose the result such that the shape is (batch_size, num_heads, seq_len, depth)
+    &#34;&#34;&#34;
+    x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+    return tf.transpose(x, perm=[0, 2, 1, 3])</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.transformer.Transformer"><code class="flex name class">
+<span>class <span class="ident">Transformer</span></span>
+<span>(</span><span>num_layers, num_attention_heads, embedding_sizes, embedding_dims, encoder_ff_dim, dropout_rate, item_embedding_weights=None, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An encoder-only Transformer. See "Attention Is All You Need", Vaswani, et. al. (2017).</p>
+<p><a href="https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf">https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf</a></p>
+<p>Note that this is a Keras Layer, not Model. It's meant to be used as part of (i.e. a layer inside) other models.</p>
+<p>It receives a dictionary of input features (see the call method) each of which must have the same shape of:</p>
+<p>(batch_size, seq_len)</p>
+<p>It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
+embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:</p>
+<p>(batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>embedding_sizes</code></strong></dt>
+<dd>Size of the vocabulary for each input feature. One can think of this as the number of
+rows in each embedding lookup table.</dd>
+<dt><strong><code>embedding_dims</code></strong></dt>
+<dd>Dimension of embedding vector for input features. One can think of this as the number of
+columns in each embedding lookup table.</dd>
+<dt><strong><code>num_layers</code></strong></dt>
+<dd>Number of Encoder layers.</dd>
+<dt><strong><code>encoder_attention_heads</code></strong></dt>
+<dd>Number of Attention heads.</dd>
+<dt><strong><code>encoder_ff_dim</code></strong></dt>
+<dd>Dimension of the feed forward layers inside the Encoder (see "Attention is All You Need").</dd>
+<dt><strong><code>dropout_rate</code></strong></dt>
+<dd>Dropout rate</dd>
+<dt><strong><code>item_embedding_weights</code></strong></dt>
+<dd>Not currently implemented, but can be used to load pre-trained embeddings from a
+checkpoint. See the instantiation of the Embedding layers.</dd>
+</dl>
+<p>**kwargs:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Transformer(tf.keras.layers.Layer):
+    &#34;&#34;&#34;
+    An encoder-only Transformer. See &#34;Attention Is All You Need&#34;, Vaswani, et. al. (2017).
+
+    https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+    Note that this is a Keras Layer, not Model. It&#39;s meant to be used as part of (i.e. a layer inside) other models.
+
+    It receives a dictionary of input features (see the call method) each of which must have the same shape of:
+
+    (batch_size, seq_len)
+
+    It will then turn these into embeddings (of possibly different dimensions) and concatenate them along the
+    embedding axis. So, each one becomes (batch_size, seq_len, dim_i) and the concatenated result will be:
+
+    (batch_size, seq_len, d_model) where d_model = sum of dim_i for all embedding dimensions
+
+    &#34;&#34;&#34;
+    # This is the maximum number of input sequences (as marked and separated by the SEP token) this model can accept
+    # The only reason we need to specify this, is to be able to create a segment embedding layer in advance.
+    # If segment embeddings are not used this becomes irrelevant
+    MAX_INPUT_SEQ = 100
+
+    def __init__(self,
+                 num_layers,
+                 num_attention_heads,
+                 embedding_sizes,
+                 embedding_dims,
+                 encoder_ff_dim,
+                 dropout_rate,
+                 item_embedding_weights=None,
+                 **kwargs):
+
+        &#34;&#34;&#34;
+
+        Args:
+            embedding_sizes: Size of the vocabulary for each input feature. One can think of this as the number of
+                rows in each embedding lookup table.
+            embedding_dims: Dimension of embedding vector for input features. One can think of this as the number of
+                columns in each embedding lookup table.
+            num_layers: Number of Encoder layers.
+            encoder_attention_heads: Number of Attention heads.
+            encoder_ff_dim: Dimension of the feed forward layers inside the Encoder (see &#34;Attention is All You Need&#34;).
+            dropout_rate: Dropout rate
+            item_embedding_weights: Not currently implemented, but can be used to load pre-trained embeddings from a
+                checkpoint. See the instantiation of the Embedding layers.
+            **kwargs:
+        &#34;&#34;&#34;
+
+        super(Transformer, self).__init__(**kwargs)
+
+        assert set(embedding_sizes.keys()) == set(embedding_dims.keys()), \
+            &#34;embedding_sizes and embedding_dims must have the same set of keys.&#34;
+
+        # Some of these attributes are not used as such, but assigning them to a class attribute allows TF to trace them
+        # This is needed for serialization. I&#39;m not completely sure though.
+        # See https://www.tensorflow.org/guide/keras/custom_layers_and_models
+        self.num_layers = num_layers
+        self.num_attention_heads = num_attention_heads
+        self.embedding_sizes = embedding_sizes
+        self.embedding_dims = embedding_dims
+        self.encoder_ff_dim = encoder_ff_dim
+        self.dropout_rate = dropout_rate
+        self.item_embedding_weights = item_embedding_weights
+
+        self.maximum_position_encoding = 10000  # This used to be an argument. But doesn&#39;t need to be.
+
+        self.d_model = sum(embedding_dims.values())
+
+        self.encoder = Encoder(
+            num_layers=num_layers,
+            d_model=self.d_model,
+            num_heads=num_attention_heads,
+            dff=encoder_ff_dim,
+            dropout_rate=dropout_rate
+        )
+
+        self.embedding_layers = {
+            feature: tf.keras.layers.Embedding(
+                input_dim=embedding_sizes[feature],
+                output_dim=embedding_dims[feature],
+                # The followings are to enable loading from checkpoints
+                # weights=embedding_weights,  # I verified that passing None to this is equivalent to not passing it
+                # name=EMBEDDING_LAYER_NAME  # Ensures that we know the name of this layer and can later load by name
+            )
+            for feature in embedding_dims.keys()
+        }
+
+        self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
+        # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)
+
+    def get_config(self):
+        &#34;&#34;&#34;
+        Custom Keras layers and models are not serializable unless they override this method.
+        &#34;&#34;&#34;
+        config = super(Transformer, self).get_config()
+        config.update({
+            &#39;num_layers&#39;: self.num_layers,
+            &#39;num_attention_heads&#39;: self.num_attention_heads,
+            &#39;embedding_sizes&#39;: self.embedding_sizes,
+            &#39;embedding_dims&#39;: self.embedding_dims,
+            &#39;encoder_ff_dim&#39;: self.encoder_ff_dim,
+            &#39;dropout_rate&#39;: self.dropout_rate,
+            &#39;item_embedding_weights&#39;: self.item_embedding_weights
+        })
+        return config
+
+    def call(self, inputs, training=None, mask=None):
+        some_feature = inputs[list(inputs.keys())[0]]
+        seq_len = tf.shape(some_feature)[1]  # features are (batch_size, seq_len) before being embedded
+
+        # All sequence features are padded the same way. It doesn&#39;t matter which one is used to create the mask
+        padding_mask = create_padding_mask(some_feature)  # (batch_size, seq_len)
+
+        # Convert to embeddings
+        embedded_features = {feature_name: self.embedding_layers[feature_name](inputs[feature_name])
+                             for feature_name in inputs.keys()}
+
+        # Concatenate embedded_features along their last dimension
+        embedded_seq = tf.concat(list(embedded_features.values()), axis=-1)  # (batch_size, seq_len, d_model)
+        # d_model == sum(embedding_dims.values())
+        embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+        # Segment embeddings
+        # segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
+        # segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
+        # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
+
+        # ToDo: Try learnable positional embeddings from Bert4Rec: https://arxiv.org/pdf/1904.06690.pdf
+        embedded_seq += self.pos_encoding[:, :seq_len, :]
+
+        encoder_output = self.encoder(inputs=embedded_seq, training=training, mask=padding_mask)  # (batch_size, seq_len, d_model)
+
+        return encoder_output</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="sequence_transformer.transformer.Transformer.MAX_INPUT_SEQ"><code class="name">var <span class="ident">MAX_INPUT_SEQ</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.transformer.Transformer.call"><code class="name flex">
+<span>def <span class="ident">call</span></span>(<span>self, inputs, training=None, mask=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is where the layer's logic lives.</p>
+<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
+from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
+layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
+method to support masking.</p>
+<h2 id="arguments">Arguments</h2>
+<p>inputs: Input tensor, or list/tuple of input tensors.
+**kwargs: Additional keyword arguments. Currently unused.</p>
+<h2 id="returns">Returns</h2>
+<p>A tensor or list/tuple of tensors.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def call(self, inputs, training=None, mask=None):
+    some_feature = inputs[list(inputs.keys())[0]]
+    seq_len = tf.shape(some_feature)[1]  # features are (batch_size, seq_len) before being embedded
+
+    # All sequence features are padded the same way. It doesn&#39;t matter which one is used to create the mask
+    padding_mask = create_padding_mask(some_feature)  # (batch_size, seq_len)
+
+    # Convert to embeddings
+    embedded_features = {feature_name: self.embedding_layers[feature_name](inputs[feature_name])
+                         for feature_name in inputs.keys()}
+
+    # Concatenate embedded_features along their last dimension
+    embedded_seq = tf.concat(list(embedded_features.values()), axis=-1)  # (batch_size, seq_len, d_model)
+    # d_model == sum(embedding_dims.values())
+    embedded_seq *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+
+    # Segment embeddings
+    # segment_markers = create_segment_markers(some_feature)  # (batch_size, seq_len)
+    # segment_embeddings = self.segment_embedding_layer(segment_markers)  # (batch_size, seq_len, d_model)
+    # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
+
+    # ToDo: Try learnable positional embeddings from Bert4Rec: https://arxiv.org/pdf/1904.06690.pdf
+    embedded_seq += self.pos_encoding[:, :seq_len, :]
+
+    encoder_output = self.encoder(inputs=embedded_seq, training=training, mask=padding_mask)  # (batch_size, seq_len, d_model)
+
+    return encoder_output</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.transformer.Transformer.get_config"><code class="name flex">
+<span>def <span class="ident">get_config</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Custom Keras layers and models are not serializable unless they override this method.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_config(self):
+    &#34;&#34;&#34;
+    Custom Keras layers and models are not serializable unless they override this method.
+    &#34;&#34;&#34;
+    config = super(Transformer, self).get_config()
+    config.update({
+        &#39;num_layers&#39;: self.num_layers,
+        &#39;num_attention_heads&#39;: self.num_attention_heads,
+        &#39;embedding_sizes&#39;: self.embedding_sizes,
+        &#39;embedding_dims&#39;: self.embedding_dims,
+        &#39;encoder_ff_dim&#39;: self.encoder_ff_dim,
+        &#39;dropout_rate&#39;: self.dropout_rate,
+        &#39;item_embedding_weights&#39;: self.item_embedding_weights
+    })
+    return config</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="sequence_transformer" href="index.html">sequence_transformer</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="sequence_transformer.transformer.create_padding_mask" href="#sequence_transformer.transformer.create_padding_mask">create_padding_mask</a></code></li>
+<li><code><a title="sequence_transformer.transformer.create_segment_markers" href="#sequence_transformer.transformer.create_segment_markers">create_segment_markers</a></code></li>
+<li><code><a title="sequence_transformer.transformer.get_angles" href="#sequence_transformer.transformer.get_angles">get_angles</a></code></li>
+<li><code><a title="sequence_transformer.transformer.point_wise_feed_forward_network" href="#sequence_transformer.transformer.point_wise_feed_forward_network">point_wise_feed_forward_network</a></code></li>
+<li><code><a title="sequence_transformer.transformer.positional_encoding" href="#sequence_transformer.transformer.positional_encoding">positional_encoding</a></code></li>
+<li><code><a title="sequence_transformer.transformer.scaled_dot_product_attention" href="#sequence_transformer.transformer.scaled_dot_product_attention">scaled_dot_product_attention</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="sequence_transformer.transformer.Encoder" href="#sequence_transformer.transformer.Encoder">Encoder</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.transformer.Encoder.call" href="#sequence_transformer.transformer.Encoder.call">call</a></code></li>
+<li><code><a title="sequence_transformer.transformer.Encoder.get_config" href="#sequence_transformer.transformer.Encoder.get_config">get_config</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.transformer.EncoderLayer" href="#sequence_transformer.transformer.EncoderLayer">EncoderLayer</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.transformer.EncoderLayer.call" href="#sequence_transformer.transformer.EncoderLayer.call">call</a></code></li>
+<li><code><a title="sequence_transformer.transformer.EncoderLayer.get_config" href="#sequence_transformer.transformer.EncoderLayer.get_config">get_config</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.transformer.MultiHeadAttention" href="#sequence_transformer.transformer.MultiHeadAttention">MultiHeadAttention</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.transformer.MultiHeadAttention.call" href="#sequence_transformer.transformer.MultiHeadAttention.call">call</a></code></li>
+<li><code><a title="sequence_transformer.transformer.MultiHeadAttention.get_config" href="#sequence_transformer.transformer.MultiHeadAttention.get_config">get_config</a></code></li>
+<li><code><a title="sequence_transformer.transformer.MultiHeadAttention.split_heads" href="#sequence_transformer.transformer.MultiHeadAttention.split_heads">split_heads</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.transformer.Transformer" href="#sequence_transformer.transformer.Transformer">Transformer</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.transformer.Transformer.MAX_INPUT_SEQ" href="#sequence_transformer.transformer.Transformer.MAX_INPUT_SEQ">MAX_INPUT_SEQ</a></code></li>
+<li><code><a title="sequence_transformer.transformer.Transformer.call" href="#sequence_transformer.transformer.Transformer.call">call</a></code></li>
+<li><code><a title="sequence_transformer.transformer.Transformer.get_config" href="#sequence_transformer.transformer.Transformer.get_config">get_config</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>sequence_transformer.data_prep.data_utils API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>sequence_transformer.data_prep.data_utils</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import tensorflow as tf
+import numpy as np
+import pandas as pd
+import os
+
+
+def to_feature(value):
+    &#34;&#34;&#34;Returns a `feature` from a value. For internal use by other functions in this module&#34;&#34;&#34;
+    def _bytes_feature(value):
+        &#34;&#34;&#34;Returns a `bytes_list` from a string / byte.&#34;&#34;&#34;
+        return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
+
+    def _float_feature(value):
+        &#34;&#34;&#34;Returns a `float_list` from a float / double.&#34;&#34;&#34;
+        return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+    def _int_feature(value):
+        &#34;&#34;&#34;Returns an `int64_list` from a bool / enum / int / uint.&#34;&#34;&#34;
+        return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+    if isinstance(value, list):
+        sample_value = value[0]
+    else:
+        sample_value = value
+        value = [value]
+
+    # TODO: This type checking feels hacky. Are np numerical types the same on all machines and Operating Systems?
+    # This used to be np.int64, but it didn&#39;t work with Pandas dataframes.
+    if isinstance(sample_value, np.int) or isinstance(sample_value, np.int32) or isinstance(sample_value, np.int64):
+        return _int_feature(value)
+    # This used to be np.float32, but it didn&#39;t work with Pandas dataframes.
+    elif isinstance(sample_value, np.float) or isinstance(sample_value, np.float32):
+        return _float_feature(value)
+    elif isinstance(sample_value, bytes):
+        return _bytes_feature(value)
+    elif isinstance(sample_value, str):
+        value = [v.encode(&#39;utf-8&#39;) for v in value]
+        return _bytes_feature(value)
+    else:
+        raise Exception(&#34;Encountered unsupported type {}&#34;.format(type(sample_value)))
+
+
+def encode_tf_example(raw_features):
+    &#34;&#34;&#34;
+    Returns a `tf.Example` object encapsulating `raw_features`. For internal use by other functions in this module.
+    &#34;&#34;&#34;
+    features = {
+        feature_key: to_feature(feature_value) for feature_key, feature_value in raw_features.items()
+    }
+    return tf.train.Example(features=tf.train.Features(feature=features))
+
+
+def pandas_to_tf_example_list(df, group_id_column):
+    &#34;&#34;&#34;
+    This function converts a pandas DataFrame into a list of Tensorflow `Example` objects.
+    It performs a groupby using `group_id_column` and collects the values of all other columns into lists (similar to
+    PySpark&#39;s `collect_list`).
+
+    Example:
+    ```python
+
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;str_feature&#39;: [&#39;1A&#39;, &#39;1B&#39;, &#39;2A&#39;, &#39;2B&#39;, &#39;3A&#39;]
+    })
+
+    ex_list = pandas_to_tf_example_list(df, group_id_column=&#39;id&#39;)
+    print(ex_list[0])
+    ```
+
+    Expected Output:
+
+        features {
+          feature {
+            key: &#34;id&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+          feature {
+            key: &#34;int_feature&#34;
+            value {
+              int64_list {
+                value: 10
+                value: 11
+              }
+            }
+          }
+          feature {
+            key: &#34;str_feature&#34;
+            value {
+              bytes_list {
+                value: &#34;1A&#34;
+                value: &#34;1B&#34;
+              }
+            }
+          }
+        }
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of `tf.train.Example` objects each element of which corresponds to a group in df.groupby(group_id_column)
+    &#34;&#34;&#34;
+    # ToDo: It would be nice to add a sort_by argument to allow within group sorting, in case data includes a timestamp
+    def to_tf_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        key_feature = {group_id_column: collected_row.name}  # df.name is the value of group_id for this group
+        features_dict = {**row_dict, **key_feature}
+
+        return encode_tf_example(features_dict)
+
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    return collected_df.apply(to_tf_example, axis=1).to_list()
+
+
+def pandas_to_tf_seq_example_list(df, group_id_column):
+    &#34;&#34;&#34;
+    This function converts a pandas DataFrame into a list of Tensorflow `SequenceExample` objects.
+    It performs a groupby using `group_id_column` and collects the values of all other columns into lists (similar to
+    PySpark&#39;s `collect_list`). Then, features that become a list of lists (see `list_feature` in the example below),
+    will be stored in the `feature_lists` component of the `tf.SequenceExample` object, while all other features
+    (the ones that were originally scalar values and have now become a list of scalars) are stored in the
+    `context` component. See https://www.tensorflow.org/api_docs/python/tf/train/SequenceExample
+
+    You only need to use `tf.SequenceExample` if you need list of lists to store your data. This happens when some
+    columns in the dataset contain a list of values in each row (see `list_feature` column below). In all other cases,
+    use `tf.Example` which is considerably easier to work with and results in less verbose code.
+
+    Example:
+    ```python
+
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;list_feature&#39;: [[100, 101], [110, 111, 112], [200, 201], [210, 211], [300]]
+    })
+
+    seq_ex_list = pandas_to_tf_seq_example_list(df, group_id_column=&#39;id&#39;)
+    print(seq_ex_list[0])
+    ```
+    Expected Output:
+
+        context {
+          feature {
+            key: &#34;id&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+          feature {
+            key: &#34;int_feature&#34;
+            value {
+              int64_list {
+                value: 10
+                value: 11
+              }
+            }
+          }
+        }
+        feature_lists {
+          feature_list {
+            key: &#34;list_feature&#34;
+            value {
+              feature {
+                int64_list {
+                  value: 100
+                  value: 101
+                }
+              }
+              feature {
+                int64_list {
+                  value: 110
+                  value: 111
+                  value: 112
+                }
+              }
+            }
+          }
+        }
+
+    The output corresponding to each group will be a SequenceExample object consisting of two components:
+    1) context
+    2) feature_lists
+
+    Notice that the column that contained a list per row, is converted into a list of lists (list_feature here).
+
+    The list of sequence examples can be passed to the `write_to_tfrecord` method.
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of `tf.train.SequenceExample` objects each element of which corresponds to a group in
+            df.groupby(group_id_column)
+    &#34;&#34;&#34;
+    def to_tf_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+        sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
+                sequence_features_dict[feature_name] = feature_value
+            else:
+                context_features_dict[feature_name] = feature_value
+
+        sequence_features_dict = {k: tf.train.FeatureList(feature=[to_feature(element) for element in v])
+                                  for k, v in sequence_features_dict.items()}
+        sequence_features_dict = tf.train.FeatureLists(feature_list=sequence_features_dict)
+
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict),
+            feature_lists=sequence_features_dict
+        )
+
+        return seq_example
+
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    # ToDo: This function decides how to split features between the &#34;context&#34; and the &#34;sequence&#34; components of the
+    #  sequence example. It is probably better to either add this as an argument so that the caller can specify that,
+    #  which would make the caller code more readable, or have this function return the resulting allocation like
+    #  component_features = [&#39;context_feature_1&#39; , &#39;context_feature_2&#39;]
+    #  sequence_features = [&#39;seq_feature_1&#39;, &#39;seq_feature_2&#39;]
+    return collected_df.apply(to_tf_seq_example, axis=1).to_list()
+
+
+def pandas_to_seq_example(df, group_id_column, name_list_list, name_list):
+    &#34;&#34;&#34;
+    Note: It appears that this function was created as a temporary solution to a temporary problem. If so, consider removing it.
+    
+    This Function is the modification to the pandas_to_tf_seq_example_list function.
+
+    pandas_to_tf_seq_example_list converts a pandas DataFrame into a list of Tensorflow SequenceExample objects
+    (lis of list).
+
+    However, to make thing easier we are not using list of list and this function converts the list of list feature
+    into several (10) list features and puts them along with the group_id_column into the `context` component of
+    the SequenceExample object.
+
+    Example:
+    Given the following Pandas DataFrame:
+
+                              feature           label
+    group_id_column
+    1                   [[189], [106], [160]]  [117]
+    2                   [[182], [111], [183]]  [122]
+
+
+    The output corresponding to each group will be a SequenceExample object which consists of only one components:
+        1) context
+
+    For example, the output for id=2 will look like:
+
+        context {
+          feature {
+            key: &#34;feature1&#34;
+            value {
+              int64_list {
+                value: 189
+              }
+            }
+          }
+          feature {
+            key: &#34;feature2&#34;
+            value {
+              int64_list {
+                value: 106
+              }
+            }
+          }
+          feature {
+            key: &#34;feature3&#34;
+            value {
+              int64_list {
+                value: 160
+              }
+            }
+          }
+          feature {
+            key: &#34;label&#34;
+            value {
+              int64_list {
+                value: 117
+              }
+            }
+          }
+          feature {
+            key: &#34;userID&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+        }
+        , context {
+          feature {
+            key: &#34;feature1&#34;
+            value {
+              int64_list {
+                value: 182
+              }
+            }
+          }
+          feature {
+            key: &#34;feature2&#34;
+            value {
+              int64_list {
+                value: 111
+              }
+            }
+          }
+          feature {
+            key: &#34;feature3&#34;
+            value {
+              int64_list {
+                value: 183
+              }
+            }
+          }
+          feature {
+            key: &#34;label&#34;
+            value {
+              int64_list {
+                value: 122
+              }
+            }
+          }
+          feature {
+            key: &#34;userID&#34;
+            value {
+              int64_list {
+                value: 2
+              }
+            }
+          }
+        }
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column that has been used for groupby.
+        name_list_list: List of column names that are in list of list format
+        name_list: List of column names that are not in list of list format
+
+    Returns:
+        A list of tf.train.SequenceExample objects each element of which corresponds
+    &#34;&#34;&#34;
+    def to_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+
+        # sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if feature_name in name_list_list:
+                # converting 2-D list to several list
+                for i_value, value in enumerate(feature_value):
+                    context_features_dict[feature_name+str(i_value+1)] = value
+                # TODO: ask milad if this is necessary:
+                #  fill the empty feature with [0] to avoid having batches with empty entry
+                # for i in range(i_value+1, seq_len-1):
+                #     context_features_dict[feature_name + str(i + 1)] = list([0])
+
+            elif feature_name in name_list:
+                context_features_dict[feature_name] = feature_value
+
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict)
+        )
+        return seq_example
+
+    return df.apply(to_seq_example, axis=1).to_list()
+
+
+def pandas_train_test_split(df, train_size, context_feature_name):
+    def mark_training_samples(grouped_df):
+        indices = np.random.choice(grouped_df.index, size=train_size, replace=False)
+        train_indices = grouped_df.index.isin(indices)
+        grouped_df[&#39;train&#39;] = train_indices
+        return grouped_df
+
+    df = df.groupby(context_feature_name).apply(mark_training_samples)
+    train_df = df[df[&#39;train&#39;]].drop(&#39;train&#39;, axis=1)
+    eval_df = df[~df[&#39;train&#39;]].drop(&#39;train&#39;, axis=1)
+    return train_df, eval_df
+
+
+def write_to_tfrecord(data, path, filename_prefix, records_per_shard=10 ** 4):
+    &#34;&#34;&#34;
+    Writes a list of `tf.Example&#39;s or `tf.SequenceExample`s to tfrecord file(s).
+
+    Example:
+
+    ```python
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;str_feature&#39;: [&#39;1A&#39;, &#39;1B&#39;, &#39;2A&#39;, &#39;2B&#39;, &#39;3A&#39;]
+    })
+
+    ex_list = pandas_to_tf_example_list(df, group_id_column=&#39;id&#39;)
+
+    write_to_tfrecord(data=ex_list, path=&#39;.&#39;, filename_prefix=&#39;temp&#39;)
+
+    feature_spec = {
+        &#39;id&#39;: tf.io.FixedLenFeature([], tf.int64),
+        &#39;int_feature&#39;: tf.io.VarLenFeature(tf.int64),
+        &#39;str_feature&#39;: tf.io.VarLenFeature(tf.string)
+    }
+
+    dataset = tf.data.TFRecordDataset([&#39;temp.tfrecord&#39;])
+
+    for serialized_string in dataset:
+        example = tf.io.parse_example(serialized_string, feature_spec)
+        # `VarLenFeatures` are parsed as `SparseTensor`s. The next step is not necessary, but makes output more readable
+        for feature, tensor in example.items():
+            if isinstance(tensor, tf.SparseTensor):
+                example[feature] = tf.sparse.to_dense(tensor)
+            print(feature, &#39;: &#39;, example[feature])
+        print(&#39;*&#39;*40)
+    ```
+
+    Expected Output:
+
+        int_feature :  tf.Tensor([10 11], shape=(2,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;1A&#39; b&#39;1B&#39;], shape=(2,), dtype=string)
+        id :  tf.Tensor(1, shape=(), dtype=int64)
+        ****************************************
+        int_feature :  tf.Tensor([21 22], shape=(2,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;2A&#39; b&#39;2B&#39;], shape=(2,), dtype=string)
+        id :  tf.Tensor(2, shape=(), dtype=int64)
+        ****************************************
+        int_feature :  tf.Tensor([31], shape=(1,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;3A&#39;], shape=(1,), dtype=string)
+        id :  tf.Tensor(3, shape=(), dtype=int64)
+        ****************************************
+
+    Args:
+        data: A list of `tf.Example` or `tf.SequenceExample` objects.
+        filename_prefix: File name prefix. In case data is sharded, file numbers will be appended to this prefix.
+        records_per_shard: Number of records to write in each file.
+
+    Returns:
+        None
+    &#34;&#34;&#34;
+    shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
+    if shard_boundaries[-1] &lt; len(data):
+        shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
+    num_shards = len(shard_boundaries) - 1
+    for i, (shard_start, shard_end) in enumerate(zip(shard_boundaries, shard_boundaries[1:])):
+        os.makedirs(path, exist_ok=True)
+        shard_numbering = f&#39;_{i+1}_of_{num_shards}&#39; if num_shards &gt; 1 else &#39;&#39;
+        filename = filename_prefix + shard_numbering + &#39;.tfrecord&#39;
+        filename = os.path.join(path, filename)
+        with tf.io.TFRecordWriter(filename) as writer:
+            for record in data[shard_start:shard_end]:
+                writer.write(record.SerializeToString())
+
+
+if __name__ == &#39;__main__&#39;:
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;str_feature&#39;: [&#39;1A&#39;, &#39;1B&#39;, &#39;2A&#39;, &#39;2B&#39;, &#39;3A&#39;]
+    })
+
+    ex_list = pandas_to_tf_example_list(df, group_id_column=&#39;id&#39;)
+
+    write_to_tfrecord(data=ex_list, path=&#39;.&#39;, filename_prefix=&#39;temp&#39;)
+
+    feature_spec = {
+        &#39;id&#39;: tf.io.FixedLenFeature([], tf.int64),
+        &#39;int_feature&#39;: tf.io.VarLenFeature(tf.int64),
+        &#39;str_feature&#39;: tf.io.VarLenFeature(tf.string)
+    }
+
+    dataset = tf.data.TFRecordDataset([&#39;temp.tfrecord&#39;])
+
+    for serialized_string in dataset:
+        example = tf.io.parse_example(serialized_string, feature_spec)
+        # `VarLenFeatures` are parsed as `SparseTensor`s. The next step is not necessary, but makes output more readable
+        for feature, tensor in example.items():
+            if isinstance(tensor, tf.SparseTensor):
+                example[feature] = tf.sparse.to_dense(tensor)
+            print(feature, &#39;: &#39;, example[feature])
+        print(&#39;*&#39;*40)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="sequence_transformer.data_prep.data_utils.encode_tf_example"><code class="name flex">
+<span>def <span class="ident">encode_tf_example</span></span>(<span>raw_features)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a <code>tf.Example</code> object encapsulating <code>raw_features</code>. For internal use by other functions in this module.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def encode_tf_example(raw_features):
+    &#34;&#34;&#34;
+    Returns a `tf.Example` object encapsulating `raw_features`. For internal use by other functions in this module.
+    &#34;&#34;&#34;
+    features = {
+        feature_key: to_feature(feature_value) for feature_key, feature_value in raw_features.items()
+    }
+    return tf.train.Example(features=tf.train.Features(feature=features))</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.pandas_to_seq_example"><code class="name flex">
+<span>def <span class="ident">pandas_to_seq_example</span></span>(<span>df, group_id_column, name_list_list, name_list)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Note: It appears that this function was created as a temporary solution to a temporary problem. If so, consider removing it.</p>
+<p>This Function is the modification to the pandas_to_tf_seq_example_list function.</p>
+<p>pandas_to_tf_seq_example_list converts a pandas DataFrame into a list of Tensorflow SequenceExample objects
+(lis of list).</p>
+<p>However, to make thing easier we are not using list of list and this function converts the list of list feature
+into several (10) list features and puts them along with the group_id_column into the <code>context</code> component of
+the SequenceExample object.</p>
+<p>Example:
+Given the following Pandas DataFrame:</p>
+<pre><code>                      feature           label
+</code></pre>
+<p>group_id_column
+1
+[[189], [106], [160]]
+[117]
+2
+[[182], [111], [183]]
+[122]</p>
+<p>The output corresponding to each group will be a SequenceExample object which consists of only one components:
+1) context</p>
+<p>For example, the output for id=2 will look like:</p>
+<pre><code>context {
+  feature {
+    key: "feature1"
+    value {
+      int64_list {
+        value: 189
+      }
+    }
+  }
+  feature {
+    key: "feature2"
+    value {
+      int64_list {
+        value: 106
+      }
+    }
+  }
+  feature {
+    key: "feature3"
+    value {
+      int64_list {
+        value: 160
+      }
+    }
+  }
+  feature {
+    key: "label"
+    value {
+      int64_list {
+        value: 117
+      }
+    }
+  }
+  feature {
+    key: "userID"
+    value {
+      int64_list {
+        value: 1
+      }
+    }
+  }
+}
+, context {
+  feature {
+    key: "feature1"
+    value {
+      int64_list {
+        value: 182
+      }
+    }
+  }
+  feature {
+    key: "feature2"
+    value {
+      int64_list {
+        value: 111
+      }
+    }
+  }
+  feature {
+    key: "feature3"
+    value {
+      int64_list {
+        value: 183
+      }
+    }
+  }
+  feature {
+    key: "label"
+    value {
+      int64_list {
+        value: 122
+      }
+    }
+  }
+  feature {
+    key: "userID"
+    value {
+      int64_list {
+        value: 2
+      }
+    }
+  }
+}
+</code></pre>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>df</code></strong></dt>
+<dd>A Pandas DataFrame.</dd>
+<dt><strong><code>group_id_column</code></strong></dt>
+<dd>The name of the column that has been used for groupby.</dd>
+<dt><strong><code>name_list_list</code></strong></dt>
+<dd>List of column names that are in list of list format</dd>
+<dt><strong><code>name_list</code></strong></dt>
+<dd>List of column names that are not in list of list format</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list of tf.train.SequenceExample objects each element of which corresponds</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pandas_to_seq_example(df, group_id_column, name_list_list, name_list):
+    &#34;&#34;&#34;
+    Note: It appears that this function was created as a temporary solution to a temporary problem. If so, consider removing it.
+    
+    This Function is the modification to the pandas_to_tf_seq_example_list function.
+
+    pandas_to_tf_seq_example_list converts a pandas DataFrame into a list of Tensorflow SequenceExample objects
+    (lis of list).
+
+    However, to make thing easier we are not using list of list and this function converts the list of list feature
+    into several (10) list features and puts them along with the group_id_column into the `context` component of
+    the SequenceExample object.
+
+    Example:
+    Given the following Pandas DataFrame:
+
+                              feature           label
+    group_id_column
+    1                   [[189], [106], [160]]  [117]
+    2                   [[182], [111], [183]]  [122]
+
+
+    The output corresponding to each group will be a SequenceExample object which consists of only one components:
+        1) context
+
+    For example, the output for id=2 will look like:
+
+        context {
+          feature {
+            key: &#34;feature1&#34;
+            value {
+              int64_list {
+                value: 189
+              }
+            }
+          }
+          feature {
+            key: &#34;feature2&#34;
+            value {
+              int64_list {
+                value: 106
+              }
+            }
+          }
+          feature {
+            key: &#34;feature3&#34;
+            value {
+              int64_list {
+                value: 160
+              }
+            }
+          }
+          feature {
+            key: &#34;label&#34;
+            value {
+              int64_list {
+                value: 117
+              }
+            }
+          }
+          feature {
+            key: &#34;userID&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+        }
+        , context {
+          feature {
+            key: &#34;feature1&#34;
+            value {
+              int64_list {
+                value: 182
+              }
+            }
+          }
+          feature {
+            key: &#34;feature2&#34;
+            value {
+              int64_list {
+                value: 111
+              }
+            }
+          }
+          feature {
+            key: &#34;feature3&#34;
+            value {
+              int64_list {
+                value: 183
+              }
+            }
+          }
+          feature {
+            key: &#34;label&#34;
+            value {
+              int64_list {
+                value: 122
+              }
+            }
+          }
+          feature {
+            key: &#34;userID&#34;
+            value {
+              int64_list {
+                value: 2
+              }
+            }
+          }
+        }
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column that has been used for groupby.
+        name_list_list: List of column names that are in list of list format
+        name_list: List of column names that are not in list of list format
+
+    Returns:
+        A list of tf.train.SequenceExample objects each element of which corresponds
+    &#34;&#34;&#34;
+    def to_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+
+        # sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if feature_name in name_list_list:
+                # converting 2-D list to several list
+                for i_value, value in enumerate(feature_value):
+                    context_features_dict[feature_name+str(i_value+1)] = value
+                # TODO: ask milad if this is necessary:
+                #  fill the empty feature with [0] to avoid having batches with empty entry
+                # for i in range(i_value+1, seq_len-1):
+                #     context_features_dict[feature_name + str(i + 1)] = list([0])
+
+            elif feature_name in name_list:
+                context_features_dict[feature_name] = feature_value
+
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict)
+        )
+        return seq_example
+
+    return df.apply(to_seq_example, axis=1).to_list()</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.pandas_to_tf_example_list"><code class="name flex">
+<span>def <span class="ident">pandas_to_tf_example_list</span></span>(<span>df, group_id_column)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function converts a pandas DataFrame into a list of Tensorflow <code>Example</code> objects.
+It performs a groupby using <code>group_id_column</code> and collects the values of all other columns into lists (similar to
+PySpark's <code>collect_list</code>).</p>
+<p>Example:</p>
+<pre><code class="language-python">
+df = pd.DataFrame({
+    'id': [1, 1, 2, 2, 3],
+    'int_feature': [10, 11, 21, 22, 31],
+    'str_feature': ['1A', '1B', '2A', '2B', '3A']
+})
+
+ex_list = pandas_to_tf_example_list(df, group_id_column='id')
+print(ex_list[0])
+</code></pre>
+<p>Expected Output:</p>
+<pre><code>features {
+  feature {
+    key: "id"
+    value {
+      int64_list {
+        value: 1
+      }
+    }
+  }
+  feature {
+    key: "int_feature"
+    value {
+      int64_list {
+        value: 10
+        value: 11
+      }
+    }
+  }
+  feature {
+    key: "str_feature"
+    value {
+      bytes_list {
+        value: "1A"
+        value: "1B"
+      }
+    }
+  }
+}
+</code></pre>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>df</code></strong></dt>
+<dd>A Pandas DataFrame.</dd>
+<dt><strong><code>group_id_column</code></strong></dt>
+<dd>The name of the column to be used for groupby.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list of <code>tf.train.Example</code> objects each element of which corresponds to a group in df.groupby(group_id_column)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pandas_to_tf_example_list(df, group_id_column):
+    &#34;&#34;&#34;
+    This function converts a pandas DataFrame into a list of Tensorflow `Example` objects.
+    It performs a groupby using `group_id_column` and collects the values of all other columns into lists (similar to
+    PySpark&#39;s `collect_list`).
+
+    Example:
+    ```python
+
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;str_feature&#39;: [&#39;1A&#39;, &#39;1B&#39;, &#39;2A&#39;, &#39;2B&#39;, &#39;3A&#39;]
+    })
+
+    ex_list = pandas_to_tf_example_list(df, group_id_column=&#39;id&#39;)
+    print(ex_list[0])
+    ```
+
+    Expected Output:
+
+        features {
+          feature {
+            key: &#34;id&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+          feature {
+            key: &#34;int_feature&#34;
+            value {
+              int64_list {
+                value: 10
+                value: 11
+              }
+            }
+          }
+          feature {
+            key: &#34;str_feature&#34;
+            value {
+              bytes_list {
+                value: &#34;1A&#34;
+                value: &#34;1B&#34;
+              }
+            }
+          }
+        }
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of `tf.train.Example` objects each element of which corresponds to a group in df.groupby(group_id_column)
+    &#34;&#34;&#34;
+    # ToDo: It would be nice to add a sort_by argument to allow within group sorting, in case data includes a timestamp
+    def to_tf_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        key_feature = {group_id_column: collected_row.name}  # df.name is the value of group_id for this group
+        features_dict = {**row_dict, **key_feature}
+
+        return encode_tf_example(features_dict)
+
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    return collected_df.apply(to_tf_example, axis=1).to_list()</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.pandas_to_tf_seq_example_list"><code class="name flex">
+<span>def <span class="ident">pandas_to_tf_seq_example_list</span></span>(<span>df, group_id_column)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This function converts a pandas DataFrame into a list of Tensorflow <code>SequenceExample</code> objects.
+It performs a groupby using <code>group_id_column</code> and collects the values of all other columns into lists (similar to
+PySpark's <code>collect_list</code>). Then, features that become a list of lists (see <code>list_feature</code> in the example below),
+will be stored in the <code>feature_lists</code> component of the <code>tf.SequenceExample</code> object, while all other features
+(the ones that were originally scalar values and have now become a list of scalars) are stored in the
+<code>context</code> component. See <a href="https://www.tensorflow.org/api_docs/python/tf/train/SequenceExample">https://www.tensorflow.org/api_docs/python/tf/train/SequenceExample</a></p>
+<p>You only need to use <code>tf.SequenceExample</code> if you need list of lists to store your data. This happens when some
+columns in the dataset contain a list of values in each row (see <code>list_feature</code> column below). In all other cases,
+use <code>tf.Example</code> which is considerably easier to work with and results in less verbose code.</p>
+<p>Example:</p>
+<pre><code class="language-python">
+df = pd.DataFrame({
+    'id': [1, 1, 2, 2, 3],
+    'int_feature': [10, 11, 21, 22, 31],
+    'list_feature': [[100, 101], [110, 111, 112], [200, 201], [210, 211], [300]]
+})
+
+seq_ex_list = pandas_to_tf_seq_example_list(df, group_id_column='id')
+print(seq_ex_list[0])
+</code></pre>
+<p>Expected Output:</p>
+<pre><code>context {
+  feature {
+    key: "id"
+    value {
+      int64_list {
+        value: 1
+      }
+    }
+  }
+  feature {
+    key: "int_feature"
+    value {
+      int64_list {
+        value: 10
+        value: 11
+      }
+    }
+  }
+}
+feature_lists {
+  feature_list {
+    key: "list_feature"
+    value {
+      feature {
+        int64_list {
+          value: 100
+          value: 101
+        }
+      }
+      feature {
+        int64_list {
+          value: 110
+          value: 111
+          value: 112
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>The output corresponding to each group will be a SequenceExample object consisting of two components:
+1) context
+2) feature_lists</p>
+<p>Notice that the column that contained a list per row, is converted into a list of lists (list_feature here).</p>
+<p>The list of sequence examples can be passed to the <code><a title="sequence_transformer.data_prep.data_utils.write_to_tfrecord" href="#sequence_transformer.data_prep.data_utils.write_to_tfrecord">write_to_tfrecord()</a></code> method.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>df</code></strong></dt>
+<dd>A Pandas DataFrame.</dd>
+<dt><strong><code>group_id_column</code></strong></dt>
+<dd>The name of the column to be used for groupby.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>A list of <code>tf.train.SequenceExample</code> objects each element of which corresponds to a group in
+df.groupby(group_id_column)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pandas_to_tf_seq_example_list(df, group_id_column):
+    &#34;&#34;&#34;
+    This function converts a pandas DataFrame into a list of Tensorflow `SequenceExample` objects.
+    It performs a groupby using `group_id_column` and collects the values of all other columns into lists (similar to
+    PySpark&#39;s `collect_list`). Then, features that become a list of lists (see `list_feature` in the example below),
+    will be stored in the `feature_lists` component of the `tf.SequenceExample` object, while all other features
+    (the ones that were originally scalar values and have now become a list of scalars) are stored in the
+    `context` component. See https://www.tensorflow.org/api_docs/python/tf/train/SequenceExample
+
+    You only need to use `tf.SequenceExample` if you need list of lists to store your data. This happens when some
+    columns in the dataset contain a list of values in each row (see `list_feature` column below). In all other cases,
+    use `tf.Example` which is considerably easier to work with and results in less verbose code.
+
+    Example:
+    ```python
+
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;list_feature&#39;: [[100, 101], [110, 111, 112], [200, 201], [210, 211], [300]]
+    })
+
+    seq_ex_list = pandas_to_tf_seq_example_list(df, group_id_column=&#39;id&#39;)
+    print(seq_ex_list[0])
+    ```
+    Expected Output:
+
+        context {
+          feature {
+            key: &#34;id&#34;
+            value {
+              int64_list {
+                value: 1
+              }
+            }
+          }
+          feature {
+            key: &#34;int_feature&#34;
+            value {
+              int64_list {
+                value: 10
+                value: 11
+              }
+            }
+          }
+        }
+        feature_lists {
+          feature_list {
+            key: &#34;list_feature&#34;
+            value {
+              feature {
+                int64_list {
+                  value: 100
+                  value: 101
+                }
+              }
+              feature {
+                int64_list {
+                  value: 110
+                  value: 111
+                  value: 112
+                }
+              }
+            }
+          }
+        }
+
+    The output corresponding to each group will be a SequenceExample object consisting of two components:
+    1) context
+    2) feature_lists
+
+    Notice that the column that contained a list per row, is converted into a list of lists (list_feature here).
+
+    The list of sequence examples can be passed to the `write_to_tfrecord` method.
+
+    Args:
+        df: A Pandas DataFrame.
+        group_id_column: The name of the column to be used for groupby.
+
+    Returns:
+        A list of `tf.train.SequenceExample` objects each element of which corresponds to a group in
+            df.groupby(group_id_column)
+    &#34;&#34;&#34;
+    def to_tf_seq_example(collected_row):
+        row_dict = collected_row.to_dict()
+        # This is what the DataFrame has been grouped by
+        context_features_dict = {group_id_column: collected_row.name}
+        sequence_features_dict = {}
+        for feature_name, feature_value in row_dict.items():
+            # Since we receive one row of the results of a groupby operation, each column is a list. That much
+            # is certain. However, some columns are a 1-D list while other are nested 2-D lists.
+            if isinstance(feature_value[0], list):  # Examine one value to see whether this is a list or a list of lists
+                sequence_features_dict[feature_name] = feature_value
+            else:
+                context_features_dict[feature_name] = feature_value
+
+        sequence_features_dict = {k: tf.train.FeatureList(feature=[to_feature(element) for element in v])
+                                  for k, v in sequence_features_dict.items()}
+        sequence_features_dict = tf.train.FeatureLists(feature_list=sequence_features_dict)
+
+        context_features_dict = {k: to_feature(v) for k, v in context_features_dict.items()}
+        seq_example = tf.train.SequenceExample(
+            context=tf.train.Features(feature=context_features_dict),
+            feature_lists=sequence_features_dict
+        )
+
+        return seq_example
+
+    collected_df = pd.DataFrame()
+    for col in df.columns:
+        if col != group_id_column:
+            collected_df[col] = df.groupby(group_id_column)[col].apply(list)
+
+    # ToDo: This function decides how to split features between the &#34;context&#34; and the &#34;sequence&#34; components of the
+    #  sequence example. It is probably better to either add this as an argument so that the caller can specify that,
+    #  which would make the caller code more readable, or have this function return the resulting allocation like
+    #  component_features = [&#39;context_feature_1&#39; , &#39;context_feature_2&#39;]
+    #  sequence_features = [&#39;seq_feature_1&#39;, &#39;seq_feature_2&#39;]
+    return collected_df.apply(to_tf_seq_example, axis=1).to_list()</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.pandas_train_test_split"><code class="name flex">
+<span>def <span class="ident">pandas_train_test_split</span></span>(<span>df, train_size, context_feature_name)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pandas_train_test_split(df, train_size, context_feature_name):
+    def mark_training_samples(grouped_df):
+        indices = np.random.choice(grouped_df.index, size=train_size, replace=False)
+        train_indices = grouped_df.index.isin(indices)
+        grouped_df[&#39;train&#39;] = train_indices
+        return grouped_df
+
+    df = df.groupby(context_feature_name).apply(mark_training_samples)
+    train_df = df[df[&#39;train&#39;]].drop(&#39;train&#39;, axis=1)
+    eval_df = df[~df[&#39;train&#39;]].drop(&#39;train&#39;, axis=1)
+    return train_df, eval_df</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.to_feature"><code class="name flex">
+<span>def <span class="ident">to_feature</span></span>(<span>value)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a <code>feature</code> from a value. For internal use by other functions in this module</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_feature(value):
+    &#34;&#34;&#34;Returns a `feature` from a value. For internal use by other functions in this module&#34;&#34;&#34;
+    def _bytes_feature(value):
+        &#34;&#34;&#34;Returns a `bytes_list` from a string / byte.&#34;&#34;&#34;
+        return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))
+
+    def _float_feature(value):
+        &#34;&#34;&#34;Returns a `float_list` from a float / double.&#34;&#34;&#34;
+        return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+    def _int_feature(value):
+        &#34;&#34;&#34;Returns an `int64_list` from a bool / enum / int / uint.&#34;&#34;&#34;
+        return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+    if isinstance(value, list):
+        sample_value = value[0]
+    else:
+        sample_value = value
+        value = [value]
+
+    # TODO: This type checking feels hacky. Are np numerical types the same on all machines and Operating Systems?
+    # This used to be np.int64, but it didn&#39;t work with Pandas dataframes.
+    if isinstance(sample_value, np.int) or isinstance(sample_value, np.int32) or isinstance(sample_value, np.int64):
+        return _int_feature(value)
+    # This used to be np.float32, but it didn&#39;t work with Pandas dataframes.
+    elif isinstance(sample_value, np.float) or isinstance(sample_value, np.float32):
+        return _float_feature(value)
+    elif isinstance(sample_value, bytes):
+        return _bytes_feature(value)
+    elif isinstance(sample_value, str):
+        value = [v.encode(&#39;utf-8&#39;) for v in value]
+        return _bytes_feature(value)
+    else:
+        raise Exception(&#34;Encountered unsupported type {}&#34;.format(type(sample_value)))</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.data_prep.data_utils.write_to_tfrecord"><code class="name flex">
+<span>def <span class="ident">write_to_tfrecord</span></span>(<span>data, path, filename_prefix, records_per_shard=10000)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Writes a list of <code>tf.Example's or</code>tf.SequenceExample`s to tfrecord file(s).</p>
+<p>Example:</p>
+<pre><code class="language-python">df = pd.DataFrame({
+    'id': [1, 1, 2, 2, 3],
+    'int_feature': [10, 11, 21, 22, 31],
+    'str_feature': ['1A', '1B', '2A', '2B', '3A']
+})
+
+ex_list = pandas_to_tf_example_list(df, group_id_column='id')
+
+write_to_tfrecord(data=ex_list, path='.', filename_prefix='temp')
+
+feature_spec = {
+    'id': tf.io.FixedLenFeature([], tf.int64),
+    'int_feature': tf.io.VarLenFeature(tf.int64),
+    'str_feature': tf.io.VarLenFeature(tf.string)
+}
+
+dataset = tf.data.TFRecordDataset(['temp.tfrecord'])
+
+for serialized_string in dataset:
+    example = tf.io.parse_example(serialized_string, feature_spec)
+    # `VarLenFeatures` are parsed as `SparseTensor`s. The next step is not necessary, but makes output more readable
+    for feature, tensor in example.items():
+        if isinstance(tensor, tf.SparseTensor):
+            example[feature] = tf.sparse.to_dense(tensor)
+        print(feature, ': ', example[feature])
+    print('*'*40)
+</code></pre>
+<p>Expected Output:</p>
+<pre><code>int_feature :  tf.Tensor([10 11], shape=(2,), dtype=int64)
+str_feature :  tf.Tensor([b'1A' b'1B'], shape=(2,), dtype=string)
+id :  tf.Tensor(1, shape=(), dtype=int64)
+****************************************
+int_feature :  tf.Tensor([21 22], shape=(2,), dtype=int64)
+str_feature :  tf.Tensor([b'2A' b'2B'], shape=(2,), dtype=string)
+id :  tf.Tensor(2, shape=(), dtype=int64)
+****************************************
+int_feature :  tf.Tensor([31], shape=(1,), dtype=int64)
+str_feature :  tf.Tensor([b'3A'], shape=(1,), dtype=string)
+id :  tf.Tensor(3, shape=(), dtype=int64)
+****************************************
+</code></pre>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>data</code></strong></dt>
+<dd>A list of <code>tf.Example</code> or <code>tf.SequenceExample</code> objects.</dd>
+<dt><strong><code>filename_prefix</code></strong></dt>
+<dd>File name prefix. In case data is sharded, file numbers will be appended to this prefix.</dd>
+<dt><strong><code>records_per_shard</code></strong></dt>
+<dd>Number of records to write in each file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>None</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def write_to_tfrecord(data, path, filename_prefix, records_per_shard=10 ** 4):
+    &#34;&#34;&#34;
+    Writes a list of `tf.Example&#39;s or `tf.SequenceExample`s to tfrecord file(s).
+
+    Example:
+
+    ```python
+    df = pd.DataFrame({
+        &#39;id&#39;: [1, 1, 2, 2, 3],
+        &#39;int_feature&#39;: [10, 11, 21, 22, 31],
+        &#39;str_feature&#39;: [&#39;1A&#39;, &#39;1B&#39;, &#39;2A&#39;, &#39;2B&#39;, &#39;3A&#39;]
+    })
+
+    ex_list = pandas_to_tf_example_list(df, group_id_column=&#39;id&#39;)
+
+    write_to_tfrecord(data=ex_list, path=&#39;.&#39;, filename_prefix=&#39;temp&#39;)
+
+    feature_spec = {
+        &#39;id&#39;: tf.io.FixedLenFeature([], tf.int64),
+        &#39;int_feature&#39;: tf.io.VarLenFeature(tf.int64),
+        &#39;str_feature&#39;: tf.io.VarLenFeature(tf.string)
+    }
+
+    dataset = tf.data.TFRecordDataset([&#39;temp.tfrecord&#39;])
+
+    for serialized_string in dataset:
+        example = tf.io.parse_example(serialized_string, feature_spec)
+        # `VarLenFeatures` are parsed as `SparseTensor`s. The next step is not necessary, but makes output more readable
+        for feature, tensor in example.items():
+            if isinstance(tensor, tf.SparseTensor):
+                example[feature] = tf.sparse.to_dense(tensor)
+            print(feature, &#39;: &#39;, example[feature])
+        print(&#39;*&#39;*40)
+    ```
+
+    Expected Output:
+
+        int_feature :  tf.Tensor([10 11], shape=(2,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;1A&#39; b&#39;1B&#39;], shape=(2,), dtype=string)
+        id :  tf.Tensor(1, shape=(), dtype=int64)
+        ****************************************
+        int_feature :  tf.Tensor([21 22], shape=(2,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;2A&#39; b&#39;2B&#39;], shape=(2,), dtype=string)
+        id :  tf.Tensor(2, shape=(), dtype=int64)
+        ****************************************
+        int_feature :  tf.Tensor([31], shape=(1,), dtype=int64)
+        str_feature :  tf.Tensor([b&#39;3A&#39;], shape=(1,), dtype=string)
+        id :  tf.Tensor(3, shape=(), dtype=int64)
+        ****************************************
+
+    Args:
+        data: A list of `tf.Example` or `tf.SequenceExample` objects.
+        filename_prefix: File name prefix. In case data is sharded, file numbers will be appended to this prefix.
+        records_per_shard: Number of records to write in each file.
+
+    Returns:
+        None
+    &#34;&#34;&#34;
+    shard_boundaries = [k * records_per_shard for k in range(len(data) // records_per_shard + 1)]
+    if shard_boundaries[-1] &lt; len(data):
+        shard_boundaries.append(len(data))  # in case the number of records is not an exact multiple of shard size
+    num_shards = len(shard_boundaries) - 1
+    for i, (shard_start, shard_end) in enumerate(zip(shard_boundaries, shard_boundaries[1:])):
+        os.makedirs(path, exist_ok=True)
+        shard_numbering = f&#39;_{i+1}_of_{num_shards}&#39; if num_shards &gt; 1 else &#39;&#39;
+        filename = filename_prefix + shard_numbering + &#39;.tfrecord&#39;
+        filename = os.path.join(path, filename)
+        with tf.io.TFRecordWriter(filename) as writer:
+            for record in data[shard_start:shard_end]:
+                writer.write(record.SerializeToString())</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="sequence_transformer.data_prep" href="index.html">sequence_transformer.data_prep</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="sequence_transformer.data_prep.data_utils.encode_tf_example" href="#sequence_transformer.data_prep.data_utils.encode_tf_example">encode_tf_example</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.pandas_to_seq_example" href="#sequence_transformer.data_prep.data_utils.pandas_to_seq_example">pandas_to_seq_example</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.pandas_to_tf_example_list" href="#sequence_transformer.data_prep.data_utils.pandas_to_tf_example_list">pandas_to_tf_example_list</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.pandas_to_tf_seq_example_list" href="#sequence_transformer.data_prep.data_utils.pandas_to_tf_seq_example_list">pandas_to_tf_seq_example_list</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.pandas_train_test_split" href="#sequence_transformer.data_prep.data_utils.pandas_train_test_split">pandas_train_test_split</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.to_feature" href="#sequence_transformer.data_prep.data_utils.to_feature">to_feature</a></code></li>
+<li><code><a title="sequence_transformer.data_prep.data_utils.write_to_tfrecord" href="#sequence_transformer.data_prep.data_utils.write_to_tfrecord">write_to_tfrecord</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

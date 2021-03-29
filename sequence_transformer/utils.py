@@ -1,5 +1,6 @@
 import tensorflow as tf
 import argparse
+import collections
 
 
 def load_vocabulary(vocab_file):
@@ -42,16 +43,30 @@ def parse_cmd_line_arguments(args):
     """
     parser = argparse.ArgumentParser()
     for param_name, arg_spec in args.items():
-        if isinstance(arg_spec, type):
+        if isinstance(arg_spec, type):  # example: {'arg_1': str}
             parser.add_argument('--%s' % param_name, type=arg_spec, required=True)
-        else:
-            if isinstance(arg_spec, bool):  # Switch arguments that don't require values
-                actions = {True: 'store_true', False: 'store_false'}
-                parser.add_argument('-%s' % param_name, action=actions[arg_spec])
-            else:
+        else:  # If the spec provides a value
+            if arg_spec is None:
                 parser.add_argument('--%s' % param_name, type=type(arg_spec),
                                     default=arg_spec)
+            else:
+                if isinstance(arg_spec, bool):  # Switch arguments that don't require values
+                    actions = {True: 'store_true', False: 'store_false'}
+                    parser.add_argument('-%s' % param_name, action=actions[arg_spec])
+                else:
+                    parser.add_argument('--%s' % param_name, type=type(arg_spec),
+                                        default=arg_spec)
 
     parsed_args = parser.parse_args().__dict__
 
     return parsed_args
+
+
+# if __name__ == '__main__':
+#     ArgSpec = collections.namedtuple('ArgSpec', ('type', 'default', 'required'), defaults=())
+#
+#     arg_spec = {
+#         'arg_1': 12,
+#         'arg_2': 'some_string',
+#         'arg_3':
+#     }

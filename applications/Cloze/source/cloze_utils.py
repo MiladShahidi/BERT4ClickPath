@@ -91,7 +91,7 @@ class ClozeMaskedNDCG(tf.keras.metrics.Metric):
 
     def __init__(self, k, name=None):
         if name is None:
-            name = f'NDCG_at_@{k}'
+            name = f'NDCG_at_{k}'
         super(ClozeMaskedNDCG, self).__init__(name=name)
         self.k = k
         self.n_examples = self.add_weight(name='n_examples', initializer='zeros')

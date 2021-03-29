@@ -1,7 +1,7 @@
 import tensorflow as tf
 from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
 from source.data_generator import ClickStreamGenerator
-from sequence_transformer.clickstream_model import ClickstreamModel
+from sequence_transformer.sequence_transformer import SequenceTransformer
 from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE
 from sequence_transformer.head import SoftMaxHead
 from sequence_transformer.utils import load_vocabulary
@@ -21,7 +21,8 @@ def parse_examples(serialized_example, feature_spec):
 
 def random_choice(x, size, axis=0, preserve_order=True):
     """
-    This is the equivalent of np.random.choice. But it always returns unique choices, i.e. keep_features=False in numpy
+    Returns randomly chosen *indices* from serialized_string.
+    This is the similar to np.random.choice. But it always returns unique choices, i.e. keep_features=False in numpy
     """
     dim_x = tf.cast(tf.shape(x)[axis], tf.int64)
     indices = tf.range(0, dim_x, dtype=tf.int64)
@@ -29,9 +30,7 @@ def random_choice(x, size, axis=0, preserve_order=True):
     if preserve_order:
         sample_index = tf.sort(sample_index)
 
-    sample = tf.gather(x, sample_index, axis=axis)
-
-    return sample, sample_index
+    return sample_index
 
 
 def format_labels(feature_dict):
@@ -56,7 +55,7 @@ def format_labels(feature_dict):
     return feature_dict
 
 
-def random_item_mask(item_list, masked_percentage=MASKED_PERCENTAGE, max_masked=MAX_MASKED_ITEMS):
+def random_item_mask(item_list, masked_percentage, max_masked):
     """
 
     Args:
@@ -70,8 +69,13 @@ def random_item_mask(item_list, masked_percentage=MASKED_PERCENTAGE, max_masked=
     n_masked = tf.cast(tf.multiply(session_len, masked_percentage), dtype=tf.int32)
     n_masked = tf.clip_by_value(n_masked, clip_value_min=0, clip_value_max=max_masked)
     # Randomly pick n_masked items to mask from the list of items
-    masked_items, mask_index = random_choice(item_list, n_masked)
+    mask_index = random_choice(item_list, n_masked)
+    masked_item_list, masked_items = mask_items(item_list, mask_index)
+    return masked_item_list, masked_items
 
+
+def mask_items(item_list, mask_index):
+    masked_items = tf.gather(item_list, mask_index, axis=0)
     # Mask the chosen items by replacing them with the masking token
     mask = tf.fill(dims=tf.shape(mask_index), value=INPUT_MASKING_TOKEN)
     # The reshaping that is done for indices below, used to be applied to the other two inputs as well.
@@ -86,7 +90,7 @@ def random_item_mask(item_list, masked_percentage=MASKED_PERCENTAGE, max_masked=
     return masked_item_list, masked_items
 
 
-def create_tf_dataset(source, is_training, batch_size, target_vocab_file):
+def create_cloze_dataset(source, is_training, batch_size, target_vocab_file):
     """
 
     Args:
@@ -146,13 +150,32 @@ def create_tf_dataset(source, is_training, batch_size, target_vocab_file):
 
     def item_mask(features):
         def label_map(x):
+            """ Labels cannot be mapped later. We need to turn then into integers here """
             return label_lookup.lookup(x)
 
-        features['asin'], labels = random_item_mask(
-            item_list=features['asin'],
-            masked_percentage=MASKED_PERCENTAGE,
-            max_masked=MAX_MASKED_ITEMS
-        )
+        if is_training:  # This is from the outer scope
+            # last item is saved for validation. Should be removed when training
+            for seq_feature in ['asin', 'unixReviewTime']:
+                features[seq_feature] = features[seq_feature][:-1]
+
+            special_example = True
+            # special_example = (random_choice([0, 1, 2], 1) == 0)  # Random number generation is tricky inside a map fn
+            if special_example:
+                last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
+                features['asin'], labels = mask_items(features['asin'], last_item_index)
+            else:
+                features['asin'], labels = random_item_mask(
+                    item_list=features['asin'],
+                    masked_percentage=MASKED_PERCENTAGE,
+                    max_masked=MAX_MASKED_ITEMS
+                )
+        else:  # validation data
+            # Masks only the last item
+            # The following assumes the data is not batched yet and we are dealing with a 1-D tensor, a single example
+            # last_item_index = tf.expand_dims(tf.size(features['asin'])//2 - 1, axis=0)  # Needs to be 1-D tensor
+            last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
+            features['asin'], labels = mask_items(features['asin'], last_item_index)
+
         features['orig_labels'] = labels
         features['labels'] = label_map(labels)
         return features
@@ -222,7 +245,7 @@ if __name__ == '__main__':
         vocab_dir='../data/simulated/vocabs'
     )
     item_vocab_file = os.path.join(input_dir, 'vocabs/item_vocab.txt')
-    data = create_tf_dataset(
+    data = create_cloze_dataset(
         source=data_gen,
         is_training=True,
         batch_size=2,
@@ -247,7 +270,7 @@ if __name__ == '__main__':
     final_layers_dims = [10, 5]
     softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=N_ITEMS)
 
-    clickstream_model = ClickstreamModel(
+    clickstream_model = SequenceTransformer(
         sequential_input_config=sequential_input_config,
         feature_vocabs=feature_vocabularies,
         embedding_dims=embedding_dims,
@@ -258,17 +281,17 @@ if __name__ == '__main__':
         dropout_rate=0.1
     )
 
-    for x, y in data.take(1):
+    for x in data.take(1):
         print_features(x)
         print('*'*80)
         print('Labels:')
-        print(y)
-        y_hat = clickstream_model(x)
-        print(y_hat)
+        # print(y)
+        # y_hat = clickstream_model(serialized_string)
+        # print(y_hat)
 
-        from sequence_transformer.metrics import ClozeMaskedNDCG
-
-        metric = ClozeMaskedNDCG(k=5)
-        metric.reset_states()
-        metric.update_state(y_true=y, y_pred=y_hat)
-        print(metric.result())
+        # from sequence_transformer.metrics import ClozeMaskedNDCG
+        #
+        # metric = ClozeMaskedNDCG(k=5)
+        # metric.reset_states()
+        # metric.update_state(y_true=y, y_pred=y_hat)
+        # print(metric.result())

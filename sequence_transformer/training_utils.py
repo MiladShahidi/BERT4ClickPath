@@ -27,6 +27,29 @@ class CustomLRSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return learning_rate * self.scale
 
 
+class CustomExponentialDecayLR(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, initial_learning_rate, limiting_learning_rate, decay_steps, decay_rate):
+        super(CustomExponentialDecayLR, self).__init__()
+
+        self.initial_learning_rate = initial_learning_rate
+        self.limiting_learning_rate = limiting_learning_rate
+        self.decay_steps = decay_steps
+        self.decay_rate = decay_rate
+
+    def get_config(self):
+        config = {
+            'init_lr': self.initial_learning_rate,
+            'limit_lr': self.limiting_learning_rate,
+            'decay_steps': self.decay_steps,
+            'decay_rate': self.decay_rate
+        }
+        return config
+
+    def __call__(self, step):
+        learning_rate = (self.initial_learning_rate - self.limiting_learning_rate) * tf.math.pow(self.decay_rate, (tf.math.divide(step, self.decay_steps))) + self.limiting_learning_rate
+        return learning_rate
+
+
 class BestModelSaverCallback(tf.keras.callbacks.Callback):
     def __init__(self, savedmodel_path):
         super(BestModelSaverCallback, self).__init__()
@@ -38,3 +61,13 @@ class BestModelSaverCallback(tf.keras.callbacks.Callback):
             # save_path = os.path.join(self.savedmodel_path, 'epoch_%03d' % (epoch + 1))  # epoch is 0-based
             tf.saved_model.save(self.model, self.savedmodel_path, signatures={'serving_default': self.model.model_server})
             self.best_val_loss = logs['val_loss']
+
+
+class LRTensorBoard(tf.keras.callbacks.TensorBoard):
+    def __init__(self, log_dir, **kwargs):  # add other arguments to __init__ if you need
+        super().__init__(log_dir=log_dir, **kwargs)
+
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        logs.update({'lr': tf.keras.backend.eval(self.model.optimizer.lr)})
+        super().on_epoch_end(epoch, logs)

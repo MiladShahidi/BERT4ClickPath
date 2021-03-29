@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>sequence_transformer.metrics API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>sequence_transformer.metrics</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import tensorflow as tf
+from sequence_transformer.constants import LABEL_PAD
+
+
+class PositiveRate(tf.keras.metrics.Metric):
+
+    def __init__(self, name=&#39;positive_rate&#39;, **kwargs):
+        super(PositiveRate, self).__init__(name=name, **kwargs)
+        self.n_returned_items = self.add_weight(name=&#39;positive_rate&#39;, initializer=&#39;zeros&#39;)
+        self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # y_pred = tf.round(y_pred)  # threshold = 0.5
+        mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        mask = tf.cast(mask, dtype=y_true.dtype)
+
+        masked_y_true = y_true * mask
+
+        self.n_returned_items.assign_add(tf.reduce_sum(masked_y_true))
+        self.n_items.assign_add(tf.reduce_sum(mask))
+
+    def result(self):
+        return self.n_returned_items / self.n_items
+
+    def reset_states(self):
+        self.n_returned_items.assign(0.)
+        self.n_items.assign(0.)
+
+
+class PredictedPositives(tf.keras.metrics.Metric):
+
+    def __init__(self, name=&#39;pred_positives&#39;, **kwargs):
+        super(PredictedPositives, self).__init__(name=name, **kwargs)
+        self.n_pred_returns = self.add_weight(name=&#39;pred_returned&#39;, initializer=&#39;zeros&#39;)
+        self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.round(y_pred)  # threshold = 0.5
+        mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        mask = tf.cast(mask, dtype=y_true.dtype)
+
+        masked_y_pred = y_pred * mask
+
+        self.n_pred_returns.assign_add(tf.reduce_sum(masked_y_pred))
+        self.n_items.assign_add(tf.reduce_sum(mask))
+
+    def result(self):
+        return self.n_pred_returns / self.n_items
+
+    def reset_states(self):
+        self.n_pred_returns.assign(0.)
+        self.n_items.assign(0.)
+
+
+class F1Score(tf.keras.metrics.Metric):
+    # ToDo: TF doesn&#39;t have an F1 metric (tfa does, but didn&#39;t want to use that).
+    #  This used to be MaskedF1. After we created the wrapper MaskerMetric class I changed this to be a normal F1,
+    #  so that it can be wrapped by that class but didn&#39;t test it.
+    #  Test this before using it.
+    def __init__(self, name=&#39;F1Score&#39;, **kwargs):
+        super(F1Score, self).__init__(name=name, **kwargs)
+        self.tp = self.add_weight(name=&#39;tp&#39;, initializer=&#39;zeros&#39;)
+        self.condition_true = self.add_weight(name=&#39;condition_true&#39;, initializer=&#39;zeros&#39;)
+        self.predicted_true = self.add_weight(name=&#39;pred_true&#39;, initializer=&#39;zeros&#39;)
+        # self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.round(y_pred)  # threshold = 0.5
+
+        tp = tf.logical_and(tf.cast(y_true, tf.int32) == 1, tf.cast(y_pred, tf.int32) == 1)
+        tp = tf.cast(tp, dtype=tf.float32)
+        # mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        # mask = tf.cast(mask, dtype=tp.dtype)
+        # tp *= mask
+        # tp = tf.cast(tp, tf.float32)
+
+        condition_true = (tf.cast(y_true, tf.int32) == 1)
+        condition_true = tf.cast(condition_true, dtype=tf.float32)
+        # condition_true *= mask
+        # condition_true = tf.cast(condition_true, tf.float32)
+
+        predicted_true = (tf.cast(y_pred, tf.int32) == 1)
+        predicted_true = tf.cast(predicted_true, dtype=tf.float32)
+        # predicted_true *= mask
+        # predicted_true = tf.cast(predicted_true, tf.float32)
+        self.tp.assign_add(tf.reduce_sum(tp))
+        self.condition_true.assign_add(tf.reduce_sum(condition_true))
+        self.predicted_true.assign_add(tf.reduce_sum(predicted_true))
+
+    def result(self):
+        return 2 * self.tp / (self.condition_true+self.predicted_true)
+
+    def reset_states(self):
+        self.tp.assign(0.)
+        self.condition_true.assign(0.)
+        self.predicted_true.assign(0.)
+
+
+class fbeta_2(tf.keras.metrics.Metric):
+    def __init__(self, name=&#39;fbeta&#39;, **kwargs):
+        super(fbeta_2, self).__init__(name=name, **kwargs)
+        self.tp = self.add_weight(name=&#39;tp&#39;, initializer=&#39;zeros&#39;)
+        self.fp = self.add_weight(name=&#39;fp&#39;, initializer=&#39;zeros&#39;)
+        self.fn = self.add_weight(name=&#39;fn&#39;, initializer=&#39;zeros&#39;)
+        self.beta = 1
+        self.precision = self.add_weight(name=&#39;precision&#39;, initializer=&#39;zeros&#39;)
+        self.recall = self.add_weight(name=&#39;recall&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # print(&#39;*&#39;*10, self.beta)
+        y_pred = tf.keras.backend.clip(y_pred, 0, 1)
+        # calculate elements
+        tp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)))
+        fp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)))
+        fn = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)))
+        # calculate precision
+
+        self.precision.assign_add(tf.reduce_sum(tp / (tp + fp + tf.keras.backend.epsilon())))
+        # calculate recall
+        self.recall.assign_add(tf.reduce_sum(tp / (tp + fn + tf.keras.backend.epsilon())))
+        # calculate fbeta, averaged across each class
+
+    def result(self):
+        # return tf.keras.backend.mean((1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon()))
+        return (1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon())
+
+    def reset_states(self):
+        self.tp.assign(0.)
+        self.fp.assign(0.)
+        self.fn.assign(0.)
+        self.precision.assign(0.)
+        self.recall.assign(0.)
+        # self.beta = 1
+
+
+class MaskedMetric(tf.keras.metrics.Metric):
+
+    def __init__(self, metric, name, **kwargs):
+        super(MaskedMetric, self).__init__(name=name, **kwargs)
+        self._metric = metric
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        if sample_weight is not None:
+            raise ValueError(&#34;Masked metrics do not support sample_weight.&#34;)
+
+        mask = tf.logical_not(tf.equal(y_true, tf.cast(LABEL_PAD, y_true.dtype)))
+        self._metric.update_state(y_true, y_pred, sample_weight=mask)
+
+    def result(self):
+        return self._metric.result()
+
+    def reset_states(self):
+        self._metric.reset_states()
+
+
+def fbeta(y_true, y_pred, beta=1):
+    &#34;&#34;&#34;
+    Calculate f-beta score for multi-class/label classification. Implementation from https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-satellite-photos-of-the-amazon-rainforest/
+    Args:
+        y_true:
+        y_pred:
+        beta:
+
+    Returns:
+
+    &#34;&#34;&#34;
+    # clip predictions
+    y_pred = tf.keras.backend.clip(y_pred, 0, 1)
+    # calculate elements
+    tp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)), axis=1)
+    fp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)), axis=1)
+    fn = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)), axis=1)
+    # calculate precision
+    p = tp / (tp + fp + tf.keras.backend.epsilon())
+    # calculate recall
+    r = tp / (tp + fn + tf.keras.backend.epsilon())
+    # calculate fbeta, averaged across each class
+    bb = beta ** 2
+    fbeta_score = tf.keras.backend.mean((1 + bb) * (p * r) / (bb * p + r + tf.keras.backend.epsilon()))
+    return fbeta_score
+
+
+if __name__ == &#39;__main__&#39;:
+
+    y_true = [[1, 0]]
+    y_pred = [[
+        [0.9, 0.1, 0.01],
+        [0.5, 0.3, 0.01]
+    ]]
+    # metric
+    ndcg = ClozeMaskedNDCG(k=3)
+    ndcg.update_state(y_true, y_pred)
+    a = ndcg.result()
+    print(&#39;my metric:&#39;, a)
+    y_true = [[0, 1, 0], [1, 0, 0]]
+    y_pred = [[0.9, 0.1, 0.01], [0.5, 0.3, 0.01]]
+    from sklearn.metrics import ndcg_score
+    sk_res = ndcg_score(y_true, y_pred, k=3)
+    print(sk_res)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="sequence_transformer.metrics.fbeta"><code class="name flex">
+<span>def <span class="ident">fbeta</span></span>(<span>y_true, y_pred, beta=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate f-beta score for multi-class/label classification. Implementation from <a href="https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-satellite-photos-of-the-amazon-rainforest/">https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-satellite-photos-of-the-amazon-rainforest/</a></p>
+<h2 id="args">Args</h2>
+<p>y_true:
+y_pred:
+beta:
+Returns:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fbeta(y_true, y_pred, beta=1):
+    &#34;&#34;&#34;
+    Calculate f-beta score for multi-class/label classification. Implementation from https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-satellite-photos-of-the-amazon-rainforest/
+    Args:
+        y_true:
+        y_pred:
+        beta:
+
+    Returns:
+
+    &#34;&#34;&#34;
+    # clip predictions
+    y_pred = tf.keras.backend.clip(y_pred, 0, 1)
+    # calculate elements
+    tp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)), axis=1)
+    fp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)), axis=1)
+    fn = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)), axis=1)
+    # calculate precision
+    p = tp / (tp + fp + tf.keras.backend.epsilon())
+    # calculate recall
+    r = tp / (tp + fn + tf.keras.backend.epsilon())
+    # calculate fbeta, averaged across each class
+    bb = beta ** 2
+    fbeta_score = tf.keras.backend.mean((1 + bb) * (p * r) / (bb * p + r + tf.keras.backend.epsilon()))
+    return fbeta_score</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="sequence_transformer.metrics.F1Score"><code class="flex name class">
+<span>class <span class="ident">F1Score</span></span>
+<span>(</span><span>name='F1Score', **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encapsulates metric logic and state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>(Optional) string name of the metric instance.</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>(Optional) data type of the metric result.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional layer keywords arguments.</dd>
+</dl>
+<p>Standalone usage:</p>
+<pre><code class="language-python">m = SomeMetric(...)
+for input in ...:
+  m.update_state(input)
+print('Final result: ', m.result().numpy())
+</code></pre>
+<p>Usage with <code>compile()</code> API:</p>
+<pre><code class="language-python">model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
+              metrics=[tf.keras.metrics.CategoricalAccuracy()])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+dataset = dataset.batch(32)
+
+model.fit(dataset, epochs=10)
+</code></pre>
+<p>To be implemented by subclasses:
+* <code>__init__()</code>: All state variables should be created in this method by
+calling <code>self.add_weight()</code> like: <code>self.var = self.add_weight(...)</code>
+* <code>update_state()</code>: Has all updates to the state variables like:
+self.var.assign_add(&hellip;).
+* <code>result()</code>: Computes and returns a value for the metric
+from the state variables.</p>
+<p>Example subclass implementation:</p>
+<pre><code class="language-python">class BinaryTruePositives(tf.keras.metrics.Metric):
+
+  def __init__(self, name='binary_true_positives', **kwargs):
+    super(BinaryTruePositives, self).__init__(name=name, **kwargs)
+    self.true_positives = self.add_weight(name='tp', initializer='zeros')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    y_true = tf.cast(y_true, tf.bool)
+    y_pred = tf.cast(y_pred, tf.bool)
+
+    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
+    values = tf.cast(values, self.dtype)
+    if sample_weight is not None:
+      sample_weight = tf.cast(sample_weight, self.dtype)
+      sample_weight = tf.broadcast_to(sample_weight, values.shape)
+      values = tf.multiply(values, sample_weight)
+    self.true_positives.assign_add(tf.reduce_sum(values))
+
+  def result(self):
+    return self.true_positives
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class F1Score(tf.keras.metrics.Metric):
+    # ToDo: TF doesn&#39;t have an F1 metric (tfa does, but didn&#39;t want to use that).
+    #  This used to be MaskedF1. After we created the wrapper MaskerMetric class I changed this to be a normal F1,
+    #  so that it can be wrapped by that class but didn&#39;t test it.
+    #  Test this before using it.
+    def __init__(self, name=&#39;F1Score&#39;, **kwargs):
+        super(F1Score, self).__init__(name=name, **kwargs)
+        self.tp = self.add_weight(name=&#39;tp&#39;, initializer=&#39;zeros&#39;)
+        self.condition_true = self.add_weight(name=&#39;condition_true&#39;, initializer=&#39;zeros&#39;)
+        self.predicted_true = self.add_weight(name=&#39;pred_true&#39;, initializer=&#39;zeros&#39;)
+        # self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.round(y_pred)  # threshold = 0.5
+
+        tp = tf.logical_and(tf.cast(y_true, tf.int32) == 1, tf.cast(y_pred, tf.int32) == 1)
+        tp = tf.cast(tp, dtype=tf.float32)
+        # mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        # mask = tf.cast(mask, dtype=tp.dtype)
+        # tp *= mask
+        # tp = tf.cast(tp, tf.float32)
+
+        condition_true = (tf.cast(y_true, tf.int32) == 1)
+        condition_true = tf.cast(condition_true, dtype=tf.float32)
+        # condition_true *= mask
+        # condition_true = tf.cast(condition_true, tf.float32)
+
+        predicted_true = (tf.cast(y_pred, tf.int32) == 1)
+        predicted_true = tf.cast(predicted_true, dtype=tf.float32)
+        # predicted_true *= mask
+        # predicted_true = tf.cast(predicted_true, tf.float32)
+        self.tp.assign_add(tf.reduce_sum(tp))
+        self.condition_true.assign_add(tf.reduce_sum(condition_true))
+        self.predicted_true.assign_add(tf.reduce_sum(predicted_true))
+
+    def result(self):
+        return 2 * self.tp / (self.condition_true+self.predicted_true)
+
+    def reset_states(self):
+        self.tp.assign(0.)
+        self.condition_true.assign(0.)
+        self.predicted_true.assign(0.)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.metrics.Metric</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.metrics.F1Score.reset_states"><code class="name flex">
+<span>def <span class="ident">reset_states</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resets all of the metric state variables.</p>
+<p>This function is called between epochs/steps,
+when a metric is evaluated during training.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset_states(self):
+    self.tp.assign(0.)
+    self.condition_true.assign(0.)
+    self.predicted_true.assign(0.)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.F1Score.result"><code class="name flex">
+<span>def <span class="ident">result</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes and returns the metric value tensor.</p>
+<p>Result computation is an idempotent operation that simply calculates the
+metric value using the state variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def result(self):
+    return 2 * self.tp / (self.condition_true+self.predicted_true)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.F1Score.update_state"><code class="name flex">
+<span>def <span class="ident">update_state</span></span>(<span>self, y_true, y_pred, sample_weight=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Accumulates statistics for the metric.</p>
+<p>Note: This function is executed as a graph function in graph mode.
+This means:
+a) Operations on the same resource are executed in textual order.
+This should make it easier to do things like add the updated
+value of a variable to another, for example.
+b) You don't need to worry about collecting the update ops to execute.
+All update ops added to the graph by this function will be executed.
+As a result, code should generally work the same way with graph or
+eager execution.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>*args:</dt>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>A mini-batch of inputs to the Metric.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_state(self, y_true, y_pred, sample_weight=None):
+    y_pred = tf.round(y_pred)  # threshold = 0.5
+
+    tp = tf.logical_and(tf.cast(y_true, tf.int32) == 1, tf.cast(y_pred, tf.int32) == 1)
+    tp = tf.cast(tp, dtype=tf.float32)
+    # mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+    # mask = tf.cast(mask, dtype=tp.dtype)
+    # tp *= mask
+    # tp = tf.cast(tp, tf.float32)
+
+    condition_true = (tf.cast(y_true, tf.int32) == 1)
+    condition_true = tf.cast(condition_true, dtype=tf.float32)
+    # condition_true *= mask
+    # condition_true = tf.cast(condition_true, tf.float32)
+
+    predicted_true = (tf.cast(y_pred, tf.int32) == 1)
+    predicted_true = tf.cast(predicted_true, dtype=tf.float32)
+    # predicted_true *= mask
+    # predicted_true = tf.cast(predicted_true, tf.float32)
+    self.tp.assign_add(tf.reduce_sum(tp))
+    self.condition_true.assign_add(tf.reduce_sum(condition_true))
+    self.predicted_true.assign_add(tf.reduce_sum(predicted_true))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.metrics.MaskedMetric"><code class="flex name class">
+<span>class <span class="ident">MaskedMetric</span></span>
+<span>(</span><span>metric, name, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encapsulates metric logic and state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>(Optional) string name of the metric instance.</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>(Optional) data type of the metric result.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional layer keywords arguments.</dd>
+</dl>
+<p>Standalone usage:</p>
+<pre><code class="language-python">m = SomeMetric(...)
+for input in ...:
+  m.update_state(input)
+print('Final result: ', m.result().numpy())
+</code></pre>
+<p>Usage with <code>compile()</code> API:</p>
+<pre><code class="language-python">model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
+              metrics=[tf.keras.metrics.CategoricalAccuracy()])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+dataset = dataset.batch(32)
+
+model.fit(dataset, epochs=10)
+</code></pre>
+<p>To be implemented by subclasses:
+* <code>__init__()</code>: All state variables should be created in this method by
+calling <code>self.add_weight()</code> like: <code>self.var = self.add_weight(...)</code>
+* <code>update_state()</code>: Has all updates to the state variables like:
+self.var.assign_add(&hellip;).
+* <code>result()</code>: Computes and returns a value for the metric
+from the state variables.</p>
+<p>Example subclass implementation:</p>
+<pre><code class="language-python">class BinaryTruePositives(tf.keras.metrics.Metric):
+
+  def __init__(self, name='binary_true_positives', **kwargs):
+    super(BinaryTruePositives, self).__init__(name=name, **kwargs)
+    self.true_positives = self.add_weight(name='tp', initializer='zeros')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    y_true = tf.cast(y_true, tf.bool)
+    y_pred = tf.cast(y_pred, tf.bool)
+
+    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
+    values = tf.cast(values, self.dtype)
+    if sample_weight is not None:
+      sample_weight = tf.cast(sample_weight, self.dtype)
+      sample_weight = tf.broadcast_to(sample_weight, values.shape)
+      values = tf.multiply(values, sample_weight)
+    self.true_positives.assign_add(tf.reduce_sum(values))
+
+  def result(self):
+    return self.true_positives
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MaskedMetric(tf.keras.metrics.Metric):
+
+    def __init__(self, metric, name, **kwargs):
+        super(MaskedMetric, self).__init__(name=name, **kwargs)
+        self._metric = metric
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        if sample_weight is not None:
+            raise ValueError(&#34;Masked metrics do not support sample_weight.&#34;)
+
+        mask = tf.logical_not(tf.equal(y_true, tf.cast(LABEL_PAD, y_true.dtype)))
+        self._metric.update_state(y_true, y_pred, sample_weight=mask)
+
+    def result(self):
+        return self._metric.result()
+
+    def reset_states(self):
+        self._metric.reset_states()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.metrics.Metric</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.metrics.MaskedMetric.reset_states"><code class="name flex">
+<span>def <span class="ident">reset_states</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resets all of the metric state variables.</p>
+<p>This function is called between epochs/steps,
+when a metric is evaluated during training.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset_states(self):
+    self._metric.reset_states()</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.MaskedMetric.result"><code class="name flex">
+<span>def <span class="ident">result</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes and returns the metric value tensor.</p>
+<p>Result computation is an idempotent operation that simply calculates the
+metric value using the state variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def result(self):
+    return self._metric.result()</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.MaskedMetric.update_state"><code class="name flex">
+<span>def <span class="ident">update_state</span></span>(<span>self, y_true, y_pred, sample_weight=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Accumulates statistics for the metric.</p>
+<p>Note: This function is executed as a graph function in graph mode.
+This means:
+a) Operations on the same resource are executed in textual order.
+This should make it easier to do things like add the updated
+value of a variable to another, for example.
+b) You don't need to worry about collecting the update ops to execute.
+All update ops added to the graph by this function will be executed.
+As a result, code should generally work the same way with graph or
+eager execution.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>*args:</dt>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>A mini-batch of inputs to the Metric.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_state(self, y_true, y_pred, sample_weight=None):
+    if sample_weight is not None:
+        raise ValueError(&#34;Masked metrics do not support sample_weight.&#34;)
+
+    mask = tf.logical_not(tf.equal(y_true, tf.cast(LABEL_PAD, y_true.dtype)))
+    self._metric.update_state(y_true, y_pred, sample_weight=mask)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.metrics.PositiveRate"><code class="flex name class">
+<span>class <span class="ident">PositiveRate</span></span>
+<span>(</span><span>name='positive_rate', **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encapsulates metric logic and state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>(Optional) string name of the metric instance.</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>(Optional) data type of the metric result.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional layer keywords arguments.</dd>
+</dl>
+<p>Standalone usage:</p>
+<pre><code class="language-python">m = SomeMetric(...)
+for input in ...:
+  m.update_state(input)
+print('Final result: ', m.result().numpy())
+</code></pre>
+<p>Usage with <code>compile()</code> API:</p>
+<pre><code class="language-python">model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
+              metrics=[tf.keras.metrics.CategoricalAccuracy()])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+dataset = dataset.batch(32)
+
+model.fit(dataset, epochs=10)
+</code></pre>
+<p>To be implemented by subclasses:
+* <code>__init__()</code>: All state variables should be created in this method by
+calling <code>self.add_weight()</code> like: <code>self.var = self.add_weight(...)</code>
+* <code>update_state()</code>: Has all updates to the state variables like:
+self.var.assign_add(&hellip;).
+* <code>result()</code>: Computes and returns a value for the metric
+from the state variables.</p>
+<p>Example subclass implementation:</p>
+<pre><code class="language-python">class BinaryTruePositives(tf.keras.metrics.Metric):
+
+  def __init__(self, name='binary_true_positives', **kwargs):
+    super(BinaryTruePositives, self).__init__(name=name, **kwargs)
+    self.true_positives = self.add_weight(name='tp', initializer='zeros')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    y_true = tf.cast(y_true, tf.bool)
+    y_pred = tf.cast(y_pred, tf.bool)
+
+    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
+    values = tf.cast(values, self.dtype)
+    if sample_weight is not None:
+      sample_weight = tf.cast(sample_weight, self.dtype)
+      sample_weight = tf.broadcast_to(sample_weight, values.shape)
+      values = tf.multiply(values, sample_weight)
+    self.true_positives.assign_add(tf.reduce_sum(values))
+
+  def result(self):
+    return self.true_positives
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PositiveRate(tf.keras.metrics.Metric):
+
+    def __init__(self, name=&#39;positive_rate&#39;, **kwargs):
+        super(PositiveRate, self).__init__(name=name, **kwargs)
+        self.n_returned_items = self.add_weight(name=&#39;positive_rate&#39;, initializer=&#39;zeros&#39;)
+        self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # y_pred = tf.round(y_pred)  # threshold = 0.5
+        mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        mask = tf.cast(mask, dtype=y_true.dtype)
+
+        masked_y_true = y_true * mask
+
+        self.n_returned_items.assign_add(tf.reduce_sum(masked_y_true))
+        self.n_items.assign_add(tf.reduce_sum(mask))
+
+    def result(self):
+        return self.n_returned_items / self.n_items
+
+    def reset_states(self):
+        self.n_returned_items.assign(0.)
+        self.n_items.assign(0.)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.metrics.Metric</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.metrics.PositiveRate.reset_states"><code class="name flex">
+<span>def <span class="ident">reset_states</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resets all of the metric state variables.</p>
+<p>This function is called between epochs/steps,
+when a metric is evaluated during training.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset_states(self):
+    self.n_returned_items.assign(0.)
+    self.n_items.assign(0.)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.PositiveRate.result"><code class="name flex">
+<span>def <span class="ident">result</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes and returns the metric value tensor.</p>
+<p>Result computation is an idempotent operation that simply calculates the
+metric value using the state variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def result(self):
+    return self.n_returned_items / self.n_items</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.PositiveRate.update_state"><code class="name flex">
+<span>def <span class="ident">update_state</span></span>(<span>self, y_true, y_pred, sample_weight=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Accumulates statistics for the metric.</p>
+<p>Note: This function is executed as a graph function in graph mode.
+This means:
+a) Operations on the same resource are executed in textual order.
+This should make it easier to do things like add the updated
+value of a variable to another, for example.
+b) You don't need to worry about collecting the update ops to execute.
+All update ops added to the graph by this function will be executed.
+As a result, code should generally work the same way with graph or
+eager execution.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>*args:</dt>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>A mini-batch of inputs to the Metric.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_state(self, y_true, y_pred, sample_weight=None):
+    # y_pred = tf.round(y_pred)  # threshold = 0.5
+    mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+    mask = tf.cast(mask, dtype=y_true.dtype)
+
+    masked_y_true = y_true * mask
+
+    self.n_returned_items.assign_add(tf.reduce_sum(masked_y_true))
+    self.n_items.assign_add(tf.reduce_sum(mask))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.metrics.PredictedPositives"><code class="flex name class">
+<span>class <span class="ident">PredictedPositives</span></span>
+<span>(</span><span>name='pred_positives', **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encapsulates metric logic and state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>(Optional) string name of the metric instance.</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>(Optional) data type of the metric result.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional layer keywords arguments.</dd>
+</dl>
+<p>Standalone usage:</p>
+<pre><code class="language-python">m = SomeMetric(...)
+for input in ...:
+  m.update_state(input)
+print('Final result: ', m.result().numpy())
+</code></pre>
+<p>Usage with <code>compile()</code> API:</p>
+<pre><code class="language-python">model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
+              metrics=[tf.keras.metrics.CategoricalAccuracy()])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+dataset = dataset.batch(32)
+
+model.fit(dataset, epochs=10)
+</code></pre>
+<p>To be implemented by subclasses:
+* <code>__init__()</code>: All state variables should be created in this method by
+calling <code>self.add_weight()</code> like: <code>self.var = self.add_weight(...)</code>
+* <code>update_state()</code>: Has all updates to the state variables like:
+self.var.assign_add(&hellip;).
+* <code>result()</code>: Computes and returns a value for the metric
+from the state variables.</p>
+<p>Example subclass implementation:</p>
+<pre><code class="language-python">class BinaryTruePositives(tf.keras.metrics.Metric):
+
+  def __init__(self, name='binary_true_positives', **kwargs):
+    super(BinaryTruePositives, self).__init__(name=name, **kwargs)
+    self.true_positives = self.add_weight(name='tp', initializer='zeros')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    y_true = tf.cast(y_true, tf.bool)
+    y_pred = tf.cast(y_pred, tf.bool)
+
+    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
+    values = tf.cast(values, self.dtype)
+    if sample_weight is not None:
+      sample_weight = tf.cast(sample_weight, self.dtype)
+      sample_weight = tf.broadcast_to(sample_weight, values.shape)
+      values = tf.multiply(values, sample_weight)
+    self.true_positives.assign_add(tf.reduce_sum(values))
+
+  def result(self):
+    return self.true_positives
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PredictedPositives(tf.keras.metrics.Metric):
+
+    def __init__(self, name=&#39;pred_positives&#39;, **kwargs):
+        super(PredictedPositives, self).__init__(name=name, **kwargs)
+        self.n_pred_returns = self.add_weight(name=&#39;pred_returned&#39;, initializer=&#39;zeros&#39;)
+        self.n_items = self.add_weight(name=&#39;n_items&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred = tf.round(y_pred)  # threshold = 0.5
+        mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+        mask = tf.cast(mask, dtype=y_true.dtype)
+
+        masked_y_pred = y_pred * mask
+
+        self.n_pred_returns.assign_add(tf.reduce_sum(masked_y_pred))
+        self.n_items.assign_add(tf.reduce_sum(mask))
+
+    def result(self):
+        return self.n_pred_returns / self.n_items
+
+    def reset_states(self):
+        self.n_pred_returns.assign(0.)
+        self.n_items.assign(0.)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.metrics.Metric</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.metrics.PredictedPositives.reset_states"><code class="name flex">
+<span>def <span class="ident">reset_states</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resets all of the metric state variables.</p>
+<p>This function is called between epochs/steps,
+when a metric is evaluated during training.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset_states(self):
+    self.n_pred_returns.assign(0.)
+    self.n_items.assign(0.)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.PredictedPositives.result"><code class="name flex">
+<span>def <span class="ident">result</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes and returns the metric value tensor.</p>
+<p>Result computation is an idempotent operation that simply calculates the
+metric value using the state variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def result(self):
+    return self.n_pred_returns / self.n_items</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.PredictedPositives.update_state"><code class="name flex">
+<span>def <span class="ident">update_state</span></span>(<span>self, y_true, y_pred, sample_weight=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Accumulates statistics for the metric.</p>
+<p>Note: This function is executed as a graph function in graph mode.
+This means:
+a) Operations on the same resource are executed in textual order.
+This should make it easier to do things like add the updated
+value of a variable to another, for example.
+b) You don't need to worry about collecting the update ops to execute.
+All update ops added to the graph by this function will be executed.
+As a result, code should generally work the same way with graph or
+eager execution.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>*args:</dt>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>A mini-batch of inputs to the Metric.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_state(self, y_true, y_pred, sample_weight=None):
+    y_pred = tf.round(y_pred)  # threshold = 0.5
+    mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
+    mask = tf.cast(mask, dtype=y_true.dtype)
+
+    masked_y_pred = y_pred * mask
+
+    self.n_pred_returns.assign_add(tf.reduce_sum(masked_y_pred))
+    self.n_items.assign_add(tf.reduce_sum(mask))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="sequence_transformer.metrics.fbeta_2"><code class="flex name class">
+<span>class <span class="ident">fbeta_2</span></span>
+<span>(</span><span>name='fbeta', **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Encapsulates metric logic and state.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>name</code></strong></dt>
+<dd>(Optional) string name of the metric instance.</dd>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>(Optional) data type of the metric result.</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>Additional layer keywords arguments.</dd>
+</dl>
+<p>Standalone usage:</p>
+<pre><code class="language-python">m = SomeMetric(...)
+for input in ...:
+  m.update_state(input)
+print('Final result: ', m.result().numpy())
+</code></pre>
+<p>Usage with <code>compile()</code> API:</p>
+<pre><code class="language-python">model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dense(10, activation='softmax'))
+
+model.compile(optimizer=tf.keras.optimizers.RMSprop(0.01),
+              loss=tf.keras.losses.CategoricalCrossentropy(),
+              metrics=[tf.keras.metrics.CategoricalAccuracy()])
+
+data = np.random.random((1000, 32))
+labels = np.random.random((1000, 10))
+
+dataset = tf.data.Dataset.from_tensor_slices((data, labels))
+dataset = dataset.batch(32)
+
+model.fit(dataset, epochs=10)
+</code></pre>
+<p>To be implemented by subclasses:
+* <code>__init__()</code>: All state variables should be created in this method by
+calling <code>self.add_weight()</code> like: <code>self.var = self.add_weight(...)</code>
+* <code>update_state()</code>: Has all updates to the state variables like:
+self.var.assign_add(&hellip;).
+* <code>result()</code>: Computes and returns a value for the metric
+from the state variables.</p>
+<p>Example subclass implementation:</p>
+<pre><code class="language-python">class BinaryTruePositives(tf.keras.metrics.Metric):
+
+  def __init__(self, name='binary_true_positives', **kwargs):
+    super(BinaryTruePositives, self).__init__(name=name, **kwargs)
+    self.true_positives = self.add_weight(name='tp', initializer='zeros')
+
+  def update_state(self, y_true, y_pred, sample_weight=None):
+    y_true = tf.cast(y_true, tf.bool)
+    y_pred = tf.cast(y_pred, tf.bool)
+
+    values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, True))
+    values = tf.cast(values, self.dtype)
+    if sample_weight is not None:
+      sample_weight = tf.cast(sample_weight, self.dtype)
+      sample_weight = tf.broadcast_to(sample_weight, values.shape)
+      values = tf.multiply(values, sample_weight)
+    self.true_positives.assign_add(tf.reduce_sum(values))
+
+  def result(self):
+    return self.true_positives
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class fbeta_2(tf.keras.metrics.Metric):
+    def __init__(self, name=&#39;fbeta&#39;, **kwargs):
+        super(fbeta_2, self).__init__(name=name, **kwargs)
+        self.tp = self.add_weight(name=&#39;tp&#39;, initializer=&#39;zeros&#39;)
+        self.fp = self.add_weight(name=&#39;fp&#39;, initializer=&#39;zeros&#39;)
+        self.fn = self.add_weight(name=&#39;fn&#39;, initializer=&#39;zeros&#39;)
+        self.beta = 1
+        self.precision = self.add_weight(name=&#39;precision&#39;, initializer=&#39;zeros&#39;)
+        self.recall = self.add_weight(name=&#39;recall&#39;, initializer=&#39;zeros&#39;)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        # print(&#39;*&#39;*10, self.beta)
+        y_pred = tf.keras.backend.clip(y_pred, 0, 1)
+        # calculate elements
+        tp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)))
+        fp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)))
+        fn = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)))
+        # calculate precision
+
+        self.precision.assign_add(tf.reduce_sum(tp / (tp + fp + tf.keras.backend.epsilon())))
+        # calculate recall
+        self.recall.assign_add(tf.reduce_sum(tp / (tp + fn + tf.keras.backend.epsilon())))
+        # calculate fbeta, averaged across each class
+
+    def result(self):
+        # return tf.keras.backend.mean((1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon()))
+        return (1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon())
+
+    def reset_states(self):
+        self.tp.assign(0.)
+        self.fp.assign(0.)
+        self.fn.assign(0.)
+        self.precision.assign(0.)
+        self.recall.assign(0.)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>tensorflow.python.keras.metrics.Metric</li>
+<li>tensorflow.python.keras.engine.base_layer.Layer</li>
+<li>tensorflow.python.module.module.Module</li>
+<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.base.Trackable</li>
+<li>tensorflow.python.keras.utils.version_utils.LayerVersionSelector</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="sequence_transformer.metrics.fbeta_2.reset_states"><code class="name flex">
+<span>def <span class="ident">reset_states</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resets all of the metric state variables.</p>
+<p>This function is called between epochs/steps,
+when a metric is evaluated during training.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset_states(self):
+    self.tp.assign(0.)
+    self.fp.assign(0.)
+    self.fn.assign(0.)
+    self.precision.assign(0.)
+    self.recall.assign(0.)</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.fbeta_2.result"><code class="name flex">
+<span>def <span class="ident">result</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Computes and returns the metric value tensor.</p>
+<p>Result computation is an idempotent operation that simply calculates the
+metric value using the state variables.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def result(self):
+    # return tf.keras.backend.mean((1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon()))
+    return (1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon())</code></pre>
+</details>
+</dd>
+<dt id="sequence_transformer.metrics.fbeta_2.update_state"><code class="name flex">
+<span>def <span class="ident">update_state</span></span>(<span>self, y_true, y_pred, sample_weight=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Accumulates statistics for the metric.</p>
+<p>Note: This function is executed as a graph function in graph mode.
+This means:
+a) Operations on the same resource are executed in textual order.
+This should make it easier to do things like add the updated
+value of a variable to another, for example.
+b) You don't need to worry about collecting the update ops to execute.
+All update ops added to the graph by this function will be executed.
+As a result, code should generally work the same way with graph or
+eager execution.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>*args:</dt>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>A mini-batch of inputs to the Metric.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_state(self, y_true, y_pred, sample_weight=None):
+    # print(&#39;*&#39;*10, self.beta)
+    y_pred = tf.keras.backend.clip(y_pred, 0, 1)
+    # calculate elements
+    tp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)))
+    fp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)))
+    fn = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)))
+    # calculate precision
+
+    self.precision.assign_add(tf.reduce_sum(tp / (tp + fp + tf.keras.backend.epsilon())))
+    # calculate recall
+    self.recall.assign_add(tf.reduce_sum(tp / (tp + fn + tf.keras.backend.epsilon())))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="sequence_transformer" href="index.html">sequence_transformer</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.fbeta" href="#sequence_transformer.metrics.fbeta">fbeta</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="sequence_transformer.metrics.F1Score" href="#sequence_transformer.metrics.F1Score">F1Score</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.F1Score.reset_states" href="#sequence_transformer.metrics.F1Score.reset_states">reset_states</a></code></li>
+<li><code><a title="sequence_transformer.metrics.F1Score.result" href="#sequence_transformer.metrics.F1Score.result">result</a></code></li>
+<li><code><a title="sequence_transformer.metrics.F1Score.update_state" href="#sequence_transformer.metrics.F1Score.update_state">update_state</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.metrics.MaskedMetric" href="#sequence_transformer.metrics.MaskedMetric">MaskedMetric</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.MaskedMetric.reset_states" href="#sequence_transformer.metrics.MaskedMetric.reset_states">reset_states</a></code></li>
+<li><code><a title="sequence_transformer.metrics.MaskedMetric.result" href="#sequence_transformer.metrics.MaskedMetric.result">result</a></code></li>
+<li><code><a title="sequence_transformer.metrics.MaskedMetric.update_state" href="#sequence_transformer.metrics.MaskedMetric.update_state">update_state</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.metrics.PositiveRate" href="#sequence_transformer.metrics.PositiveRate">PositiveRate</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.PositiveRate.reset_states" href="#sequence_transformer.metrics.PositiveRate.reset_states">reset_states</a></code></li>
+<li><code><a title="sequence_transformer.metrics.PositiveRate.result" href="#sequence_transformer.metrics.PositiveRate.result">result</a></code></li>
+<li><code><a title="sequence_transformer.metrics.PositiveRate.update_state" href="#sequence_transformer.metrics.PositiveRate.update_state">update_state</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.metrics.PredictedPositives" href="#sequence_transformer.metrics.PredictedPositives">PredictedPositives</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.PredictedPositives.reset_states" href="#sequence_transformer.metrics.PredictedPositives.reset_states">reset_states</a></code></li>
+<li><code><a title="sequence_transformer.metrics.PredictedPositives.result" href="#sequence_transformer.metrics.PredictedPositives.result">result</a></code></li>
+<li><code><a title="sequence_transformer.metrics.PredictedPositives.update_state" href="#sequence_transformer.metrics.PredictedPositives.update_state">update_state</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="sequence_transformer.metrics.fbeta_2" href="#sequence_transformer.metrics.fbeta_2">fbeta_2</a></code></h4>
+<ul class="">
+<li><code><a title="sequence_transformer.metrics.fbeta_2.reset_states" href="#sequence_transformer.metrics.fbeta_2.reset_states">reset_states</a></code></li>
+<li><code><a title="sequence_transformer.metrics.fbeta_2.result" href="#sequence_transformer.metrics.fbeta_2.result">result</a></code></li>
+<li><code><a title="sequence_transformer.metrics.fbeta_2.update_state" href="#sequence_transformer.metrics.fbeta_2.update_state">update_state</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
