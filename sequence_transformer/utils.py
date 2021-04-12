@@ -1,6 +1,5 @@
 import tensorflow as tf
 import argparse
-import collections
 
 
 def load_vocabulary(vocab_file):

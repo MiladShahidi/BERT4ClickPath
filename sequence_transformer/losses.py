@@ -3,13 +3,15 @@ from sequence_transformer.constants import LABEL_PAD
 
 
 class MaskedLoss(tf.keras.losses.Loss):
+    """
+
+    """
     def __init__(self, item_wise_loss_fn, pos_weight=None, label_pad=LABEL_PAD):
         """
-
         Args:
             item_wise_loss_fn: An item-wise loss function that does not perform any reduction (e.g. mean over batch).
                 For example, `tf.keras.backend.binary_crossentropy` is one such loss function.
-                NOTE: usual loss functions like `tf.keras.losses.binary_crossentropy` performs reduction
+                NOTE: usual loss functions like `tf.keras.losses.binary_crossentropy` perform reduction
             pos_weight: weight for positive class for binary labels. Only works as expected for binary labels.
         """
         super(MaskedLoss, self).__init__(reduction=tf.keras.losses.Reduction.NONE)
@@ -56,7 +58,7 @@ class MaskedLoss(tf.keras.losses.Loss):
         y_true -= pad_offset  # replaces label pads with 0s. Leaves all other labels intact.
         # (batch_size, input_seq_len)
         item_loss = self.item_wise_loss_fn(y_true, y_pred)
-        # Some functions squeeze the resulting tensor but we need this to have the same shape as y_true
+        # Some loss functions squeeze the resulting tensor but we need this to have the same shape as y_true
         # Otherwise it will get messed up (wrong dimensions) when multiplied by mask below
         item_loss = tf.reshape(item_loss, tf.shape(y_true))
 
@@ -81,7 +83,7 @@ class MaskedLoss(tf.keras.losses.Loss):
         # multiple of number of GPUs, some GPUs will receive empty batches. This can cause nan loss. One work-around
         # is to explicitly handle this case here.
         # https://stackoverflow.com/questions/54283937/training-on-multiple-gpus-causes-nan-validation-errors-in-keras
-        # This does not happen during is_training. My guess is that because is_training data is repeated indefinitely,
+        # This does not happen during training. My guess is that because training data is repeated indefinitely,
         # there is never a last smaller batch with a different size and all batches are the same size (which we set to a
         # multiple of number of GPUs manually).
         mean_batch_loss = tf.cond(pred=tf.size(y_true) == 0,

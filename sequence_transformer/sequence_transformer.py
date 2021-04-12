@@ -163,6 +163,7 @@ class SequenceTransformer(tf.keras.models.Model):
                  feature_vocabs,
                  embedding_dims,
                  head_unit,
+                 enable_positional_encoding,
                  segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
                  value_to_head=None,  # Find a better name, like token_to_output
                  num_encoder_layers=1,
@@ -176,6 +177,10 @@ class SequenceTransformer(tf.keras.models.Model):
                 fed to the Transformer.
             feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
             embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
+            head_unit: The Head (e.g. dense layers) that will consume the output of the Transformer and produce the final output.
+            enable_positional_encoding: If False, the model will not use positional encoding. The model ignore the
+                sequential nature of the input and will treat it as a "bag of words" and the order of the input tokens
+                will have no effect on the output.
             segment_to_head: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
                 of the mode. This parameter needs a better name.
             value_to_head: The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
@@ -194,6 +199,7 @@ class SequenceTransformer(tf.keras.models.Model):
         self.num_encoder_layers = num_encoder_layers
         self.num_attention_heads = num_attention_heads
         self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
+        self.enable_positional_encoding = enable_positional_encoding  # ToDo: Do all of these need to be stored as class attributes?
         self.sequential_input_config = sequential_input_config
 
         assert (segment_to_head is not None or value_to_head is not None) and \
@@ -219,7 +225,8 @@ class SequenceTransformer(tf.keras.models.Model):
             num_layers=self.num_encoder_layers,
             num_attention_heads=self.num_attention_heads,
             encoder_ff_dim=100,
-            dropout_rate=self.dropout_rate
+            dropout_rate=self.dropout_rate,
+            enable_positional_encoding=self.enable_positional_encoding
         )
 
         self.head = head_unit
@@ -236,6 +243,45 @@ class SequenceTransformer(tf.keras.models.Model):
             lookup_tables[feature_name] = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
 
         return lookup_tables
+
+    @staticmethod
+    def _gather_output_by_raw_value(transformer_output, key_raw_feature, filter_value):
+        """
+            Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
+            `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer's
+            output. The catch is, different examples may have different number of entries that match this value.
+            So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
+
+        Args:
+            transformer_output:
+            key_raw_feature: See comments about *the ugly patch* in the call method
+            filter_value: What value to look for. This is the value specified in value_to_head argument, e.g. [MASK]
+
+        Returns:
+            Transformed embeddings from Transformer's output that correspond to the entries that matched `filter_value`
+            Example: if `filter_value` = [MASK] the outputs corresponding to [MASK] positions in the input will be
+                gathered and returned.
+        """
+        batch_size = tf.shape(key_raw_feature)[0]
+
+        # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
+        indices = tf.where(tf.equal(key_raw_feature, filter_value))
+
+        # Since all examples in the batch don't necessarily have the same number of matching entries, we will create
+        # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
+        ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
+
+        # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
+        ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
+                                                           nrows=tf.cast(batch_size, tf.int64))
+
+        ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
+
+        # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
+        # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
+        matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
+
+        return matching_embeddings
 
     def call(self, inputs, training=None, mask=None):
 
@@ -254,16 +300,14 @@ class SequenceTransformer(tf.keras.models.Model):
         # ToDo: Side features should be added to the output of the Transformer
         transformer_output = self.transformer(sequential_features, training, mask)  # (batch_size, seq_len, d_model)
 
-        # segment_starts and segment_ends mark the index in the Transformer's output tensor where each sequence begins
-        # and ends. The first segment corresponds to the [CLS] token and is therefore always
-        # (batch_size, 1, d_model)
-        # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
-
-        # This model feeds the output corresponding to the second sequence. This is specific to this particular task
         if self.segment_to_head is not None:
+            # segment_starts and segment_ends mark the index in the Transformer's output tensor where each sequence
+            # begins and ends. The first segment corresponds to the [CLS] token and is therefore always
+            # (batch_size, 1, d_model)
+            # The rest are (batch_size, seq_i_len, d_model) for the i-th sequence.
             head_input = transformer_output[:, segment_starts[self.segment_to_head]:segment_ends[self.segment_to_head], ...]
         elif self.value_to_head is not None:
-            # This is an ugly patch
+            # # # # # # This is an ugly patch
             # We designed the Transformer so that it would accept multiple sequences and stack them. Most obvious
             # example is a sequence of items and a sequence of events associated with those items, e.g.
             #   (view, bag), (add_to_cart, shoe), ...
@@ -274,36 +318,11 @@ class SequenceTransformer(tf.keras.models.Model):
             # The items? or the events? Given how rare this multi-feature input is, I think this is an unnecessary
             # complication. And the Transformer should only expect one input feature: The items.
             some_raw_feature_name = list(self.sequential_input_config.keys())[0]
-
             # (batch_size, seq_len)
             some_raw_feature = raw_features[some_raw_feature_name]
+            # # # # # # end of ugly patch
 
-            # ToDo: move this part into a method
-            # Here is what this part does:
-            # Given a raw feature (not embedded) of shape (batch_size, seq_len), it first finds positions of
-            # `value_to_head` values. It then gathers the embeddings that correspond to these entries from transformer's
-            # output. The catch is, different examples may have different number of entries that match this value.
-            # So we need to do a ragged gather_nd and then pad the resulting ragged tensor to make it rectangular.
-            batch_size = tf.shape(some_raw_feature)[0]
-
-            # (num_of_matching_tokens, 2). This loses the batch dimension and puts all the indices on the same axis
-            indices = tf.where(tf.equal(some_raw_feature, self.value_to_head))
-
-            # Since all examples in the batch don't necessarily have the same number of matching entries, we will create
-            # a RaggedTensor of indices. The resulting gathered tensor will be padded later.
-            ragged_row_ids = indices[:, 0]  # The index of examples in the batch (0 for 1st example, 1 for 2nd, etc.)
-
-            # Specifying nrows ensures batch size is preserved, even if some examples have 0 matching tokens
-            ragged_indices = tf.RaggedTensor.from_value_rowids(values=indices, value_rowids=ragged_row_ids,
-                                                               nrows=tf.cast(batch_size, tf.int64))
-
-            ragged_matching_embeddings = tf.gather_nd(params=transformer_output, indices=ragged_indices)
-
-            # The indices we used for gather_nd were ragged and so is the result. We need to pad and make it rectangular
-            # Pad parts will later be ignored in the loss function because the label is (must be) padded accordingly.
-            matching_embeddings = ragged_matching_embeddings.to_tensor(default_value=INPUT_PAD)
-
-            head_input = matching_embeddings
+            head_input = self._gather_output_by_raw_value(transformer_output, some_raw_feature, self.value_to_head)
         else:
             raise ValueError("One of value_to_head and segment_to_head must be provided.")
 

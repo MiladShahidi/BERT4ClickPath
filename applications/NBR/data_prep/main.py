@@ -2,7 +2,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import os
-from sequence_transformer.data_prep import data_utils
+from sequence_transformer.data_utils import data_utils
 from applications.NBR.NBR_constant import SEQ_LEN, MIN_SEQ_LEN
 
 

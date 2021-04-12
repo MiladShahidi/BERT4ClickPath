@@ -178,22 +178,3 @@ def fbeta(y_true, y_pred, beta=1):
     bb = beta ** 2
     fbeta_score = tf.keras.backend.mean((1 + bb) * (p * r) / (bb * p + r + tf.keras.backend.epsilon()))
     return fbeta_score
-
-
-if __name__ == '__main__':
-
-    y_true = [[1, 0]]
-    y_pred = [[
-        [0.9, 0.1, 0.01],
-        [0.5, 0.3, 0.01]
-    ]]
-    # metric
-    ndcg = ClozeMaskedNDCG(k=3)
-    ndcg.update_state(y_true, y_pred)
-    a = ndcg.result()
-    print('my metric:', a)
-    y_true = [[0, 1, 0], [1, 0, 0]]
-    y_pred = [[0.9, 0.1, 0.01], [0.5, 0.3, 0.01]]
-    from sklearn.metrics import ndcg_score
-    sk_res = ndcg_score(y_true, y_pred, k=3)
-    print(sk_res)

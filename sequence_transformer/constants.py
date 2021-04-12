@@ -1,10 +1,8 @@
-"""s1"""
 LABEL_PAD = -1.0  # Labels should be padded with -1, since 0 indicates class 0
 
 # # Reserved tokens for vocabulary
 NUM_RESERVED_TOKENS = 10
 
-"""s2"""
 INPUT_PADDING_TOKEN = '[PAD]'
 UNKNOWN_TOKEN = '[UNK]'
 INPUT_MASKING_TOKEN = '[MASK]'  # This is for unsupervised pre-is_training. Not used in the supervised is_training

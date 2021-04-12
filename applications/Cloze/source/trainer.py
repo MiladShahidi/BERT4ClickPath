@@ -3,7 +3,7 @@ from source.input_pipeline import create_cloze_dataset
 from sequence_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
 from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, LRTensorBoard
 from sequence_transformer.losses import MaskedLoss
-from source.cloze_utils import ClozeMaskedLoss, ClozeMaskedNDCG
+from source.cloze_utils import ClozeMaskedLoss, ClozeMaskedNDCG, ClozeMaskedRecall
 from source.data_generator import ClickStreamGenerator
 from sequence_transformer.sequence_transformer import SequenceTransformer
 import os
@@ -65,7 +65,9 @@ def get_training_spec(training_params):
         # MaskedMetric(metric=tf.keras.metrics.Precision(), name='precision'),
         # MaskedMetric(metric=tf.keras.metrics.SparseCategoricalAccuracy(), name='Accuracy'),
         ClozeMaskedNDCG(k=5),
-        ClozeMaskedNDCG(k=10)
+        ClozeMaskedNDCG(k=10),
+        ClozeMaskedRecall(k=5),
+        ClozeMaskedRecall(k=10)
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
         # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
@@ -225,10 +227,10 @@ if __name__ == '__main__':
     training_params.pop('job-dir')
 
     from pprint import pprint
-    print('*'*80)
+    print('*' * 80)
     pprint(model_params)
     pprint(training_params)
-    print('*'*80)
+    print('*' * 80)
 
     data_files = os.path.join(training_params['input_data'], '*.tfrecord')
 

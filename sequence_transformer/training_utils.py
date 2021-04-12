@@ -1,6 +1,5 @@
 import tensorflow as tf
 import math
-from sequence_transformer.constants import LABEL_PAD
 
 
 class CustomLRSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):

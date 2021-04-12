@@ -1,5 +1,5 @@
 import pandas as pd
-from sequence_transformer.data_prep import data_utils
+from sequence_transformer.data_utils import data_utils
 import json
 import gzip
 import os
