@@ -3,7 +3,8 @@ from source.input_pipeline import create_cloze_dataset
 from sequence_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
 from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, LRTensorBoard
 from sequence_transformer.losses import MaskedLoss
-from source.cloze_utils import ClozeMaskedLoss, ClozeMaskedNDCG, ClozeMaskedRecall
+from source.utils import ClozeMaskedLoss, ClozeMaskedNDCG, ClozeMaskedRecall, parse_cmd_line_arguments
+from source.cloze_constants import modes
 from source.data_generator import ClickStreamGenerator
 from sequence_transformer.sequence_transformer import SequenceTransformer
 import os
@@ -11,9 +12,9 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
-from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD, CLASSIFICATION_TOKEN
+from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD
 from sequence_transformer.head import SoftMaxHead
-from sequence_transformer.utils import load_vocabulary, parse_cmd_line_arguments
+from sequence_transformer.training_utils import load_vocabulary
 
 
 def create_input(training, validation, **kwargs):
@@ -30,12 +31,12 @@ def create_input(training, validation, **kwargs):
 
     """
     training_dataset = create_cloze_dataset(source=training,
-                                            is_training=True,
+                                            mode=modes.TRAIN,
                                             batch_size=kwargs['batch_size'],
                                             target_vocab_file=kwargs['target_vocab_file'])
 
     validation_dataset = create_cloze_dataset(source=validation,
-                                              is_training=False,
+                                              mode=modes.EVAL,
                                               batch_size=kwargs['batch_size'],
                                               target_vocab_file=kwargs['target_vocab_file'])
 
@@ -66,8 +67,8 @@ def get_training_spec(training_params):
         # MaskedMetric(metric=tf.keras.metrics.SparseCategoricalAccuracy(), name='Accuracy'),
         ClozeMaskedNDCG(k=5),
         ClozeMaskedNDCG(k=10),
-        ClozeMaskedRecall(k=5),
-        ClozeMaskedRecall(k=10)
+        # ClozeMaskedRecall(k=5),
+        # ClozeMaskedRecall(k=10)
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='PR'), name='prauc'),
         # MaskedMetric(metric=tf.keras.metrics.AUC(curve='ROC'), name='rocauc'),
         # MaskedMetric(metric=tf.keras.metrics.PrecisionAtRecall(recall=0.1), name='precision-at-10'),
@@ -85,8 +86,8 @@ def get_training_spec(training_params):
     lr = training_params['lr']
     optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-9)
 
+    loss = ClozeMaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=LABEL_PAD)
     # loss = MaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
-    loss = ClozeMaskedLoss(tf.keras.backend.sparse_categorical_crossentropy, label_pad=tf.cast(LABEL_PAD, tf.int64))
     # loss = tf.keras.losses.SparseCategoricalCrossentropy()
 
     return {
@@ -130,7 +131,7 @@ def train(model,
     callbacks = []
 
     # Reduce LR on Plateau
-    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10, factor=0.316)
+    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.316)
 
     # Checkpoint saver
     ckpt_dir = os.path.join(model_dir, 'ckpts')
@@ -147,16 +148,13 @@ def train(model,
     # AttributeError: Embedding object has no attribute embeddings
     tensorboard = TensorBoard(log_dir=tensorboard_path, profile_batch=0)  # , embeddings_freq=5)
 
-    # Log learning rate
-    lr_logger = LRTensorBoard(tensorboard_path + '/metrics')
-
     # Model Saver
     saved_model_dir = os.path.join(model_dir, 'savedmodel')
     best_model_saver = BestModelSaverCallback(savedmodel_path=saved_model_dir)
 
     # Early stopping
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30)
-    callbacks += [tensorboard, early_stopping, reduce_lr_on_plateau, lr_logger]
+    callbacks += [tensorboard, early_stopping, reduce_lr_on_plateau, best_model_saver]
 
     model.fit(training_data,
               epochs=training_params['n_epochs'],
@@ -170,19 +168,22 @@ def train(model,
 
 
 if __name__ == '__main__':
+    TASK = 'train'  # or 'train'
     tf_config = json.loads(os.environ.get('TF_CONFIG', '{}'))
     local_run = (tf_config == {})  # Trying to be specific and avoid logical not of a dict! (not tf_config)
 
     if not local_run:
+        # For this to work the config .yaml file must specify master_config etc. explicitly, instead of using
+        # pre-defined identifiers like complex_model_gpu
         N_PROCESSORS = int(tf_config['job']['master_config']['accelerator_config']['count'])  # Cloud GPUs
     else:
         N_PROCESSORS = 1  # local CPU
 
-    PER_GPU_BATCH_SIZE = 512
+    PER_GPU_BATCH_SIZE = 1024
 
     timestamp = time.strftime('%d-%b-%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
     model_dir = os.path.join('../training_output', f'run_{timestamp}')
-    root_data_dir = '../data/amazon_beauty_bert4rec'
+    root_data_dir = '//data/amazon_beauty_bert4rec'
 
     # simulated_data = False
     # if simulated_data:
@@ -197,7 +198,7 @@ if __name__ == '__main__':
     #     validation_data_src = data_src
     # else:
 
-    LOCAL_BATCH_SIZE = 10
+    LOCAL_BATCH_SIZE = 5
     CLOUD_BATCH_SIZE = PER_GPU_BATCH_SIZE * N_PROCESSORS  # In distributed training N_PROCESSORS > 1 (= no. of GPUs)
 
     training_param_spec = {
@@ -205,13 +206,15 @@ if __name__ == '__main__':
         'model_dir': model_dir,
         'n_epochs': 10000,
         'steps_per_epoch': 1000 if not local_run else 5,
-        'validation_steps': 100 if not local_run else 1,
+        'validation_steps': 100 if not local_run else 5,
         'lr_warmup_steps': 4000,
-        'lr': 1e-3,
+        'lr': 5e-4,
         'lr_scale': 1.0,
         'batch_size': CLOUD_BATCH_SIZE if not local_run else LOCAL_BATCH_SIZE,
         'max_sess_len': 50,  # ToDo: Enable this. This is set to 50 in BERT4Rec for Amazon Beauty dataset
-        'init_ckpt_dir': 'DUMMY',  # None causes problems. The arg parser needs to be updated to handle None properly
+        'init_ckpt_dir':
+            'DUMMY' if TASK == 'train'  # None causes problems. The arg parser needs to be updated to handle None
+            else '/Users/milad/PycharmProjects/algomart/applications/Cloze/training_output/run_14-Apr-18-45-48/ckpts',
         'job-dir': 'placeholder'
     }
 
@@ -226,12 +229,6 @@ if __name__ == '__main__':
     training_params = {k: parsed_args.get(k, None) for k in training_param_spec.keys()}
     training_params.pop('job-dir')
 
-    from pprint import pprint
-    print('*' * 80)
-    pprint(model_params)
-    pprint(training_params)
-    print('*' * 80)
-
     data_files = os.path.join(training_params['input_data'], '*.tfrecord')
 
     item_vocab_file = os.path.join(training_params['input_data'], 'vocabs/item_vocab.txt')
@@ -239,6 +236,8 @@ if __name__ == '__main__':
 
     # saved_model_dir = os.path.join(training_params['model_dir'], 'savedmodel')
     ckpt_dir = os.path.join(training_params['model_dir'], 'ckpts')
+
+    d_model = 64
 
     input_config = {
         'sequential_input_config': {
@@ -250,7 +249,7 @@ if __name__ == '__main__':
             # 'events':
         },
         'embedding_dims': {
-            'items': 64,
+            'items': d_model,
             # 'events': 2
         },
         'value_to_head': INPUT_MASKING_TOKEN
@@ -259,14 +258,13 @@ if __name__ == '__main__':
 
     config = {**model_params, **input_config}
 
+    print('*'*80)
+    print(training_params)
+    print(config)
+    print('*'*80)
+
     final_layers_dims = [1024, 512]
     head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
-
-    with get_distribution_context(N_PROCESSORS):
-        model = create_model(ckpt_dir=training_params['init_ckpt_dir'],
-                             head_unit=head_unit, **config)
-        training_spec = get_training_spec(training_params)  # This must be created inside the distribution scope
-        model.compile(**training_spec)
 
     # source data files are the same for training and validation but input_pipeline will process them differently
     training_dataset, validation_dataset = create_input(
@@ -276,35 +274,13 @@ if __name__ == '__main__':
         **training_params  # batch_size and max_sess_len
     )
 
-    do_train = True
-    if do_train:
-        model = train(model=model,
-                      training_data=training_dataset,
-                      validation_data=validation_dataset,
-                      **training_params)
+    with get_distribution_context(N_PROCESSORS):
+        model = create_model(ckpt_dir=training_params['init_ckpt_dir'],
+                             head_unit=head_unit, **config)
+        training_spec = get_training_spec(training_params)  # This must be created inside the distribution scope
+        model.compile(**training_spec)
 
-    # import numpy as np
-    # import sys
-    # np.set_printoptions(threshold=sys.maxsize, precision=2)
-
-    # from source.input_pipeline import print_features
-    # for serialized_string, y in training_dataset.take(1):
-    #     print_features(serialized_string)
-    #     # print('*'*80)
-    #     # print(y)
-    #     # y_hat = model(serialized_string)
-    #     # print(head_inp)
-    #     # print(y_hat.numpy())
-    #     # print(np.argmax(y_hat.numpy(), axis=-1))
-    #     # emb = model.transformer.embedding_layers['items']
-    #     # print(emb.input_dim)
-    #     # print(emb.output_dim)
-    #     # print(emb(tf.convert_to_tensor(range(N_ITEMS+11))))
-
-    # tf.keras.backend.set_learning_phase(0)
-    # tf.saved_model.save(trained_model, saved_model_dir, signatures={'serving_default': trained_model.model_server})
-
-    # produce scores
-    # get scores and choose interventions (if in treatment)
-    # customer
-    # dashboard measuring how much gained
+    model = train(model=model,
+                  training_data=training_dataset,
+                  validation_data=validation_dataset,
+                  **training_params)

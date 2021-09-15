@@ -2,7 +2,7 @@ import tensorflow as tf
 from sequence_transformer.constants import RESERVED_TOKENS
 from sequence_transformer.transformer import Transformer
 from sequence_transformer.constants import INPUT_PAD, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
-from sequence_transformer.utils import load_vocabulary
+from sequence_transformer.training_utils import load_vocabulary
 
 
 class TransformerInputPrep:
@@ -64,7 +64,6 @@ class TransformerInputPrep:
 
     def __call__(self, features, keep_features=False):
         """
-
         Args:
             features: Dictionary of feature, mapping feature names to tensors
             keep_features: Whether to keep chained features in the returned feature dictionary
@@ -163,7 +162,6 @@ class SequenceTransformer(tf.keras.models.Model):
                  feature_vocabs,
                  embedding_dims,
                  head_unit,
-                 enable_positional_encoding,
                  segment_to_head=None,  # ToDo: Find a better name for this. Also, it should allow multiple segments
                  value_to_head=None,  # Find a better name, like token_to_output
                  num_encoder_layers=1,
@@ -178,9 +176,6 @@ class SequenceTransformer(tf.keras.models.Model):
             feature_vocabs: Dictionary mapping categorical feature names to vocabulary files.
             embedding_dims: Dictionary that specifies the embedding dimension for embedded features.
             head_unit: The Head (e.g. dense layers) that will consume the output of the Transformer and produce the final output.
-            enable_positional_encoding: If False, the model will not use positional encoding. The model ignore the
-                sequential nature of the input and will treat it as a "bag of words" and the order of the input tokens
-                will have no effect on the output.
             segment_to_head: Which segment/sequence (0-based, where 0 is always the CLS token) to feed to the BinaryClassificationHead
                 of the mode. This parameter needs a better name.
             value_to_head: The outputs corresponding to input positions that have this value will be sent to the BinaryClassificationHead
@@ -195,12 +190,13 @@ class SequenceTransformer(tf.keras.models.Model):
         """
         super(SequenceTransformer, self).__init__(**kwargs)
 
+        self.sequential_input_config = sequential_input_config
+        self.feature_vocabs = feature_vocabs
         self.embedding_dims = embedding_dims
+        self.head = head_unit
         self.num_encoder_layers = num_encoder_layers
         self.num_attention_heads = num_attention_heads
         self.dropout_rate = dropout_rate  # ToDo: Do all of these need to be stored as class attributes?
-        self.enable_positional_encoding = enable_positional_encoding  # ToDo: Do all of these need to be stored as class attributes?
-        self.sequential_input_config = sequential_input_config
 
         assert (segment_to_head is not None or value_to_head is not None) and \
                (segment_to_head is None or value_to_head is None), \
@@ -211,25 +207,42 @@ class SequenceTransformer(tf.keras.models.Model):
 
         self.transformer_input_prep = TransformerInputPrep(self.sequential_input_config)
         # self.token_mapper = TokenMapper(vocabularies=feature_vocabs, reserved_tokens=RESERVED_TOKENS)
-        self.vocab_lookup_tables = self._create_lookup_tables(vocabularies=feature_vocabs,
+        self.vocab_lookup_tables = self._create_lookup_tables(vocabularies=self.feature_vocabs,
                                                               tokens_to_prepend=RESERVED_TOKENS)
         # This operation will fail with KeyError if there is a key in embedding_dims that is not present in
         # feature_vocabs. In other words, if you imply that a feature must be embedded (by specifying an embedding
         # dimension) for it, but don't provide a vocab file for it.
-        embedding_sizes = {f: self.vocab_lookup_tables[f].size() for f in feature_vocabs.keys()}
+        # Note: The .numpy() below converts the tf.Tensor object to numpy. Otherwise, it will throw a 'Not serializable'
+        # error when you try to serialize and save the model
+        self.embedding_sizes = {f: self.vocab_lookup_tables[f].size().numpy() for f in self.feature_vocabs.keys()}
 
         # Transformer
         self.transformer = Transformer(
-            embedding_sizes=embedding_sizes,
-            embedding_dims=embedding_dims,
+            embedding_sizes=self.embedding_sizes,
+            embedding_dims=self.embedding_dims,
             num_layers=self.num_encoder_layers,
             num_attention_heads=self.num_attention_heads,
             encoder_ff_dim=100,
-            dropout_rate=self.dropout_rate,
-            enable_positional_encoding=self.enable_positional_encoding
+            dropout_rate=self.dropout_rate
         )
 
-        self.head = head_unit
+    def get_config(self):
+        """
+        Custom Keras layers and models are not serializable unless they override this method.
+        """
+        config = super(SequenceTransformer, self).get_config()
+        config.update({
+            'sequential_input_config': self.sequential_input_config,
+            'feature_vocabs': self.feature_vocabs,
+            'embedding_dims': self.embedding_dims,
+            'head_unit': self.head_unit,
+            'segment_to_head': self.segment_to_head,
+            'value_to_head': self.value_to_head,
+            'num_encoder_layers': self.num_encoder_layers,
+            'num_attention_heads': self.num_attention_heads,
+            'dropout_rate': self.dropout_rate
+        })
+        return config
 
     @staticmethod
     def _create_lookup_tables(vocabularies, tokens_to_prepend=None):
@@ -283,6 +296,7 @@ class SequenceTransformer(tf.keras.models.Model):
 
         return matching_embeddings
 
+    @tf.function
     def call(self, inputs, training=None, mask=None):
 
         # Traced functions are not allowed to change their input arguments
@@ -321,28 +335,48 @@ class SequenceTransformer(tf.keras.models.Model):
             # (batch_size, seq_len)
             some_raw_feature = raw_features[some_raw_feature_name]
             # # # # # # end of ugly patch
-
             head_input = self._gather_output_by_raw_value(transformer_output, some_raw_feature, self.value_to_head)
+
         else:
             raise ValueError("One of value_to_head and segment_to_head must be provided.")
 
         logits = self.head(head_input)
 
-        return logits
+        # In serving, the model can accept and return an instance id
+        if 'instance_id' in inputs.keys():
+            return {
+                'instance_id': inputs['instance_id'],
+                'logits': logits
+            }
+        else:
+            return logits
+
+    def get_serving_signature(self):
+        # This can be improved in a couple of ways.
+        # This does not allow non-sequential side features. It also assumes all sequential features are string
+        # The latter assumption is also made in the model implementation where we require dictionaries for seq. inputs
+        # So that we can map them to integers. But what if the sequential input is already an integer?
+
+        seq_feature_list = []
+        for seq_feature_chain in self.sequential_input_config.values():
+            # this loop compiles a list of all features that were chained together to form sequential inputs
+            # Example:
+            # sequential_input_config = {'items': ['session_items', 'basket_items']}
+            # But when calling the model the signature will be
+            # {'session_items': ..., 'basket_items': ...}
+            seq_feature_list.extend(seq_feature_chain)
+
+        instance_id_dict = {'instance_id': tf.TensorSpec([], dtype=tf.string)}
+        features_dict = {
+            seq_feature: tf.TensorSpec([None, None], dtype=tf.string)
+            for seq_feature in seq_feature_list
+        }
+
+        return features_dict  # {**instance_id_dict, **features_dict}
 
     # # ToDo: write a helper function that produces these given the arguments to init
     # @tf.function(input_signature=[
-    #     tf.TensorSpec([None, 1], dtype=tf.string),  # reviewerID
-    #     tf.TensorSpec([None, None], dtype=tf.string),   # asin
-    #     tf.TensorSpec([None, None], dtype=tf.int64),  # unixReviewTime
+    #     tf.TensorSpec([None, None], dtype=tf.string)
     # ])
-    # def model_server(self, asin, reviewerID, unixReviewTime):
-    #
-    #     features = {
-    #         # Basket features
-    #         'asin': asin,
-    #         'reviewerID': reviewerID,
-    #         'unixReviewTime': unixReviewTime
-    #     }
-    #
-    #     return {'scores': self.call(inputs=features, training=False)}
+    # def model_server(self, **kwargs):
+    #     return {'scores': self.call(inputs=kwargs)}

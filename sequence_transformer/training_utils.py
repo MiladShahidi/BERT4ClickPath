@@ -2,6 +2,16 @@ import tensorflow as tf
 import math
 
 
+def load_vocabulary(vocab_file):
+    if tf.io.gfile.isdir(vocab_file):
+        # Strangely enough GFile does not raise an error when it is given a directory to read from.
+        # Reported this on Github: https://github.com/tensorflow/tensorflow/issues/46282#issue-782000566
+        raise IsADirectoryError(f'{vocab_file} is a directory.')
+
+    with tf.io.gfile.GFile(vocab_file, 'r') as f:
+        return tf.strings.strip(f.readlines())
+
+
 class CustomLRSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000, scale=1):
         super(CustomLRSchedule, self).__init__()
@@ -58,7 +68,9 @@ class BestModelSaverCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         if logs['val_loss'] < self.best_val_loss:
             # save_path = os.path.join(self.savedmodel_path, 'epoch_%03d' % (epoch + 1))  # epoch is 0-based
-            tf.saved_model.save(self.model, self.savedmodel_path, signatures={'serving_default': self.model.model_server})
+            call = self.model.call.get_concrete_function(self.model.get_serving_signature())
+            tf.saved_model.save(self.model, self.savedmodel_path, signatures=call)
+            # tf.saved_model.save(self.model, self.savedmodel_path, signatures={'serving_default': self.model.model_server})
             self.best_val_loss = logs['val_loss']
 
 
@@ -70,3 +82,11 @@ class LRTensorBoard(tf.keras.callbacks.TensorBoard):
         logs = logs or {}
         logs.update({'lr': tf.keras.backend.eval(self.model.optimizer.lr)})
         super().on_epoch_end(epoch, logs)
+
+
+if __name__ == '__main__':
+    lr = CustomLRSchedule(d_model=20)
+    q = lr(tf.range(40000, dtype=tf.float32))
+    from matplotlib import pyplot as plt
+    plt.plot(q)
+    plt.show()

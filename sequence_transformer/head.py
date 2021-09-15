@@ -57,7 +57,6 @@ class MultiLabel_MultiClass_classification(tf.keras.layers.Layer):
         self.output_layer = tf.keras.layers.Dense(units=output_vocab_size, activation='sigmoid')
 
     def call(self, inputs, **kwargs):
-        # print('input', inputs.shape)
         # items go through these layers without interacting with each other. So pads don't affect real data
         x = inputs  # (batch_size, input_len, d_model)
         for dense_layer in self.intermediate_layers:
@@ -65,10 +64,6 @@ class MultiLabel_MultiClass_classification(tf.keras.layers.Layer):
 
         logits = self.output_layer(x)  # logits.shape == (batch_size, input_len, output_layer_dim)
 
-        # (batch_size, output_layer_dim)
-        # print(logits.shape)
-        # print(tf.Tensor.shape(logits))
-        # exit()
         logits = tf.squeeze(logits, axis=1)
 
         return logits

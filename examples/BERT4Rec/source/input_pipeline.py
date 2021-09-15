@@ -2,9 +2,10 @@ import tensorflow as tf
 from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
 from source.data_generator import ClickStreamGenerator
 from sequence_transformer.sequence_transformer import SequenceTransformer
-from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE
+from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE, modes
 from sequence_transformer.head import SoftMaxHead
-from sequence_transformer.utils import load_vocabulary
+from sequence_transformer.training_utils import load_vocabulary
+import functools
 import os
 
 
@@ -38,6 +39,8 @@ def format_labels(feature_dict):
         This mapping is applied after batching. It adds padding (-1) to the left of labels (which are associated with
         seq_2 items). The seq_1 component does not have labels and should be assigned pads instead of labels.
     """
+    # This was written for the specific case of two part inputs for HBC. Needs to be updated
+    raise NotImplementedError
     batch_size = tf.shape(feature_dict['event_name'])[0]
     session_len = tf.shape(feature_dict['event_name'])[1]
 
@@ -57,7 +60,6 @@ def format_labels(feature_dict):
 
 def random_item_mask(item_list, masked_percentage, max_masked):
     """
-
     Args:
         item_list: A tensor containing a list of item IDs (strings).
 
@@ -90,19 +92,62 @@ def mask_items(item_list, mask_index):
     return masked_item_list, masked_items
 
 
-def create_cloze_dataset(source, is_training, batch_size, target_vocab_file):
+def cloze_data_prep(features, mode, label_lookup_table):
+
+    def label_map(x):
+        """ Labels cannot be mapped later. We need to turn then into integers here """
+        return tf.cast(label_lookup_table.lookup(x), tf.float32)
+
+    if mode == modes.TRAIN:  # This is from the outer scope
+        # last item is saved for validation. Should be removed when training
+        for seq_feature in ['asin', 'unixReviewTime']:
+            features[seq_feature] = features[seq_feature][:-1]
+
+        special_example = False
+        # special_example = (random_choice([0, 1, 2], 1) == 0)  # Random number generation is tricky inside a map fn
+        if special_example:
+            last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
+            features['asin'], labels = mask_items(features['asin'], last_item_index)
+        else:
+            features['asin'], labels = random_item_mask(
+                item_list=features['asin'],
+                masked_percentage=MASKED_PERCENTAGE,
+                max_masked=MAX_MASKED_ITEMS
+            )
+    elif mode == modes.EVAL:  # validation data
+        if False:
+            # Masks only the last item
+            # The following assumes the data is not batched yet and we are dealing with a 1-D tensor, a single example
+            # last_item_index = tf.expand_dims(tf.size(features['asin'])//2 - 1, axis=0)  # Needs to be 1-D tensor
+            last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
+            features['asin'], labels = mask_items(features['asin'], last_item_index)
+        else:
+            features['asin'], labels = random_item_mask(
+                item_list=features['asin'],
+                masked_percentage=MASKED_PERCENTAGE,
+                max_masked=1
+            )
+    else:
+        raise ValueError(f'Unrecognized mode: {mode}')
+
+    # features['orig_labels'] = labels
+    features['labels'] = label_map(labels)
+
+    return features
+
+
+def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
     """
 
     Args:
         source: If str, must be the path to data files (not directory). For example data/*.tfrecord
-        is_training:
+        mode:
         batch_size:
 
     Returns:
 
     """
     if isinstance(source, str):
-        # files = [os.path.join(source, filename) for filename in tf.io.gfile.listdir(source)]
         filenames = tf.data.Dataset.list_files(source)
         dataset = tf.data.TFRecordDataset(filenames=filenames)
 
@@ -138,65 +183,37 @@ def create_cloze_dataset(source, is_training, batch_size, target_vocab_file):
         raise TypeError('Source must be either str or callable.')
 
     # Shuffle then repeat. Batch should always be after these two (https://stackoverflow.com/a/49916221/4936825)
-    if is_training:
+    if mode == modes.TRAIN:
         dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
 
     dataset = dataset.repeat(None)
 
+    # This lookup table is needed to map label tokens to integers. It should be created outside the function
+    # that will be passed to dataset.map. Creating it inside that function will result in a TF warning
     label_vocab = load_vocabulary(target_vocab_file)
     values = tf.convert_to_tensor(range(len(label_vocab)), dtype=tf.int64)
     initializer = tf.lookup.KeyValueTensorInitializer(keys=label_vocab, values=values)
     label_lookup = tf.lookup.StaticVocabularyTable(initializer, num_oov_buckets=1)
 
-    def item_mask(features):
-        def label_map(x):
-            """ Labels cannot be mapped later. We need to turn then into integers here """
-            return label_lookup.lookup(x)
-
-        if is_training:  # This is from the outer scope
-            # last item is saved for validation. Should be removed when training
-            for seq_feature in ['asin', 'unixReviewTime']:
-                features[seq_feature] = features[seq_feature][:-1]
-
-            special_example = True
-            # special_example = (random_choice([0, 1, 2], 1) == 0)  # Random number generation is tricky inside a map fn
-            if special_example:
-                last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
-                features['asin'], labels = mask_items(features['asin'], last_item_index)
-            else:
-                features['asin'], labels = random_item_mask(
-                    item_list=features['asin'],
-                    masked_percentage=MASKED_PERCENTAGE,
-                    max_masked=MAX_MASKED_ITEMS
-                )
-        else:  # validation data
-            # Masks only the last item
-            # The following assumes the data is not batched yet and we are dealing with a 1-D tensor, a single example
-            # last_item_index = tf.expand_dims(tf.size(features['asin'])//2 - 1, axis=0)  # Needs to be 1-D tensor
-            last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
-            features['asin'], labels = mask_items(features['asin'], last_item_index)
-
-        features['orig_labels'] = labels
-        features['labels'] = label_map(labels)
-        return features
+    item_mask = functools.partial(cloze_data_prep, mode=mode, label_lookup_table=label_lookup)
 
     dataset = dataset.map(item_mask, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     dataset = dataset.padded_batch(
         batch_size=batch_size,
-        padded_shapes={  # Pad all to longest in batch
+        padded_shapes={  # Pad all to longest in the batch
             'reviewerID': [],
             'asin': [None],
             'unixReviewTime': [None],
             'labels': [None],
-            'orig_labels': [None]
+            # 'orig_labels': [None]
         },
         padding_values={
             'reviewerID': INPUT_PADDING_TOKEN,
             'asin': INPUT_PADDING_TOKEN,
             'unixReviewTime': tf.cast(INPUT_PAD, tf.int64),
-            'labels': tf.cast(LABEL_PAD, tf.int64),
-            'orig_labels': INPUT_PADDING_TOKEN
+            'labels': LABEL_PAD,
+            # 'orig_labels': INPUT_PADDING_TOKEN
         }
     )
 
@@ -218,36 +235,20 @@ def create_cloze_dataset(source, is_training, batch_size, target_vocab_file):
     return dataset
 
 
-def print_features(x, select=None):
-    for k in x:
-        if (select is None) or (k in select):
-            print(k)
-            print('\t', x[k])
-            print('*'*80)
-
-
-def dataset_benchmark(dataset, n_steps):
-    import time
-    start_time = time.perf_counter()
-    for x in dataset.take(n_steps):
-        time.sleep(0.01)  # train step
-    return time.perf_counter() - start_time
-
-
 if __name__ == '__main__':
     N_ITEMS = 10
-    input_dir = '../data/simulated'
-    data_gen = ClickStreamGenerator(
-        n_items=N_ITEMS,
-        n_events=10,
-        session_cohesiveness=5,
-        write_vocab_files=True,
-        vocab_dir='../data/simulated/vocabs'
-    )
+    input_dir = '../data/amazon_beauty_bert4rec'
+    # data_gen = ClickStreamGenerator(
+    #     n_items=N_ITEMS,
+    #     n_events=10,
+    #     session_cohesiveness=5,
+    #     write_vocab_files=True,
+    #     vocab_dir='../data/simulated/vocabs'
+    # )
     item_vocab_file = os.path.join(input_dir, 'vocabs/item_vocab.txt')
     data = create_cloze_dataset(
-        source=data_gen,
-        is_training=True,
+        source=input_dir + '/*.tfrecord',
+        mode='TRAIN',
         batch_size=2,
         target_vocab_file=item_vocab_file
     )
@@ -270,28 +271,13 @@ if __name__ == '__main__':
     final_layers_dims = [10, 5]
     softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=N_ITEMS)
 
-    clickstream_model = SequenceTransformer(
-        sequential_input_config=sequential_input_config,
-        feature_vocabs=feature_vocabularies,
-        embedding_dims=embedding_dims,
-        head_unit=softmax_head,
-        value_to_head=INPUT_MASKING_TOKEN,
-        num_encoder_layers=1,
-        num_attention_heads=1,
-        dropout_rate=0.1
-    )
-
-    for x in data.take(1):
-        print_features(x)
-        print('*'*80)
-        print('Labels:')
-        # print(y)
-        # y_hat = clickstream_model(serialized_string)
-        # print(y_hat)
-
-        # from sequence_transformer.metrics import ClozeMaskedNDCG
-        #
-        # metric = ClozeMaskedNDCG(k=5)
-        # metric.reset_states()
-        # metric.update_state(y_true=y, y_pred=y_hat)
-        # print(metric.result())
+    # clickstream_model = SequenceTransformer(
+    #     sequential_input_config=sequential_input_config,
+    #     feature_vocabs=feature_vocabularies,
+    #     embedding_dims=embedding_dims,
+    #     head_unit=softmax_head,
+    #     value_to_head=INPUT_MASKING_TOKEN,
+    #     num_encoder_layers=1,
+    #     num_attention_heads=1,
+    #     dropout_rate=0.1
+    # )

@@ -224,7 +224,6 @@ class Encoder(tf.keras.layers.Layer):
         self.num_heads = num_heads
         self.dff = dff
         self.dropout_rate = dropout_rate
-        # self.maximum_position_encoding = maximum_position_encoding
 
         # TODO: It is possible to have the embedding layer produce a mask tensor by setting mask_zero=True
         #  In that case all subsequent layers must support masking.
@@ -297,7 +296,6 @@ class Transformer(tf.keras.layers.Layer):
                  embedding_dims,
                  encoder_ff_dim,
                  dropout_rate,
-                 enable_positional_encoding=True,
                  item_embedding_weights=None,
                  **kwargs):
 
@@ -312,9 +310,6 @@ class Transformer(tf.keras.layers.Layer):
             encoder_attention_heads: Number of Attention heads.
             encoder_ff_dim: Dimension of the feed forward layers inside the Encoder (see "Attention is All You Need").
             dropout_rate: Dropout rate
-            enable_positional_encoding: If False, the model will not use positional encoding. The model ignore the sequential
-                nature of the input and will treat it as a "bag of words" and the order of the input tokens will have no
-                effect on the output.
             item_embedding_weights: Not currently implemented, but can be used to load pre-trained embeddings from a
                 checkpoint. See the instantiation of the Embedding layers.
             **kwargs:
@@ -333,7 +328,6 @@ class Transformer(tf.keras.layers.Layer):
         self.embedding_sizes = embedding_sizes
         self.embedding_dims = embedding_dims
         self.encoder_ff_dim = encoder_ff_dim
-        self.enable_positional_encoding = enable_positional_encoding
         self.dropout_rate = dropout_rate
         self.item_embedding_weights = item_embedding_weights
 
@@ -362,8 +356,6 @@ class Transformer(tf.keras.layers.Layer):
 
         self.pos_encoding = positional_encoding(self.maximum_position_encoding, self.d_model)
         # self.segment_embedding_layer = tf.keras.layers.Embedding(self.MAX_INPUT_SEQ, self.d_model)
-
-    MAX_INPUT_SEQ = 100
 
     def get_config(self):
         """
@@ -403,8 +395,7 @@ class Transformer(tf.keras.layers.Layer):
         # embedded_seq += segment_embeddings  # (batch_size, seq_len, d_model)
 
         # ToDo: Try learnable positional embeddings from Bert4Rec: https://arxiv.org/pdf/1904.06690.pdf
-        if self.enable_positional_encoding:
-            embedded_seq += self.pos_encoding[:, :seq_len, :]
+        embedded_seq += self.pos_encoding[:, :seq_len, :]
 
         encoder_output = self.encoder(inputs=embedded_seq, training=training, mask=padding_mask)  # (batch_size, seq_len, d_model)
 

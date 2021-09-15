@@ -1,8 +1,9 @@
 import pandas as pd
-from sequence_transformer.data_utils import data_utils
+from sequence_transformer import data_utils
 import json
 import gzip
 import os
+import numpy as np
 
 
 def parse(path, use_columns=None):
@@ -63,6 +64,8 @@ if __name__ == '__main__':
     if True:
         # df = read_raw_amazon_data('../raw_data/reviews_Beauty.json.gz', min_item_per_user=MIN_ITEM)
         df = read_bert4rec_text_data('../raw_data/beauty.txt')
+        df['side_1'] = np.random.uniform(size=len(df))
+        df['side_2'] = np.random.uniform(size=len(df))
 
         print('# of interactions: ', len(df))
 

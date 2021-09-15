@@ -10,7 +10,6 @@ class PositiveRate(tf.keras.metrics.Metric):
         self.n_items = self.add_weight(name='n_items', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        # y_pred = tf.round(y_pred)  # threshold = 0.5
         mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
         mask = tf.cast(mask, dtype=y_true.dtype)
 
@@ -62,27 +61,18 @@ class F1Score(tf.keras.metrics.Metric):
         self.tp = self.add_weight(name='tp', initializer='zeros')
         self.condition_true = self.add_weight(name='condition_true', initializer='zeros')
         self.predicted_true = self.add_weight(name='pred_true', initializer='zeros')
-        # self.n_items = self.add_weight(name='n_items', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         y_pred = tf.round(y_pred)  # threshold = 0.5
 
         tp = tf.logical_and(tf.cast(y_true, tf.int32) == 1, tf.cast(y_pred, tf.int32) == 1)
         tp = tf.cast(tp, dtype=tf.float32)
-        # mask = tf.math.logical_not(tf.math.equal(y_true, LABEL_PAD))
-        # mask = tf.cast(mask, dtype=tp.dtype)
-        # tp *= mask
-        # tp = tf.cast(tp, tf.float32)
 
         condition_true = (tf.cast(y_true, tf.int32) == 1)
         condition_true = tf.cast(condition_true, dtype=tf.float32)
-        # condition_true *= mask
-        # condition_true = tf.cast(condition_true, tf.float32)
 
         predicted_true = (tf.cast(y_pred, tf.int32) == 1)
         predicted_true = tf.cast(predicted_true, dtype=tf.float32)
-        # predicted_true *= mask
-        # predicted_true = tf.cast(predicted_true, tf.float32)
         self.tp.assign_add(tf.reduce_sum(tp))
         self.condition_true.assign_add(tf.reduce_sum(condition_true))
         self.predicted_true.assign_add(tf.reduce_sum(predicted_true))
@@ -94,43 +84,6 @@ class F1Score(tf.keras.metrics.Metric):
         self.tp.assign(0.)
         self.condition_true.assign(0.)
         self.predicted_true.assign(0.)
-
-
-class fbeta_2(tf.keras.metrics.Metric):
-    def __init__(self, name='fbeta', **kwargs):
-        super(fbeta_2, self).__init__(name=name, **kwargs)
-        self.tp = self.add_weight(name='tp', initializer='zeros')
-        self.fp = self.add_weight(name='fp', initializer='zeros')
-        self.fn = self.add_weight(name='fn', initializer='zeros')
-        self.beta = 1
-        self.precision = self.add_weight(name='precision', initializer='zeros')
-        self.recall = self.add_weight(name='recall', initializer='zeros')
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        # print('*'*10, self.beta)
-        y_pred = tf.keras.backend.clip(y_pred, 0, 1)
-        # calculate elements
-        tp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)))
-        fp = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)))
-        fn = tf.reduce_sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)))
-        # calculate precision
-
-        self.precision.assign_add(tf.reduce_sum(tp / (tp + fp + tf.keras.backend.epsilon())))
-        # calculate recall
-        self.recall.assign_add(tf.reduce_sum(tp / (tp + fn + tf.keras.backend.epsilon())))
-        # calculate fbeta, averaged across each class
-
-    def result(self):
-        # return tf.keras.backend.mean((1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon()))
-        return (1 + self.beta**2) * (self.precision * self.recall) / (self.beta**2 * self.precision + self.recall + tf.keras.backend.epsilon())
-
-    def reset_states(self):
-        self.tp.assign(0.)
-        self.fp.assign(0.)
-        self.fn.assign(0.)
-        self.precision.assign(0.)
-        self.recall.assign(0.)
-        # self.beta = 1
 
 
 class MaskedMetric(tf.keras.metrics.Metric):
@@ -152,29 +105,3 @@ class MaskedMetric(tf.keras.metrics.Metric):
     def reset_states(self):
         self._metric.reset_states()
 
-
-def fbeta(y_true, y_pred, beta=1):
-    """
-    Calculate f-beta score for multi-class/label classification. Implementation from https://machinelearningmastery.com/how-to-develop-a-convolutional-neural-network-to-classify-satellite-photos-of-the-amazon-rainforest/
-    Args:
-        y_true:
-        y_pred:
-        beta:
-
-    Returns:
-
-    """
-    # clip predictions
-    y_pred = tf.keras.backend.clip(y_pred, 0, 1)
-    # calculate elements
-    tp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true * y_pred, 0, 1)), axis=1)
-    fp = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_pred - y_true, 0, 1)), axis=1)
-    fn = tf.keras.backend.sum(tf.keras.backend.round(tf.keras.backend.clip(y_true - y_pred, 0, 1)), axis=1)
-    # calculate precision
-    p = tp / (tp + fp + tf.keras.backend.epsilon())
-    # calculate recall
-    r = tp / (tp + fn + tf.keras.backend.epsilon())
-    # calculate fbeta, averaged across each class
-    bb = beta ** 2
-    fbeta_score = tf.keras.backend.mean((1 + bb) * (p * r) / (bb * p + r + tf.keras.backend.epsilon()))
-    return fbeta_score
