@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from sequence_transformer.constants import INPUT_MASKING_TOKEN
+from clickstream_transformer.constants import INPUT_MASKING_TOKEN
 
 
 def softmax(x, axis=None):

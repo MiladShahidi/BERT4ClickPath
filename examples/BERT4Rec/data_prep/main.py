@@ -1,5 +1,5 @@
 import pandas as pd
-from sequence_transformer import data_utils
+from clickstream_transformer import data_utils
 import json
 import gzip
 import os

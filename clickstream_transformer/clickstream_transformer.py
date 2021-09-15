@@ -1,8 +1,8 @@
 import tensorflow as tf
-from sequence_transformer.constants import RESERVED_TOKENS
-from sequence_transformer.transformer import Transformer
-from sequence_transformer.constants import INPUT_PAD, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
-from sequence_transformer.training_utils import load_vocabulary
+from clickstream_transformer.constants import RESERVED_TOKENS
+from clickstream_transformer.transformer import Transformer
+from clickstream_transformer.constants import INPUT_PAD, CLASSIFICATION_TOKEN, SEPARATOR_TOKEN
+from clickstream_transformer.training_utils import load_vocabulary
 
 
 class TransformerInputPrep:
@@ -103,7 +103,7 @@ class TransformerInputPrep:
         return features, segment_starts, segment_ends
 
 
-class SequenceTransformer(tf.keras.models.Model):
+class ClickstreamTransformer(tf.keras.models.Model):
 
     """
     This model closely resembles that of Chen et. al. (2019), available at https://arxiv.org/pdf/1905.06874.pdf.
@@ -188,7 +188,7 @@ class SequenceTransformer(tf.keras.models.Model):
                 determines the BinaryClassificationHead of the model. In the future this will be replaced by an argument or arguments that
                 specify what type of BinaryClassificationHead should be used.
         """
-        super(SequenceTransformer, self).__init__(**kwargs)
+        super(ClickstreamTransformer, self).__init__(**kwargs)
 
         self.sequential_input_config = sequential_input_config
         self.feature_vocabs = feature_vocabs
@@ -230,7 +230,7 @@ class SequenceTransformer(tf.keras.models.Model):
         """
         Custom Keras layers and models are not serializable unless they override this method.
         """
-        config = super(SequenceTransformer, self).get_config()
+        config = super(ClickstreamTransformer, self).get_config()
         config.update({
             'sequential_input_config': self.sequential_input_config,
             'feature_vocabs': self.feature_vocabs,

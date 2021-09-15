@@ -1,5 +1,5 @@
 import tensorflow as tf
-from sequence_transformer.constants import LABEL_PAD
+from clickstream_transformer.constants import LABEL_PAD
 
 
 class PositiveRate(tf.keras.metrics.Metric):

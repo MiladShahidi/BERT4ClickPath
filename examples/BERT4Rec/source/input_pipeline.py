@@ -1,10 +1,10 @@
 import tensorflow as tf
-from sequence_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
+from clickstream_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
 from source.data_generator import ClickStreamGenerator
-from sequence_transformer.sequence_transformer import SequenceTransformer
+from clickstream_transformer.clickstream_transformer import ClickstreamTransformer
 from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE, modes
-from sequence_transformer.head import SoftMaxHead
-from sequence_transformer.training_utils import load_vocabulary
+from clickstream_transformer.head import SoftMaxHead
+from clickstream_transformer.training_utils import load_vocabulary
 import functools
 import os
 
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     final_layers_dims = [10, 5]
     softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=N_ITEMS)
 
-    # clickstream_model = SequenceTransformer(
+    # clickstream_model = ClickstreamTransformer(
     #     sequential_input_config=sequential_input_config,
     #     feature_vocabs=feature_vocabularies,
     #     embedding_dims=embedding_dims,

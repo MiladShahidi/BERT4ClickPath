@@ -1,5 +1,5 @@
 import tensorflow as tf
-from sequence_transformer.constants import INPUT_PAD, SEP, ITEM_EMBEDDING_LAYER_NAME
+from clickstream_transformer.constants import INPUT_PAD, SEP, ITEM_EMBEDDING_LAYER_NAME
 import numpy as np
 
 

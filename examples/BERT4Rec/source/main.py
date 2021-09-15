@@ -1,20 +1,20 @@
 import json
 from source.input_pipeline import create_cloze_dataset
-from sequence_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
-from sequence_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, LRTensorBoard
-from sequence_transformer.losses import MaskedLoss
+from clickstream_transformer.metrics import PositiveRate, PredictedPositives, MaskedMetric
+from clickstream_transformer.training_utils import BestModelSaverCallback, CustomLRSchedule, LRTensorBoard
+from clickstream_transformer.losses import MaskedLoss
 from source.utils import ClozeMaskedLoss, ClozeMaskedNDCG, ClozeMaskedRecall, parse_cmd_line_arguments
 from source.cloze_constants import modes
 from source.data_generator import ClickStreamGenerator
-from sequence_transformer.sequence_transformer import SequenceTransformer
+from clickstream_transformer.clickstream_transformer import ClickstreamTransformer
 import os
 import tensorflow as tf
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 import time
 import contextlib
-from sequence_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD
-from sequence_transformer.head import SoftMaxHead
-from sequence_transformer.training_utils import load_vocabulary
+from clickstream_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD
+from clickstream_transformer.head import SoftMaxHead
+from clickstream_transformer.training_utils import load_vocabulary
 
 
 def create_input(training, validation, **kwargs):
@@ -107,7 +107,7 @@ def create_model(ckpt_dir=None, **config):
     Returns:
 
     """
-    model = SequenceTransformer(**config)
+    model = ClickstreamTransformer(**config)
 
     if ckpt_dir is not None:
         latest_ckpt = tf.train.latest_checkpoint(ckpt_dir)

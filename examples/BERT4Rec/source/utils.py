@@ -1,6 +1,6 @@
 import tensorflow as tf
-from sequence_transformer.constants import LABEL_PAD
-from sequence_transformer.losses import MaskedLoss
+from clickstream_transformer.constants import LABEL_PAD
+from clickstream_transformer.losses import MaskedLoss
 import argparse
 
 
@@ -76,7 +76,7 @@ def cloze_output_adaptor(y_true, y_pred):
     For training on a single GPU or CPU, this is not necessary. The reason we would even bother to do this reshaping
     has to do with what happens in distributed training. In distributed training, y_true is padded before splitting the
     batch across GPUs, but y_pred gets padded inside the model. That is, each GPU will pad it to the longest example
-    in **its own (sub)batch** (see the call method of the SequenceTransformer class). The result is that y_true may get
+    in **its own (sub)batch** (see the call method of the ClickstreamTransformer class). The result is that y_true may get
     padded to 5, because the maximum number of masked positions in the GLOBAL batch was 5, but one GPU may only pad to 3
     because the maximum number of masked positions it can see in its own (sub)batch is 3. And these two shapes are
     incompatible for loss and metric calculations.
