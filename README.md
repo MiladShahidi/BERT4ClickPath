@@ -24,9 +24,9 @@ In its simplest configuration, the model takes in a sequence of items that the u
 for the specific task at hand. This architecture facilitates transfer learning from one task to another. Once the model
 is trained for, say recommendation, it can quickly be fine-tuned to perform another task on the same set of products.
 
-![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
+![alt text](https://github.com/MiladShahidi/Clickstream-Transformer/blob/master/doc/images/Clickstream%20Transformer.svg "Clickstream-Transformer")
 
-Alternatively, it also accepts multiple variables per sequence. For example, the
+Alternatively, it can also accept multiple variables per sequence. For example, the
 clickstream data might consist of (action, item) pairs, such as ("view", "gloves") or ("size change", "shoe"). In this
 case, it learns representations (embeddings) of both actions and items resulting in a richer model of user behaviour.
 
