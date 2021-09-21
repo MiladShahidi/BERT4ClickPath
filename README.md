@@ -25,6 +25,7 @@ for the specific task at hand. This architecture facilitates transfer learning f
 is trained for, say recommendation, it can quickly be fine-tuned to perform another task on the same set of products.
 
 <img src="https://github.com/MiladShahidi/Clickstream-Transformer/blob/master/doc/images/Clickstream-Transformer.svg" alt="architechture" width="50%"/>
+<img src="https://github.com/MiladShahidi/Clickstream-Transformer/blob/master/doc/images/Clickstream-Transformer.png" alt="architechture" width="50%"/>
 
 Alternatively, it can also accept multiple variables per sequence. For example, the
 clickstream data might consist of (action, item) pairs, such as ("view", "gloves") or ("size change", "shoe"). In this
