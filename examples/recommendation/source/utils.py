@@ -98,6 +98,7 @@ def cloze_output_adaptor(y_true, y_pred):
     Returns:
 
     """
+    # return y_true, y_pred
     # Merge the first two dimensions. Each example may contain more than 1 masked item
     # But we treat all of them the same way. So we will flatten the batch dimension together with the mask dim.
     dim_per_example = tf.shape(y_pred)[-1]  # e.g. vocab_size when the model outputs a distribution over vocabulary

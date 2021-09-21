@@ -8,9 +8,6 @@ export BUCKET="seq_trans_cloze"
 export REGION="us-west1"
 export TFVERSION='2.3'
 
-#cd ../..
-#source build_pkg.sh > /dev/null
-#mv
 JOBNAME=$1
 
 MODELDIR=gs://${BUCKET}/training_output/${JOBNAME}
@@ -23,9 +20,10 @@ gcloud ai-platform jobs submit training $JOBNAME \
   --staging-bucket=gs://$BUCKET \
   --config=./gcp_training_config.yaml \
   --runtime-version=$TFVERSION \
-  --packages sequence_transformer-0.0.1-py3-none-any.whl \
+  --packages clickstream_transformer-0.0.1-py3-none-any.whl \
   -- \
-  --input_data=gs://${BUCKET}/data/amazon_beauty_bert4rec \
+  --input_data=gs://${BUCKET}/data/amazon_beauty_bert4rec_trunc_50 \
   --model_dir=${MODELDIR} \
   --num_encoder_layers=1 \
-  --num_attention_heads=4
+  --num_attention_heads=2 \
+#  --init_ckpt_dir=gs://seq_trans_cloze/training_output/test_26_lr_5e4_batch_1024/ckpts

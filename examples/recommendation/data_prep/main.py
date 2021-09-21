@@ -54,7 +54,8 @@ if __name__ == '__main__':
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    MIN_ITEM = 5
+    MIN_FEEDBACK = 5  # This has already been applied to the data in BERT4Rec repo
+    MAX_SEQ_LEN = 50
 
     output_path = '../data/amazon_beauty_bert4rec'
     import shutil
@@ -62,10 +63,11 @@ if __name__ == '__main__':
 
     print('Reading data...')
     if True:
-        # df = read_raw_amazon_data('../raw_data/reviews_Beauty.json.gz', min_item_per_user=MIN_ITEM)
+        # df = read_raw_amazon_data('../raw_data/reviews_Beauty.json.gz', min_item_per_user=MIN_FEEDBACK)
         df = read_bert4rec_text_data('../raw_data/beauty.txt')
-        df['side_1'] = np.random.uniform(size=len(df))
-        df['side_2'] = np.random.uniform(size=len(df))
+
+        df['row_num'] = df.groupby('reviewerID').cumcount()
+        df = df[df['row_num'] < MAX_SEQ_LEN].drop('row_num', axis=1)
 
         print('# of interactions: ', len(df))
 

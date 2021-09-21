@@ -1,7 +1,6 @@
 import tensorflow as tf
 from clickstream_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
 from source.data_generator import ClickStreamGenerator
-from clickstream_transformer.clickstream_transformer import ClickstreamTransformer
 from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE, modes
 from clickstream_transformer.head import SoftMaxHead
 from clickstream_transformer.training_utils import load_vocabulary
@@ -100,7 +99,7 @@ def cloze_data_prep(features, mode, label_lookup_table):
 
     if mode == modes.TRAIN:  # This is from the outer scope
         # last item is saved for validation. Should be removed when training
-        for seq_feature in ['asin', 'unixReviewTime']:
+        for seq_feature in ['asin']:
             features[seq_feature] = features[seq_feature][:-1]
 
         special_example = False
@@ -118,7 +117,6 @@ def cloze_data_prep(features, mode, label_lookup_table):
         if False:
             # Masks only the last item
             # The following assumes the data is not batched yet and we are dealing with a 1-D tensor, a single example
-            # last_item_index = tf.expand_dims(tf.size(features['asin'])//2 - 1, axis=0)  # Needs to be 1-D tensor
             last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
             features['asin'], labels = mask_items(features['asin'], last_item_index)
         else:
@@ -154,7 +152,7 @@ def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
         feature_spec = {
             'reviewerID': tf.io.FixedLenFeature([], dtype=tf.string),
             'asin': tf.io.VarLenFeature(dtype=tf.string),
-            'unixReviewTime': tf.io.VarLenFeature(dtype=tf.int64)
+            # 'unixReviewTime': tf.io.VarLenFeature(dtype=tf.int64)
         }
 
         def parse_fn(ex):
@@ -167,13 +165,13 @@ def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
         data_types = {
             'asin': tf.string,
             'reviewerID': tf.string,
-            'unixReviewTime': tf.int64,
+            # 'unixReviewTime': tf.int64,
             # 'labels': tf.int64
         }
         tensor_shapes = {
             'asin': tf.TensorShape([None]),
             'reviewerID': tf.TensorShape([]),
-            'unixReviewTime': tf.TensorShape([None]),
+            # 'unixReviewTime': tf.TensorShape([None]),
             # 'labels': tf.TensorShape([])
         }
 
@@ -183,8 +181,7 @@ def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
         raise TypeError('Source must be either str or callable.')
 
     # Shuffle then repeat. Batch should always be after these two (https://stackoverflow.com/a/49916221/4936825)
-    if mode == modes.TRAIN:
-        dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
+    dataset = dataset.shuffle(buffer_size=20000, reshuffle_each_iteration=True)
 
     dataset = dataset.repeat(None)
 
@@ -204,14 +201,14 @@ def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
         padded_shapes={  # Pad all to longest in the batch
             'reviewerID': [],
             'asin': [None],
-            'unixReviewTime': [None],
+            # 'unixReviewTime': [None],
             'labels': [None],
             # 'orig_labels': [None]
         },
         padding_values={
             'reviewerID': INPUT_PADDING_TOKEN,
             'asin': INPUT_PADDING_TOKEN,
-            'unixReviewTime': tf.cast(INPUT_PAD, tf.int64),
+            # 'unixReviewTime': tf.cast(INPUT_PAD, tf.int64),
             'labels': LABEL_PAD,
             # 'orig_labels': INPUT_PADDING_TOKEN
         }
@@ -233,51 +230,3 @@ def create_cloze_dataset(source, mode, batch_size, target_vocab_file):
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     return dataset
-
-
-if __name__ == '__main__':
-    N_ITEMS = 10
-    input_dir = '../data/amazon_beauty_bert4rec'
-    # data_gen = ClickStreamGenerator(
-    #     n_items=N_ITEMS,
-    #     n_events=10,
-    #     session_cohesiveness=5,
-    #     write_vocab_files=True,
-    #     vocab_dir='../data/simulated/vocabs'
-    # )
-    item_vocab_file = os.path.join(input_dir, 'vocabs/item_vocab.txt')
-    data = create_cloze_dataset(
-        source=input_dir + '/*.tfrecord',
-        mode='TRAIN',
-        batch_size=2,
-        target_vocab_file=item_vocab_file
-    )
-
-    sequential_input_config = {
-        'items': ['asin'],
-        # 'events': ['seq_1_events', 'seq_2_events']
-    }
-
-    feature_vocabularies = {
-        'items': item_vocab_file,
-        # 'events': 'data/vocabs/event_vocab.txt'
-    }
-
-    embedding_dims = {
-        'items': 4,
-        # 'events': 2
-    }
-
-    final_layers_dims = [10, 5]
-    softmax_head = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=N_ITEMS)
-
-    # clickstream_model = ClickstreamTransformer(
-    #     sequential_input_config=sequential_input_config,
-    #     feature_vocabs=feature_vocabularies,
-    #     embedding_dims=embedding_dims,
-    #     head_unit=softmax_head,
-    #     value_to_head=INPUT_MASKING_TOKEN,
-    #     num_encoder_layers=1,
-    #     num_attention_heads=1,
-    #     dropout_rate=0.1
-    # )

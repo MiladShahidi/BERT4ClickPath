@@ -131,12 +131,12 @@ def train(model,
     callbacks = []
 
     # Reduce LR on Plateau
-    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=5, factor=0.316)
+    reduce_lr_on_plateau = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=10, factor=0.317)
 
     # Checkpoint saver
     ckpt_dir = os.path.join(model_dir, 'ckpts')
     ckpt_timestamp = time.strftime('%b-%d_%H-%M-%S')  # Avoid overwriting files with same epoch no. from older runs
-    ckpt_filename = 'ckpt-' + '{epoch:04d}'  # will include epoch in filename
+    ckpt_filename = 'ckpt-' + ckpt_timestamp + '{epoch:04d}'  # will include epoch in filename
     checkpoint_path = os.path.join(ckpt_dir, ckpt_filename)
     save_checkpoint = ModelCheckpoint(filepath=checkpoint_path, save_best_only=True, verbose=2)
     callbacks += [save_checkpoint]
@@ -179,11 +179,9 @@ if __name__ == '__main__':
     else:
         N_PROCESSORS = 1  # local CPU
 
-    PER_GPU_BATCH_SIZE = 1024
-
     timestamp = time.strftime('%d-%b-%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
     model_dir = os.path.join('../training_output', f'run_{timestamp}')
-    root_data_dir = '//data/amazon_beauty_bert4rec'
+    root_data_dir = '../data/amazon_beauty_bert4rec'
 
     # simulated_data = False
     # if simulated_data:
@@ -198,23 +196,24 @@ if __name__ == '__main__':
     #     validation_data_src = data_src
     # else:
 
-    LOCAL_BATCH_SIZE = 5
+    PER_GPU_BATCH_SIZE = 512
+    LOCAL_BATCH_SIZE = 100
     CLOUD_BATCH_SIZE = PER_GPU_BATCH_SIZE * N_PROCESSORS  # In distributed training N_PROCESSORS > 1 (= no. of GPUs)
 
+    # These are the default values. If provided through the command line (e.g. for hyperparameter tuning), these will
+    # be replaced by the cmd line values
     training_param_spec = {
         'input_data': root_data_dir,
         'model_dir': model_dir,
         'n_epochs': 10000,
-        'steps_per_epoch': 1000 if not local_run else 5,
-        'validation_steps': 100 if not local_run else 5,
+        'steps_per_epoch': 1000 if not local_run else 50,
+        'validation_steps': 500 if not local_run else 100,
         'lr_warmup_steps': 4000,
         'lr': 5e-4,
         'lr_scale': 1.0,
         'batch_size': CLOUD_BATCH_SIZE if not local_run else LOCAL_BATCH_SIZE,
         'max_sess_len': 50,  # ToDo: Enable this. This is set to 50 in BERT4Rec for Amazon Beauty dataset
-        'init_ckpt_dir':
-            'DUMMY' if TASK == 'train'  # None causes problems. The arg parser needs to be updated to handle None
-            else '/Users/milad/PycharmProjects/algomart/applications/Cloze/training_output/run_14-Apr-18-45-48/ckpts',
+        'init_ckpt_dir': 'DUMMY',  # Provide from command line if needed
         'job-dir': 'placeholder'
     }
 
@@ -234,7 +233,6 @@ if __name__ == '__main__':
     item_vocab_file = os.path.join(training_params['input_data'], 'vocabs/item_vocab.txt')
     output_vocab_size = len(load_vocabulary(item_vocab_file))
 
-    # saved_model_dir = os.path.join(training_params['model_dir'], 'savedmodel')
     ckpt_dir = os.path.join(training_params['model_dir'], 'ckpts')
 
     d_model = 64
@@ -242,11 +240,11 @@ if __name__ == '__main__':
     input_config = {
         'sequential_input_config': {
             'items': ['asin'],
-            # 'events': ['seq_1_events', 'seq_2_events']
+            # 'events': ['seq_1_events']
         },
         'feature_vocabs': {
             'items': item_vocab_file,
-            # 'events':
+            # 'events': event_vocab_file
         },
         'embedding_dims': {
             'items': d_model,
@@ -280,6 +278,11 @@ if __name__ == '__main__':
         training_spec = get_training_spec(training_params)  # This must be created inside the distribution scope
         model.compile(**training_spec)
 
+    # This will:
+    # - train the model
+    # - write metrics for Tensorboard
+    # - save checkpoints regularly
+    # - save the latest best model (according to validation loss)
     model = train(model=model,
                   training_data=training_dataset,
                   validation_data=validation_dataset,
