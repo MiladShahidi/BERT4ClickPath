@@ -5,7 +5,6 @@ from clickstream_transformer.training_utils import BestModelSaverCallback, Custo
 from clickstream_transformer.losses import MaskedLoss
 from source.utils import ClozeMaskedLoss, ClozeMaskedNDCG, ClozeMaskedRecall, parse_cmd_line_arguments
 from source.cloze_constants import modes
-from source.data_generator import ClickStreamGenerator
 from clickstream_transformer.clickstream_transformer import ClickstreamTransformer
 import os
 import tensorflow as tf
@@ -15,6 +14,7 @@ import contextlib
 from clickstream_transformer.constants import INPUT_MASKING_TOKEN, LABEL_PAD
 from clickstream_transformer.head import SoftMaxHead
 from clickstream_transformer.training_utils import load_vocabulary
+from source.data_generator import ClickStreamGenerator
 
 
 def create_input(training, validation, **kwargs):
@@ -181,20 +181,7 @@ if __name__ == '__main__':
 
     timestamp = time.strftime('%d-%b-%H-%M-%S')  # Avoid overwriting files with same epoch number from older runs
     model_dir = os.path.join('../training_output', f'run_{timestamp}')
-    root_data_dir = '../data/amazon_beauty_bert4rec'
-
-    # simulated_data = False
-    # if simulated_data:
-    #     N_ITEMS = 100
-    #     COHESION = 100
-    #     item_vocab_dir = 'data/simulated/vocabs'
-    #     data_src = ClickStreamGenerator(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION,
-    #                                     write_vocab_files=True, vocab_dir=item_vocab_dir)
-    #     item_vocab_file = os.path.join(item_vocab_dir, 'item_vocab.txt')
-    #     output_vocab_size = len(load_vocabulary(item_vocab_file))
-    #     training_data_src = data_src
-    #     validation_data_src = data_src
-    # else:
+    root_data_dir = '../data/amazon_beauty_bert4rec_trunc_50'
 
     PER_GPU_BATCH_SIZE = 512
     LOCAL_BATCH_SIZE = 100
@@ -206,10 +193,10 @@ if __name__ == '__main__':
         'input_data': root_data_dir,
         'model_dir': model_dir,
         'n_epochs': 10000,
-        'steps_per_epoch': 1000 if not local_run else 50,
-        'validation_steps': 500 if not local_run else 100,
+        'steps_per_epoch': 1000 if not local_run else 100,
+        'validation_steps': 500 if not local_run else 50,
         'lr_warmup_steps': 4000,
-        'lr': 5e-4,
+        'lr': 1e-3,
         'lr_scale': 1.0,
         'batch_size': CLOUD_BATCH_SIZE if not local_run else LOCAL_BATCH_SIZE,
         'max_sess_len': 50,  # ToDo: Enable this. This is set to 50 in BERT4Rec for Amazon Beauty dataset
@@ -228,10 +215,21 @@ if __name__ == '__main__':
     training_params = {k: parsed_args.get(k, None) for k in training_param_spec.keys()}
     training_params.pop('job-dir')
 
-    data_files = os.path.join(training_params['input_data'], '*.tfrecord')
-
-    item_vocab_file = os.path.join(training_params['input_data'], 'vocabs/item_vocab.txt')
-    output_vocab_size = len(load_vocabulary(item_vocab_file))
+    simulated_data = False
+    if simulated_data:
+        N_ITEMS = 40
+        COHESION = 100
+        item_vocab_dir = '../data/simulated/vocabs'
+        data_src = ClickStreamGenerator(n_items=N_ITEMS, n_events=10, session_cohesiveness=COHESION,
+                                        write_vocab_files=True, vocab_dir=item_vocab_dir)
+        item_vocab_file = os.path.join(item_vocab_dir, 'item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_file))
+        # training_data_src = data_src
+        # validation_data_src = data_src
+    else:
+        data_src = os.path.join(training_params['input_data'], '*.tfrecord')
+        item_vocab_file = os.path.join(training_params['input_data'], 'vocabs/item_vocab.txt')
+        output_vocab_size = len(load_vocabulary(item_vocab_file))
 
     ckpt_dir = os.path.join(training_params['model_dir'], 'ckpts')
 
@@ -261,13 +259,13 @@ if __name__ == '__main__':
     print(config)
     print('*'*80)
 
-    final_layers_dims = [1024, 512]
+    final_layers_dims = [1024, 512, 256, 128]
     head_unit = SoftMaxHead(dense_layer_dims=final_layers_dims, output_vocab_size=output_vocab_size)
 
     # source data files are the same for training and validation but input_pipeline will process them differently
     training_dataset, validation_dataset = create_input(
-        training=data_files,
-        validation=data_files,
+        training=data_src,
+        validation=data_src,
         target_vocab_file=item_vocab_file,
         **training_params  # batch_size and max_sess_len
     )

@@ -1,6 +1,5 @@
 import tensorflow as tf
 from clickstream_transformer.constants import INPUT_PADDING_TOKEN, LABEL_PAD, INPUT_PAD, INPUT_MASKING_TOKEN
-from source.data_generator import ClickStreamGenerator
 from source.cloze_constants import MAX_MASKED_ITEMS, MASKED_PERCENTAGE, modes
 from clickstream_transformer.head import SoftMaxHead
 from clickstream_transformer.training_utils import load_vocabulary
@@ -114,7 +113,7 @@ def cloze_data_prep(features, mode, label_lookup_table):
                 max_masked=MAX_MASKED_ITEMS
             )
     elif mode == modes.EVAL:  # validation data
-        if False:
+        if True:
             # Masks only the last item
             # The following assumes the data is not batched yet and we are dealing with a 1-D tensor, a single example
             last_item_index = tf.expand_dims(tf.size(features['asin']) - 1, axis=0)  # Needs to be 1-D tensor
