@@ -26,7 +26,7 @@ for the specific task at hand.
 This architecture facilitates transfer learning from one task to another. Once the model
 is trained for, say recommendation, it can be easily fine-tuned to perform another task on the same set of products.
 
-<img src="https://github.com/MiladShahidi/BERT4ClickPath/tree/master/doc/images/click-path-Transformer.png" alt="architechture" width="50%"/>
+<img src="https://github.com/MiladShahidi/BERT4ClickPath/blob/master/doc/images/Clickstream-Transformer.png" alt="architechture" width="50%"/>
 
 Alternatively, it can also accept multiple variables per sequence. For example, the
 click-path data might consist of (action, item) pairs, such as ("view", "gloves") or ("size change", "shoe"). In this
