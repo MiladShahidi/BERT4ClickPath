@@ -1,7 +1,7 @@
-# Clickstream-Transformer
+# BERT4ClickPath
 
-Clickstream-Transformer is a Python library that has emerged out of the various models I have built around online
-shopping use cases. It implements a configurable Transformer-based model for clickstream data and can be easily
+BERT4ClickPath is a Python library that has emerged out of the various models I have built around online
+shopping use cases. It implements a configurable Transformer-based model for click-path data and can be easily
 configured and trained for a wide range of tasks. The following are some examples:
 
 - Product recommendation (See BERT4Rec implementation below)
@@ -26,17 +26,17 @@ for the specific task at hand.
 This architecture facilitates transfer learning from one task to another. Once the model
 is trained for, say recommendation, it can be easily fine-tuned to perform another task on the same set of products.
 
-<img src="https://github.com/MiladShahidi/Clickstream-Transformer/blob/master/doc/images/Clickstream-Transformer.png" alt="architechture" width="50%"/>
+<img src="https://github.com/MiladShahidi/click-path-Transformer/blob/master/doc/images/click-path-Transformer.png" alt="architechture" width="50%"/>
 
 Alternatively, it can also accept multiple variables per sequence. For example, the
-clickstream data might consist of (action, item) pairs, such as ("view", "gloves") or ("size change", "shoe"). In this
+click-path data might consist of (action, item) pairs, such as ("view", "gloves") or ("size change", "shoe"). In this
 case, it learns representations (embeddings) of both actions and items resulting in a richer model of user behaviour.
 
 # Example: BERT4Rec
  
 To demonstrate the flexibility of BERT4ClickPath, I provide a demonstration of how it can be configured to create
-BERT4Rec (Fei Sun et. al., 2019) for sequential recommendation. This is implemented and tested using Amazon Beauty data
-under `examples`.
+BERT4Rec (Fei Sun et. al., 2019) for sequential recommendation. This is implemented under `examples` and tested on
+Amazon Beauty data.
 
 Following ideas from the NLP literature, and BERT in particular, the model is trained using the Cloze task (aka Masked
 Language Model). More specifically a random subset of each sequence is masked and the task is to predict what those
